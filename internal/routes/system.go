@@ -2,10 +2,11 @@ package routes
 
 import (
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/joyrex2001/donk/internal/config"
 )
 
 // GET "/healthz"
@@ -19,10 +20,10 @@ func Healthz(c *gin.Context) {
 // GET "/info"
 func Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"ID":              "donk-909",
-		"Name":            "donk",
-		"ServerVersion":   "donk-909",
-		"OperatingSystem": "kubernetes",
+		"ID":              config.ID,
+		"Name":            config.Name,
+		"ServerVersion":   config.Version,
+		"OperatingSystem": config.OS,
 		"MemTotal":        0,
 	})
 }
@@ -30,10 +31,12 @@ func Info(c *gin.Context) {
 // GET "/version"
 func Version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"Version":    "1.0",
-		"ApiVersion": "1.0",
-		"GoVersion":  runtime.Version(),
-		"Os":         runtime.GOOS,
-		"Arch":       runtime.GOARCH,
+		"Version":    config.DockerVersion,
+		"ApiVersion": config.DockerAPIVersion,
+		"GitCommit":  config.Build,
+		"BuildTime":  config.Date,
+		"GoVersion":  config.GoVersion,
+		"Os":         config.GOOS,
+		"Arch":       config.GOARCH,
 	})
 }
