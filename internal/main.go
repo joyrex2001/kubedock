@@ -13,11 +13,15 @@ import (
 // Main is the main entry point for starting this service, based the settings
 // initiated by cmd.
 func Main(cmd *cobra.Command, args []string) {
+	// https://docs.docker.com/engine/api/v1.41/
+	// https://github.com/moby/moby
+
+	if !viper.GetBool("generic.verbose") {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 
-	// https://docs.docker.com/engine/api/v1.41/#operation/ContainerCreate
-	// https://github.com/moby/moby/tree/master/api/types/container
-	// https://docs.docker.com/engine/api/sdk/
 	router.GET("/info", routes.Info)
 	router.GET("/version", routes.Version)
 	router.GET("/healthz", routes.Healthz)
@@ -26,29 +30,28 @@ func Main(cmd *cobra.Command, args []string) {
 	router.POST("/containers/create", routes.ContainerCreate)
 	router.POST("/containers/:id/start", routes.ContainerStart)
 	router.GET("/containers/:id/logs", NotImplemented)
-	router.GET("/containers/:id/json", NotImplemented)
-	router.POST("/containers/:id/stop", NotImplemented)
-
-	// router.GET("/containers/json", NotImplemented)
-	// router.GET("/containers/:id/top", NotImplemented)
-	// router.GET("/containers/:id/changes", NotImplemented)
-	// router.GET("/containers/:id/export", NotImplemented)
-	// router.GET("/containers/:id/stats", NotImplemented)
-	// router.POST("/containers/:id/resize", NotImplemented)
-	// router.POST("/containers/:id/restart", NotImplemented)
+	router.GET("/containers/:id/json", routes.ContainerInfo)
+	router.POST("/containers/:id/stop", routes.ContainerStop)
+	router.GET("/containers/json", NotImplemented)
+	router.GET("/containers/:id/top", NotImplemented)
+	router.GET("/containers/:id/changes", NotImplemented)
+	router.GET("/containers/:id/export", NotImplemented)
+	router.GET("/containers/:id/stats", NotImplemented)
+	router.POST("/containers/:id/resize", NotImplemented)
+	router.POST("/containers/:id/restart", NotImplemented)
 	// router.POST("/containers/:id/kill", NotImplemented)
-	// router.POST("/containers/:id/update", NotImplemented)
-	// router.POST("/containers/:id/rename", NotImplemented)
-	// router.POST("/containers/:id/pause", NotImplemented)
-	// router.POST("/containers/:id/unpause", NotImplemented)
-	// router.POST("/containers/:id/attach", NotImplemented)
-	// router.GET("/containers/:id/attach/ws", NotImplemented)
-	// router.POST("/containers/:id/wait", NotImplemented)
+	router.POST("/containers/:id/update", NotImplemented)
+	router.POST("/containers/:id/rename", NotImplemented)
+	router.POST("/containers/:id/pause", NotImplemented)
+	router.POST("/containers/:id/unpause", NotImplemented)
+	router.POST("/containers/:id/attach", NotImplemented)
+	router.GET("/containers/:id/attach/ws", NotImplemented)
+	router.POST("/containers/:id/wait", NotImplemented)
 	// router.DELETE("/containers/:id", NotImplemented)
-	// router.HEAD("/containers/:id/archive", NotImplemented)
-	// router.GET("/containers/:id/archive", NotImplemented)
-	// router.PUT("/containers/:id/archive", NotImplemented)
-	// router.POST("/containers/prune", NotImplemented)
+	router.HEAD("/containers/:id/archive", NotImplemented)
+	router.GET("/containers/:id/archive", NotImplemented)
+	router.PUT("/containers/:id/archive", NotImplemented)
+	router.POST("/containers/prune", NotImplemented)
 
 	router.Run(viper.GetString("server.listen-addr"))
 }
