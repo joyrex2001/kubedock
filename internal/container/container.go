@@ -12,7 +12,7 @@ import (
 var db *cache.Cache
 
 func init() {
-	db = cache.New(cache.DefaultExpiration, 10*time.Minute)
+	db = cache.New(cache.NoExpiration, 10*time.Minute)
 }
 
 type Container struct {
@@ -32,7 +32,7 @@ func New(name, image string, ports map[string]interface{}, labels map[string]str
 		ExposedPorts: ports,
 		Labels:       labels,
 	}
-	db.Set(id, tainr, cache.DefaultExpiration)
+	db.Set(id, tainr, cache.NoExpiration)
 	return tainr
 }
 
