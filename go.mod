@@ -9,6 +9,7 @@ require (
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	github.com/ugorji/go v1.2.5 // indirect

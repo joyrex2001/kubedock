@@ -1,14 +1,15 @@
 package routes
 
 import (
-	"net/http"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Error will return an error response in json.
-func Error(c *gin.Context, err error) {
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"error": err,
+func Error(c *gin.Context, status int, err error) {
+	log.Print(err)
+	c.JSON(status, gin.H{
+		"error": err.Error(),
 	})
 }

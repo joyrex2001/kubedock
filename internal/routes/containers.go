@@ -1,8 +1,7 @@
 package routes
 
 import (
-	"io/ioutil"
-	"log"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,16 +10,21 @@ import (
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
 )
 
+type ContainerCreateRequest struct {
+	Name         string                 `json:"name"`
+	Image        string                 `json:"image"`
+	ExposedPorts map[string]interface{} `json:"ExposedPorts"`
+	Labels       map[string]string      `json:"Labels"`
+}
+
 // POST "/containers/create"
 func ContainerCreate(c *gin.Context) {
-	in, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		Error(c, err)
+	in := &ContainerCreateRequest{}
+	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
+		Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	log.Print(string(in))
-	ctainr := container.New()
-	// TODO: instantiate container object with details
+	ctainr := container.New(in.Name, in.Image, in.ExposedPorts, in.Labels)
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": ctainr.ID,
 	})
@@ -31,11 +35,11 @@ func ContainerStart(c *gin.Context) {
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
-		Error(c, err)
+		Error(c, http.StatusNotFound, err)
 		return
 	}
 	if err := kubernetes.StartContainer(ctainr); err != nil {
-		Error(c, err)
+		Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
@@ -46,11 +50,11 @@ func ContainerStop(c *gin.Context) {
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
-		Error(c, err)
+		Error(c, http.StatusNotFound, err)
 		return
 	}
 	if err := kubernetes.StopContainer(ctainr); err != nil {
-		Error(c, err)
+		Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
@@ -61,9 +65,22 @@ func ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := container.Load(id)
 	if err != nil {
-		Error(c, err)
+		Error(c, http.StatusNotFound, err)
 		return
 	}
-	_ = tainr
-	c.Writer.WriteHeader(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{
+		"Id": id,
+		"Config": gin.H{
+			"Image":  tainr.Image,
+			"Labels": tainr.Labels,
+		},
+		"Image": tainr.Image,
+		"State": gin.H{
+			"Health": gin.H{
+				"Status": "healthy",
+			},
+			"Running": true,
+			"Status":  "running",
+		},
+	})
 }
