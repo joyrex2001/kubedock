@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/joyrex2001/donk/internal/container"
-	"github.com/joyrex2001/donk/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/kubernetes"
 )
 
 // POST "/containers/create"
@@ -19,21 +19,22 @@ func ContainerCreate(c *gin.Context) {
 		return
 	}
 	log.Print(string(in))
-	tainr := container.New()
+	ctainr := container.New()
+	// TODO: instantiate container object with details
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": tainr.ID,
+		"Id": ctainr.ID,
 	})
 }
 
 // POST "/containers/:id/start"
 func ContainerStart(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := container.Load(id)
+	ctainr, err := container.Load(id)
 	if err != nil {
 		Error(c, err)
 		return
 	}
-	if err := kubernetes.StartContainer(tainr); err != nil {
+	if err := kubernetes.StartContainer(ctainr); err != nil {
 		Error(c, err)
 		return
 	}
@@ -43,12 +44,12 @@ func ContainerStart(c *gin.Context) {
 // POST "/containers/:id/stop"
 func ContainerStop(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := container.Load(id)
+	ctainr, err := container.Load(id)
 	if err != nil {
 		Error(c, err)
 		return
 	}
-	if err := kubernetes.StopContainer(tainr); err != nil {
+	if err := kubernetes.StopContainer(ctainr); err != nil {
 		Error(c, err)
 		return
 	}

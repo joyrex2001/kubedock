@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/joyrex2001/donk/internal/config"
+	"github.com/joyrex2001/kubedock/internal/config"
 )
 
 // GET "/healthz"

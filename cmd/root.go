@@ -8,14 +8,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/joyrex2001/donk/internal"
+	"github.com/joyrex2001/kubedock/internal"
 )
 
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "donk",
-	Short: "donk is a docker on kubernetes service.",
+	Use:   "kubedock",
+	Short: "kubedock is a docker on kubernetes service.",
 	Long:  ``,
 	Run:   internal.Main,
 }

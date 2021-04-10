@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/joyrex2001/donk/internal/routes"
+	"github.com/joyrex2001/kubedock/internal/routes"
 )
 
 // Main is the main entry point for starting this service, based the settings

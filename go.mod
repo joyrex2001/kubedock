@@ -1,4 +1,4 @@
-module github.com/joyrex2001/donk
+module github.com/joyrex2001/kubedock
 
 go 1.16
 

@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	ID   = "com.joyrex2001.donk"
-	Name = "donk"
+	ID   = "com.joyrex2001.kubedock"
+	Name = "kubedock"
 	OS   = "kubernetes"
 
 	GoVersion = runtime.Version()

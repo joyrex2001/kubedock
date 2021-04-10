@@ -3,7 +3,7 @@ package container
 import (
 	"fmt"
 
-	"github.com/joyrex2001/donk/internal/util/uuid"
+	"github.com/joyrex2001/kubedock/internal/util/uuid"
 )
 
 type Container struct {

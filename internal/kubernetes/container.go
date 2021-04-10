@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"fmt"
 
-	"github.com/joyrex2001/donk/internal/container"
+	"github.com/joyrex2001/kubedock/internal/container"
 )
 
 func StartContainer(tainr *container.Container) error {
