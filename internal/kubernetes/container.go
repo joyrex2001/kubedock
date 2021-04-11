@@ -1,8 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
-
 	"github.com/joyrex2001/kubedock/internal/container"
 )
 
@@ -11,6 +9,7 @@ func StartContainer(tainr *container.Container) error {
 	return nil
 }
 
-func StopContainer(tainr *container.Container) error {
-	return fmt.Errorf("container %s could not be stopped", tainr.ID)
+func DeleteContainer(tainr *container.Container) error {
+	// return fmt.Errorf("container %s could not be deleted", tainr.ID)
+	return nil
 }

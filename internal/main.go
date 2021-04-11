@@ -13,6 +13,7 @@ import (
 // Main is the main entry point for starting this service, based the settings
 // initiated by cmd.
 func Main(cmd *cobra.Command, args []string) {
+	// https://docs.docker.com/engine/api/v1.18/
 	// https://docs.docker.com/engine/api/v1.41/
 	// https://github.com/moby/moby
 
@@ -27,14 +28,17 @@ func Main(cmd *cobra.Command, args []string) {
 	router.GET("/healthz", routes.Healthz)
 	router.GET("/images/json", routes.ImageList)
 	router.POST("/images/create", routes.ImageCreate)
+	router.GET("/images/:image/*json", routes.ImageJson)
 	router.POST("/containers/create", routes.ContainerCreate)
 	router.POST("/containers/:id/start", routes.ContainerStart)
 	router.GET("/containers/:id/logs", NotImplemented)
 	router.GET("/containers/:id/json", routes.ContainerInfo)
-	router.POST("/containers/:id/stop", routes.ContainerStop)
+	router.POST("/containers/:id/stop", NotImplemented)
 	router.POST("/containers/:id/kill", NotImplemented)
-	// router.DELETE("/containers/:id", NotImplemented)
+	router.DELETE("/containers/:id", routes.ContainerDelete)
 	router.POST("/containers/:id/exec", routes.ContainerExec)
+	router.POST("/exec/:id/start", routes.ExecStart)
+	router.GET("/exec/:id/json", routes.ExecInfo)
 
 	router.GET("/containers/json", NotImplemented)
 	router.GET("/containers/:id/top", NotImplemented)

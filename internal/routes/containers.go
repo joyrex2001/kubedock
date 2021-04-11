@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,10 +15,6 @@ type ContainerCreateRequest struct {
 	Image        string                 `json:"image"`
 	ExposedPorts map[string]interface{} `json:"ExposedPorts"`
 	Labels       map[string]string      `json:"Labels"`
-}
-
-type ContainerExecRequest struct {
-	Cmd []string `json:"Cmd"`
 }
 
 // POST "/containers/create"
@@ -50,15 +45,15 @@ func ContainerStart(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// POST "/containers/:id/stop"
-func ContainerStop(c *gin.Context) {
+// DELETE "/containers/:id"
+func ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
 		Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := kubernetes.StopContainer(ctainr); err != nil {
+	if err := kubernetes.DeleteContainer(ctainr); err != nil {
 		Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -83,8 +78,8 @@ func ContainerInfo(c *gin.Context) {
 			"Ports": gin.H{
 				"9000/tcp": []gin.H{
 					{
-						"HostIp":   "127.0.0.1",
-						"HostPort": "55000",
+						"HostIp":   "localhost",
+						"HostPort": "8080",
 					},
 				},
 			},
@@ -97,28 +92,5 @@ func ContainerInfo(c *gin.Context) {
 			"Running": true,
 			"Status":  "running",
 		},
-	})
-}
-
-// POST "/containers/:id/start"
-func ContainerExec(c *gin.Context) {
-	in := &ContainerExecRequest{}
-	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
-		Error(c, http.StatusInternalServerError, err)
-		return
-	}
-	id := c.Param("id")
-	ctainr, err := container.Load(id)
-	if err != nil {
-		Error(c, http.StatusNotFound, err)
-		return
-	}
-	log.Printf("cmd = %v", in.Cmd)
-	if err := kubernetes.StartContainer(ctainr); err != nil {
-		Error(c, http.StatusInternalServerError, err)
-		return
-	}
-	c.JSON(http.StatusCreated, gin.H{
-		"Id": ctainr.ID,
 	})
 }
