@@ -19,15 +19,19 @@ type Container struct {
 	ID           string
 	Name         string
 	Image        string
+	Cmd          []string
+	Env          []string
 	ExposedPorts map[string]interface{}
 	Labels       map[string]string
 }
 
-func New(name, image string, ports map[string]interface{}, labels map[string]string) *Container {
+func New(name, image string, cmd, env []string, ports map[string]interface{}, labels map[string]string) *Container {
 	id, _ := uuid.New()
 	tainr := &Container{
 		ID:           id,
 		Name:         name,
+		Cmd:          cmd,
+		Env:          env,
 		Image:        image,
 		ExposedPorts: ports,
 		Labels:       labels,

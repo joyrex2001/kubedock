@@ -15,6 +15,8 @@ type ContainerCreateRequest struct {
 	Image        string                 `json:"image"`
 	ExposedPorts map[string]interface{} `json:"ExposedPorts"`
 	Labels       map[string]string      `json:"Labels"`
+	Cmd          []string               `json:"Cmd"`
+	Env          []string               `json:"Env"`
 }
 
 // POST "/containers/create"
@@ -24,7 +26,7 @@ func ContainerCreate(c *gin.Context) {
 		Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	ctainr := container.New(in.Name, in.Image, in.ExposedPorts, in.Labels)
+	ctainr := container.New(in.Name, in.Image, in.Cmd, in.Env, in.ExposedPorts, in.Labels)
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": ctainr.ID,
 	})
@@ -73,6 +75,8 @@ func ContainerInfo(c *gin.Context) {
 		"Config": gin.H{
 			"Image":  tainr.Image,
 			"Labels": tainr.Labels,
+			"Env":    tainr.Env,
+			"Cmd":    tainr.Cmd,
 		},
 		"NetworkSettings": gin.H{
 			"Ports": gin.H{
