@@ -1,4 +1,4 @@
-package routes
+package container
 
 import (
 	"encoding/json"
@@ -7,29 +7,22 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
-type ContainerExecRequest struct {
-	Cmd []string `json:"Cmd"`
-}
-
-type ExecStartRequest struct {
-	Detach bool `json:"Detach"`
-	Tty    bool `json:"Tty"`
-}
-
 // POST "/containers/:id/exec"
-func ContainerExec(c *gin.Context) {
+func (cn *Container) ContainerExec(c *gin.Context) {
 	in := &ContainerExecRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
-		Error(c, http.StatusInternalServerError, err)
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
-		Error(c, http.StatusNotFound, err)
+		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	log.Printf("cmd = %v", in.Cmd)
@@ -40,10 +33,10 @@ func ContainerExec(c *gin.Context) {
 }
 
 // POST "/exec/:id/start"
-func ExecStart(c *gin.Context) {
+func (cn *Container) ExecStart(c *gin.Context) {
 	in := &ExecStartRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
-		Error(c, http.StatusInternalServerError, err)
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	id := c.Param("id")
@@ -53,12 +46,12 @@ func ExecStart(c *gin.Context) {
 		r := c.Request
 		w := c.Writer
 
-		in, out, err := HijackConnection(w)
+		in, out, err := httputil.HijackConnection(w)
 		if err != nil {
-			Error(c, http.StatusInternalServerError, err)
+			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
-		defer CloseStreams(in, out)
+		defer httputil.CloseStreams(in, out)
 
 		if _, ok := r.Header["Upgrade"]; ok {
 			fmt.Fprint(out, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n")
@@ -68,7 +61,7 @@ func ExecStart(c *gin.Context) {
 
 		// copy headers that were removed as part of hijack
 		if err := w.Header().WriteSubset(out, nil); err != nil {
-			Error(c, http.StatusInternalServerError, err)
+			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
 		fmt.Fprint(out, "\r\n")
@@ -79,7 +72,7 @@ func ExecStart(c *gin.Context) {
 }
 
 // GET "/exec/:id/json"
-func ExecInfo(c *gin.Context) {
+func (cn *Container) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 	c.JSON(http.StatusOK, gin.H{
 		"ID":       id,

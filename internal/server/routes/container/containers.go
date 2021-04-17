@@ -1,4 +1,4 @@
-package routes
+package container
 
 import (
 	"encoding/json"
@@ -8,22 +8,14 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
-type ContainerCreateRequest struct {
-	Name         string                 `json:"name"`
-	Image        string                 `json:"image"`
-	ExposedPorts map[string]interface{} `json:"ExposedPorts"`
-	Labels       map[string]string      `json:"Labels"`
-	Cmd          []string               `json:"Cmd"`
-	Env          []string               `json:"Env"`
-}
-
 // POST "/containers/create"
-func ContainerCreate(c *gin.Context) {
+func (cn *Container) ContainerCreate(c *gin.Context) {
 	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
-		Error(c, http.StatusInternalServerError, err)
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	ctainr := container.New(in.Name, in.Image, in.Cmd, in.Env, in.ExposedPorts, in.Labels)
@@ -33,41 +25,41 @@ func ContainerCreate(c *gin.Context) {
 }
 
 // POST "/containers/:id/start"
-func ContainerStart(c *gin.Context) {
+func (cn *Container) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
-		Error(c, http.StatusNotFound, err)
+		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	if err := kubernetes.StartContainer(ctainr); err != nil {
-		Error(c, http.StatusInternalServerError, err)
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
 // DELETE "/containers/:id"
-func ContainerDelete(c *gin.Context) {
+func (cn *Container) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
 	ctainr, err := container.Load(id)
 	if err != nil {
-		Error(c, http.StatusNotFound, err)
+		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	if err := kubernetes.DeleteContainer(ctainr); err != nil {
-		Error(c, http.StatusInternalServerError, err)
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
 // GET "/containers/:id/json"
-func ContainerInfo(c *gin.Context) {
+func (cn *Container) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := container.Load(id)
 	if err != nil {
-		Error(c, http.StatusNotFound, err)
+		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

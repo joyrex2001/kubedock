@@ -1,4 +1,4 @@
-package routes
+package httputil
 
 import (
 	"io"
@@ -14,6 +14,11 @@ func Error(c *gin.Context, status int, err error) {
 	c.JSON(status, gin.H{
 		"error": err.Error(),
 	})
+}
+
+// NotImplemented will return a not implented response.
+func NotImplemented(c *gin.Context) {
+	c.Writer.WriteHeader(http.StatusNotImplemented)
 }
 
 // HijackConnection interrupts the http response writer to get the
