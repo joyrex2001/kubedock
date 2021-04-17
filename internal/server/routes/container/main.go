@@ -4,19 +4,22 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
 // containerRouter is the object that facilitate all container
 // related API endpoints.
 type containerRouter struct {
-	factory container.Factory
+	factory    container.Factory
+	kubernetes kubernetes.Kubernetes
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, factory container.Factory) *containerRouter {
+func New(router *gin.Engine, factory container.Factory, kube kubernetes.Kubernetes) *containerRouter {
 	cr := &containerRouter{
-		factory: factory,
+		factory:    factory,
+		kubernetes: kube,
 	}
 	cr.initRoutes(router)
 	return cr

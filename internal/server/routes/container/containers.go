@@ -44,11 +44,10 @@ func (cr *containerRouter) ContainerStart(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	_ = ctainr
-	// if err := kubernetes.StartContainer(ctainr); err != nil {
-	// 	httputil.Error(c, http.StatusInternalServerError, err)
-	// 	return
-	// }
+	if err := cr.kubernetes.StartContainer(ctainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -60,11 +59,10 @@ func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	_ = ctainr
-	// if err := kubernetes.DeleteContainer(ctainr); err != nil {
-	// 	httputil.Error(c, http.StatusInternalServerError, err)
-	// 	return
-	// }
+	if err := cr.kubernetes.DeleteContainer(ctainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 

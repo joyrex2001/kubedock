@@ -5,9 +5,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/joyrex2001/kubedock/internal/container"
-	rcont "github.com/joyrex2001/kubedock/internal/server/routes/container"
-	"github.com/joyrex2001/kubedock/internal/server/routes/images"
-	"github.com/joyrex2001/kubedock/internal/server/routes/system"
+	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	routes_container "github.com/joyrex2001/kubedock/internal/server/routes/container"
+	routes_images "github.com/joyrex2001/kubedock/internal/server/routes/images"
+	routes_system "github.com/joyrex2001/kubedock/internal/server/routes/system"
 	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
@@ -33,11 +34,13 @@ func (s *Server) Run(port string) error {
 	if err != nil {
 		return err
 	}
-	cf := container.NewFactory(kv)
 
-	system.New(router)
-	images.New(router)
-	rcont.New(router, cf)
+	cf := container.NewFactory(kv)
+	kube := kubernetes.New()
+
+	routes_container.New(router, cf, kube)
+	routes_system.New(router)
+	routes_images.New(router)
 
 	router.Run(port)
 
