@@ -4,20 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Images is the object that facilitate all image API endpoints.
-type Images struct {
+// imagesRouter is the object that facilitate all image API endpoints.
+type imagesRouter struct {
 }
 
-// New will instantiate a Images object.
-func New(router *gin.Engine) *Images {
-	im := &Images{}
-	im.initRoutes(router)
-	return im
+// New will instantiate a imagesRouter object.
+func New(router *gin.Engine) *imagesRouter {
+	ir := &imagesRouter{}
+	ir.initRoutes(router)
+	return ir
 }
 
 // initRoutes will add all suported routes.
-func (im *Images) initRoutes(router *gin.Engine) {
-	router.GET("/images/json", im.ImageList)
-	router.POST("/images/create", im.ImageCreate)
-	router.GET("/images/:image/*json", im.ImageJson)
+func (ir *imagesRouter) initRoutes(router *gin.Engine) {
+	router.GET("/images/json", ir.ImageList)
+	router.POST("/images/create", ir.ImageCreate)
+	router.GET("/images/:image/*json", ir.ImageJson)
 }

@@ -13,7 +13,7 @@ var uuidPool = sync.Pool{
 	},
 }
 
-// func New() generates a random UUID according to RFC 4122
+// New generates a random UUID according to RFC 4122
 func New() (string, error) {
 	uuid := uuidPool.Get().([]byte)
 	defer uuidPool.Put(uuid)

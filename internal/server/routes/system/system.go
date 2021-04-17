@@ -10,7 +10,7 @@ import (
 )
 
 // GET "/healthz"
-func (s *System) Healthz(c *gin.Context) {
+func (sr *systemRouter) Healthz(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":    "OK",
 		"timestamp": time.Now().Unix(),
@@ -18,7 +18,7 @@ func (s *System) Healthz(c *gin.Context) {
 }
 
 // GET "/info"
-func (s *System) Info(c *gin.Context) {
+func (sr *systemRouter) Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"ID":              config.ID,
 		"Name":            config.Name,
@@ -29,7 +29,7 @@ func (s *System) Info(c *gin.Context) {
 }
 
 // GET "/version"
-func (s *System) Version(c *gin.Context) {
+func (sr *systemRouter) Version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Version":    config.DockerVersion,
 		"ApiVersion": config.DockerAPIVersion,

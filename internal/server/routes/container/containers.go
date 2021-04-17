@@ -6,58 +6,69 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/joyrex2001/kubedock/internal/container"
-	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
 // POST "/containers/create"
-func (cn *Container) ContainerCreate(c *gin.Context) {
+func (cr *containerRouter) ContainerCreate(c *gin.Context) {
 	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	ctainr := container.New(in.Name, in.Image, in.Cmd, in.Env, in.ExposedPorts, in.Labels)
+	ctainr, err := cr.factory.Create()
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+	ctainr.SetName(in.Name)
+	ctainr.SetImage(in.Image)
+	ctainr.SetCmd(in.Cmd)
+	ctainr.SetEnv(in.Env)
+	ctainr.SetExposedPorts(in.ExposedPorts)
+	ctainr.SetLabels(in.Labels)
+	ctainr.Update()
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": ctainr.ID,
+		"Id": ctainr.GetID(),
 	})
 }
 
 // POST "/containers/:id/start"
-func (cn *Container) ContainerStart(c *gin.Context) {
+func (cr *containerRouter) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
-	ctainr, err := container.Load(id)
+	ctainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := kubernetes.StartContainer(ctainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
+	_ = ctainr
+	// if err := kubernetes.StartContainer(ctainr); err != nil {
+	// 	httputil.Error(c, http.StatusInternalServerError, err)
+	// 	return
+	// }
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
 // DELETE "/containers/:id"
-func (cn *Container) ContainerDelete(c *gin.Context) {
+func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
-	ctainr, err := container.Load(id)
+	ctainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := kubernetes.DeleteContainer(ctainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
+	_ = ctainr
+	// if err := kubernetes.DeleteContainer(ctainr); err != nil {
+	// 	httputil.Error(c, http.StatusInternalServerError, err)
+	// 	return
+	// }
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
 // GET "/containers/:id/json"
-func (cn *Container) ContainerInfo(c *gin.Context) {
+func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := container.Load(id)
+	ctainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -65,10 +76,10 @@ func (cn *Container) ContainerInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Id": id,
 		"Config": gin.H{
-			"Image":  tainr.Image,
-			"Labels": tainr.Labels,
-			"Env":    tainr.Env,
-			"Cmd":    tainr.Cmd,
+			"Image":  ctainr.GetImage(),
+			"Labels": ctainr.GetLabels(),
+			"Env":    ctainr.GetEnv(),
+			"Cmd":    ctainr.GetCmd(),
 		},
 		"NetworkSettings": gin.H{
 			"Ports": gin.H{
@@ -80,7 +91,7 @@ func (cn *Container) ContainerInfo(c *gin.Context) {
 				},
 			},
 		},
-		"Image": tainr.Image,
+		"Image": ctainr.GetImage(),
 		"State": gin.H{
 			"Health": gin.H{
 				"Status": "healthy",

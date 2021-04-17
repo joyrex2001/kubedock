@@ -8,19 +8,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
 // POST "/containers/:id/exec"
-func (cn *Container) ContainerExec(c *gin.Context) {
+func (cr *containerRouter) ContainerExec(c *gin.Context) {
 	in := &ContainerExecRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	id := c.Param("id")
-	ctainr, err := container.Load(id)
+	ctainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -28,12 +27,12 @@ func (cn *Container) ContainerExec(c *gin.Context) {
 	log.Printf("cmd = %v", in.Cmd)
 	// TODO: implement prepare exec
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": ctainr.ID,
+		"Id": ctainr.GetID(),
 	})
 }
 
 // POST "/exec/:id/start"
-func (cn *Container) ExecStart(c *gin.Context) {
+func (cr *containerRouter) ExecStart(c *gin.Context) {
 	in := &ExecStartRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -72,7 +71,7 @@ func (cn *Container) ExecStart(c *gin.Context) {
 }
 
 // GET "/exec/:id/json"
-func (cn *Container) ExecInfo(c *gin.Context) {
+func (cr *containerRouter) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 	c.JSON(http.StatusOK, gin.H{
 		"ID":       id,

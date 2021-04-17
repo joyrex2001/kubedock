@@ -2,33 +2,38 @@ package container
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
-// Container is the object that facilitate all container related
-// API endpoints.
-type Container struct {
+// containerRouter is the object that facilitate all container
+// related API endpoints.
+type containerRouter struct {
+	factory container.ContainerFactory
 }
 
-// New will instantiate a Container object.
-func New(router *gin.Engine) *Container {
-	cn := &Container{}
-	cn.initRoutes(router)
-	return cn
+// New will instantiate a containerRouter object.
+func New(router *gin.Engine, factory container.ContainerFactory) *containerRouter {
+	cr := &containerRouter{
+		factory: factory,
+	}
+	cr.initRoutes(router)
+	return cr
 }
 
 // initRoutes will add all suported routes.
-func (cn *Container) initRoutes(router *gin.Engine) {
-	router.POST("/containers/create", cn.ContainerCreate)
-	router.POST("/containers/:id/start", cn.ContainerStart)
+func (cr *containerRouter) initRoutes(router *gin.Engine) {
+	router.POST("/containers/create", cr.ContainerCreate)
+	router.POST("/containers/:id/start", cr.ContainerStart)
 	router.GET("/containers/:id/logs", httputil.NotImplemented)
-	router.GET("/containers/:id/json", cn.ContainerInfo)
+	router.GET("/containers/:id/json", cr.ContainerInfo)
 	router.POST("/containers/:id/stop", httputil.NotImplemented)
 	router.POST("/containers/:id/kill", httputil.NotImplemented)
-	router.DELETE("/containers/:id", cn.ContainerDelete)
-	router.POST("/containers/:id/exec", cn.ContainerExec)
-	router.POST("/exec/:id/start", cn.ExecStart)
-	router.GET("/exec/:id/json", cn.ExecInfo)
+	router.DELETE("/containers/:id", cr.ContainerDelete)
+	router.POST("/containers/:id/exec", cr.ContainerExec)
+	router.POST("/exec/:id/start", cr.ExecStart)
+	router.GET("/exec/:id/json", cr.ExecInfo)
 
 	router.GET("/containers/json", httputil.NotImplemented)
 	router.GET("/containers/:id/top", httputil.NotImplemented)

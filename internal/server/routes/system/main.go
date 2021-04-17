@@ -4,20 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// System is the object that facilitate all system API endpoints.
-type System struct {
+// systemRouter is the object that facilitate all system API endpoints.
+type systemRouter struct {
 }
 
-// New will instantiate a System object.
-func New(router *gin.Engine) *System {
-	s := &System{}
-	s.initRoutes(router)
-	return s
+// New will instantiate a systemRouter object.
+func New(router *gin.Engine) *systemRouter {
+	sr := &systemRouter{}
+	sr.initRoutes(router)
+	return sr
 }
 
 // initRoutes will add all suported routes.
-func (s *System) initRoutes(router *gin.Engine) {
-	router.GET("/info", s.Info)
-	router.GET("/version", s.Version)
-	router.GET("/healthz", s.Healthz)
+func (sr *systemRouter) initRoutes(router *gin.Engine) {
+	router.GET("/info", sr.Info)
+	router.GET("/version", sr.Version)
+	router.GET("/healthz", sr.Healthz)
 }
