@@ -19,5 +19,5 @@ func New(router *gin.Engine) *imagesRouter {
 func (ir *imagesRouter) initRoutes(router *gin.Engine) {
 	router.GET("/images/json", ir.ImageList)
 	router.POST("/images/create", ir.ImageCreate)
-	router.GET("/images/:image/*json", ir.ImageJson)
+	router.GET("/images/:image/*json", ir.ImageJSON)
 }

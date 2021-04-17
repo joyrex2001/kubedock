@@ -10,11 +10,11 @@ import (
 // containerRouter is the object that facilitate all container
 // related API endpoints.
 type containerRouter struct {
-	factory container.ContainerFactory
+	factory container.Factory
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, factory container.ContainerFactory) *containerRouter {
+func New(router *gin.Engine, factory container.Factory) *containerRouter {
 	cr := &containerRouter{
 		factory: factory,
 	}
@@ -26,15 +26,16 @@ func New(router *gin.Engine, factory container.ContainerFactory) *containerRoute
 func (cr *containerRouter) initRoutes(router *gin.Engine) {
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
-	router.GET("/containers/:id/logs", httputil.NotImplemented)
 	router.GET("/containers/:id/json", cr.ContainerInfo)
-	router.POST("/containers/:id/stop", httputil.NotImplemented)
-	router.POST("/containers/:id/kill", httputil.NotImplemented)
 	router.DELETE("/containers/:id", cr.ContainerDelete)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
 	router.POST("/exec/:id/start", cr.ExecStart)
 	router.GET("/exec/:id/json", cr.ExecInfo)
 
+	// not supported at the moment
+	router.GET("/containers/:id/logs", httputil.NotImplemented)
+	router.POST("/containers/:id/stop", httputil.NotImplemented)
+	router.POST("/containers/:id/kill", httputil.NotImplemented)
 	router.GET("/containers/json", httputil.NotImplemented)
 	router.GET("/containers/:id/top", httputil.NotImplemented)
 	router.GET("/containers/:id/changes", httputil.NotImplemented)

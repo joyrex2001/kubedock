@@ -13,7 +13,7 @@ func (ir *imagesRouter) ImageList(c *gin.Context) {
 }
 
 // GET "/images/:image/json"
-func (ir *imagesRouter) ImageJson(c *gin.Context) {
+func (ir *imagesRouter) ImageJSON(c *gin.Context) {
 	id := c.Param("image")
 	log.Printf("image: %s", id)
 	c.JSON(http.StatusOK, gin.H{

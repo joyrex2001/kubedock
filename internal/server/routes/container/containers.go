@@ -16,11 +16,13 @@ func (cr *containerRouter) ContainerCreate(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
 	ctainr, err := cr.factory.Create()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
 	ctainr.SetName(in.Name)
 	ctainr.SetImage(in.Image)
 	ctainr.SetCmd(in.Cmd)
@@ -28,6 +30,7 @@ func (cr *containerRouter) ContainerCreate(c *gin.Context) {
 	ctainr.SetExposedPorts(in.ExposedPorts)
 	ctainr.SetLabels(in.Labels)
 	ctainr.Update()
+
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": ctainr.GetID(),
 	})

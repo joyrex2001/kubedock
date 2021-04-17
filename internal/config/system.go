@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	// The below variables define the version and context of the application.
 	ID   = "com.joyrex2001.kubedock"
 	Name = "kubedock"
 	OS   = "kubernetes"

@@ -1,5 +1,7 @@
 package container
 
+// ContainerCreateRequest represents the json structure that
+// is used for the /container/create post endpoint.
 type ContainerCreateRequest struct {
 	Name         string                 `json:"name"`
 	Image        string                 `json:"image"`
@@ -10,10 +12,14 @@ type ContainerCreateRequest struct {
 	// Mounts
 }
 
+// ContainerExecRequest represents the json structure that
+// is used for the /conteiner/:id/exec request.
 type ContainerExecRequest struct {
 	Cmd []string `json:"Cmd"`
 }
 
+// ExecStartRequest represents the json structure that is
+// used for the /exec/:id/start request.
 type ExecStartRequest struct {
 	Detach bool `json:"Detach"`
 	Tty    bool `json:"Tty"`

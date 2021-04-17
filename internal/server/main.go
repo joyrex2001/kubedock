@@ -23,10 +23,6 @@ func New() *Server {
 // Run will initialize the http api server and configure all available
 // routers.
 func (s *Server) Run(port string) error {
-	// https://docs.docker.com/engine/api/v1.18/
-	// https://docs.docker.com/engine/api/v1.41/
-	// https://github.com/moby/moby
-
 	if !viper.GetBool("generic.verbose") {
 		gin.SetMode(gin.ReleaseMode)
 	}
