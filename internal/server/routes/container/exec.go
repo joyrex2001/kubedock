@@ -48,14 +48,20 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 	}
 	id := c.Param("id")
 
-	exec, err := cr.factory.CreateExec(id)
+	exec, err := cr.factory.LoadExec(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	tainr, err := cr.factory.Load(exec.GetContainerID())
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
 	// TODO: implement exec
-	if err := cr.kubernetes.ExecContainer(exec); err != nil {
+	if err := cr.kubernetes.ExecContainer(tainr, exec); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}

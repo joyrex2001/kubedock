@@ -17,17 +17,17 @@ func (in *instance) StartContainer(tainr container.Container) error {
 
 	name := tainr.GetKubernetesName()
 	matchlabels := map[string]string{
-		"app":  name,
-		"tier": "kubedock",
+		"app":      name,
+		"tier":     "kubedock",
+		"kubedock": tainr.GetID(),
 	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: in.namespace,
-			Labels:    tainr.GetLabels(),
+			Labels:    tainr.GetLabels(), // TODO: add generic label, add ttl annotation, template?)
 		},
-
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: matchlabels,
@@ -52,5 +52,8 @@ func (in *instance) StartContainer(tainr container.Container) error {
 	log.Printf("%#v", dep)
 
 	_, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{})
+
+	// TODO: create services (implement in model?), reverse proxy
+
 	return err
 }

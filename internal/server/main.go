@@ -50,7 +50,7 @@ func (s *Server) Run(port string) error {
 		return err
 	}
 
-	kube := kubernetes.New(cli, viper.GetString("kubernetes.namespace"))
+	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
 
 	routes_container.New(router, cf, kube)
 	routes_system.New(router)

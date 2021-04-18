@@ -1,9 +1,8 @@
 package kubernetes
 
 import (
-	"log"
-
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/joyrex2001/kubedock/internal/container"
 )
@@ -13,20 +12,22 @@ type Kubernetes interface {
 	StartContainer(container.Container) error
 	GetContainerStatus(container.Container) (map[string]string, error)
 	DeleteContainer(container.Container) error
-	ExecContainer(container.Exec) error
+	ExecContainer(container.Container, container.Exec) error
 	GetExecStatus(container.Exec) (map[string]string, error)
 }
 
 // instance is the internal representation of the Kubernetes object.
 type instance struct {
 	cli       *kubernetes.Clientset
+	cfg       *rest.Config
 	namespace string
 }
 
 // NewFactory will return an ContainerFactory instance.
-func New(cli *kubernetes.Clientset, namespace string) Kubernetes {
+func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernetes {
 	return &instance{
 		cli:       cli,
+		cfg:       cfg,
 		namespace: namespace,
 	}
 }
@@ -34,12 +35,6 @@ func New(cli *kubernetes.Clientset, namespace string) Kubernetes {
 // GetContainerStatus will return current status of given exec object in kubernetes.
 func (in *instance) GetContainerStatus(tainr container.Container) (map[string]string, error) {
 	return nil, nil
-}
-
-// ExecContainer will execute given exec object in kubernetes.
-func (in *instance) ExecContainer(exec container.Exec) error {
-	log.Printf("exec %s", exec.GetID())
-	return nil
 }
 
 // GetExecStatus will return current status of given exec object in kubernetes.
