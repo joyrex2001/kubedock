@@ -63,6 +63,10 @@ func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+	if err := ctainr.Delete(); err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -74,6 +78,13 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
+	_, err = cr.kubernetes.GetContainerStatus(ctainr)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"Id": id,
 		"Config": gin.H{
@@ -82,6 +93,7 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			"Env":    ctainr.GetEnv(),
 			"Cmd":    ctainr.GetCmd(),
 		},
+		// TODO: implement port mapping
 		"NetworkSettings": gin.H{
 			"Ports": gin.H{
 				"9000/tcp": []gin.H{
@@ -93,6 +105,7 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			},
 		},
 		"Image": ctainr.GetImage(),
+		// TODO: manage state
 		"State": gin.H{
 			"Health": gin.H{
 				"Status": "healthy",

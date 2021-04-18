@@ -1,6 +1,13 @@
 package container
 
 import (
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
@@ -9,18 +16,20 @@ import (
 type Container interface {
 	GetID() string
 	GetName() string
+	GetKubernetesName() string
 	SetName(string)
 	GetImage() string
 	SetImage(string)
 	GetCmd() []string
 	SetCmd([]string)
 	GetEnv() []string
+	GetEnvVar() []corev1.EnvVar
 	SetEnv([]string)
 	GetExposedPorts() map[string]interface{}
+	GetContainerPorts() []corev1.ContainerPort
 	SetExposedPorts(map[string]interface{})
 	GetLabels() map[string]string
 	SetLabels(map[string]string)
-	CreateExec() Exec
 	Delete() error
 	Update() error
 }
@@ -45,6 +54,18 @@ func (co *Object) GetID() string {
 // GetName will return the name of the container.
 func (co *Object) GetName() string {
 	return co.Name
+}
+
+// GetShortName will return the a k8s compatible name of the container.
+func (co *Object) GetKubernetesName() string {
+	n := co.Name
+	if n == "" {
+		n = co.ID
+	}
+	if len(n) > 63 {
+		return n[0:63]
+	}
+	return n
 }
 
 // SetName will update the name of the container.
@@ -77,6 +98,21 @@ func (co *Object) GetEnv() []string {
 	return co.Env
 }
 
+// GetEnvMap will return the environment variables of the container
+// as k8s EnvVars.
+func (co *Object) GetEnvVar() []corev1.EnvVar {
+	env := []corev1.EnvVar{}
+	for _, e := range co.Env {
+		f := strings.Split(e, "=")
+		if len(f) != 2 {
+			log.Printf("could not parse env %s", e)
+			continue
+		}
+		env = append(env, corev1.EnvVar{Name: f[0], Value: f[1]})
+	}
+	return env
+}
+
 // SetEnv will update the environment variables of the container.
 func (co *Object) SetEnv(env []string) {
 	co.Env = env
@@ -85,6 +121,27 @@ func (co *Object) SetEnv(env []string) {
 // GetExposedPorts will return the mapped ports of the container.
 func (co *Object) GetExposedPorts() map[string]interface{} {
 	return co.ExposedPorts
+}
+
+// GetContainerPorts will return the mapped ports of the container
+// as k8s ContainerPorts.
+func (co *Object) GetContainerPorts() []corev1.ContainerPort {
+	ports := []corev1.ContainerPort{}
+	for p := range co.ExposedPorts {
+		f := strings.Split(p, "/")
+		if len(f) != 2 {
+			log.Printf("could not parse exposed port %s", p)
+			continue
+		}
+		pp, err := strconv.Atoi(f[0])
+		if err != nil {
+			log.Printf("could not parse exposed port %s: %s", p, err)
+			continue
+		}
+		n := fmt.Sprintf("kd-%s-%d", f[1], pp)
+		ports = append(ports, corev1.ContainerPort{ContainerPort: int32(pp), Name: n})
+	}
+	return ports
 }
 
 // SetExposedPorts will update the mapped ports of the container.
@@ -110,10 +167,4 @@ func (co *Object) Delete() error {
 // Update will update the ContainerObject instance.
 func (co *Object) Update() error {
 	return co.db.Update(co.ID, co)
-}
-
-// CreateExec will create an Exec for the current container.
-func (co *Object) CreateExec() Exec {
-	// TODO: load exec, delete exec? cascade delete
-	return &ExecObject{}
 }

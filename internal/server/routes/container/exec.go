@@ -18,16 +18,24 @@ func (cr *containerRouter) ContainerExec(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
 	id := c.Param("id")
-	ctainr, err := cr.factory.Load(id)
+	_, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	log.Printf("cmd = %v", in.Cmd)
-	// TODO: implement prepare exec
+
+	exec, err := cr.factory.CreateExec(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	exec.SetCmd(in.Cmd)
+
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": ctainr.GetID(),
+		"Id": exec.GetID(),
 	})
 }
 
@@ -39,7 +47,19 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 		return
 	}
 	id := c.Param("id")
+
+	exec, err := cr.factory.CreateExec(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
 	// TODO: implement exec
+	if err := cr.kubernetes.ExecContainer(exec); err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
 	c.Writer.WriteHeader(http.StatusOK)
 	if !in.Detach {
 		r := c.Request
@@ -73,6 +93,19 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 // GET "/exec/:id/json"
 func (cr *containerRouter) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
+
+	exec, err := cr.factory.LoadExec(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	_, err = cr.kubernetes.GetExecStatus(exec)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"ID":       id,
 		"Running":  false,

@@ -4,6 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 
+	kubecli "k8s.io/client-go/kubernetes"
+
+	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	routes_container "github.com/joyrex2001/kubedock/internal/server/routes/container"
@@ -36,7 +39,18 @@ func (s *Server) Run(port string) error {
 	}
 
 	cf := container.NewFactory(kv)
-	kube := kubernetes.New()
+
+	cfg, err := config.GetKubernetes()
+	if err != nil {
+		return err
+	}
+
+	cli, err := kubecli.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	kube := kubernetes.New(cli, viper.GetString("kubernetes.namespace"))
 
 	routes_container.New(router, cf, kube)
 	routes_system.New(router)
