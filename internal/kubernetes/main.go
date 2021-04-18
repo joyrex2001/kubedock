@@ -36,12 +36,6 @@ func (in *instance) GetContainerStatus(tainr container.Container) (map[string]st
 	return nil, nil
 }
 
-// DeleteContainer will delete given container object in kubernetes.
-func (in *instance) DeleteContainer(tainr container.Container) error {
-	log.Printf("deleting container %s", tainr.GetID())
-	return nil
-}
-
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(exec container.Exec) error {
 	log.Printf("exec %s", exec.GetID())
