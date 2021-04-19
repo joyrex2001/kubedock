@@ -138,8 +138,12 @@ func (co *Object) GetContainerPorts() []corev1.ContainerPort {
 			log.Printf("could not parse exposed port %s: %s", p, err)
 			continue
 		}
+		if f[1] != "tcp" {
+			log.Printf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
+			continue
+		}
 		n := fmt.Sprintf("kd-%s-%d", f[1], pp)
-		ports = append(ports, corev1.ContainerPort{ContainerPort: int32(pp), Name: n})
+		ports = append(ports, corev1.ContainerPort{ContainerPort: int32(pp), Name: n, Protocol: corev1.ProtocolTCP})
 	}
 	return ports
 }

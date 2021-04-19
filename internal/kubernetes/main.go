@@ -32,11 +32,6 @@ func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernet
 	}
 }
 
-// GetContainerStatus will return current status of given exec object in kubernetes.
-func (in *instance) GetContainerStatus(tainr container.Container) (map[string]string, error) {
-	return nil, nil
-}
-
 // GetExecStatus will return current status of given exec object in kubernetes.
 func (in *instance) GetExecStatus(exec container.Exec) (map[string]string, error) {
 	return nil, nil

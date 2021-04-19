@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"context"
-	"log"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -13,8 +12,6 @@ import (
 
 // StartContainer will start given container object in kubernetes.
 func (in *instance) StartContainer(tainr container.Container) error {
-	log.Printf("starting container %s (%s)", tainr.GetName(), tainr.GetID())
-
 	name := tainr.GetKubernetesName()
 	matchlabels := map[string]string{
 		"app":      name,
@@ -49,11 +46,11 @@ func (in *instance) StartContainer(tainr container.Container) error {
 		},
 	}
 
-	log.Printf("%#v", dep)
+	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
+		return err
+	}
 
-	_, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{})
+	// TODO: create port-forward https://github.com/kubernetes/client-go/issues/51
 
-	// TODO: create services (implement in model?), reverse proxy
-
-	return err
+	return nil
 }

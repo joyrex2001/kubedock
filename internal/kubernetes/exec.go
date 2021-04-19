@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"log"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,8 +14,6 @@ import (
 
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(tainr container.Container, exec container.Exec) error {
-	log.Printf("exec %s", exec.GetID())
-
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "kubedock=" + tainr.GetID(),
 	})

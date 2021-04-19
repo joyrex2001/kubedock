@@ -1,7 +1,6 @@
 package images
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +14,6 @@ func (ir *imagesRouter) ImageList(c *gin.Context) {
 // GET "/images/:image/json"
 func (ir *imagesRouter) ImageJSON(c *gin.Context) {
 	id := c.Param("image")
-	log.Printf("image: %s", id)
 	c.JSON(http.StatusOK, gin.H{
 		"Id":      id,
 		"Created": "2018-12-18T01:20:53.669016181Z",

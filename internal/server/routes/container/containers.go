@@ -79,7 +79,7 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 		return
 	}
 
-	_, err = cr.kubernetes.GetContainerStatus(ctainr)
+	status, err := cr.kubernetes.GetContainerStatus(ctainr)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -98,20 +98,19 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			"Ports": gin.H{
 				"9000/tcp": []gin.H{
 					{
-						"HostIp":   "localhost",
+						"HostIp":   "127.0.0.1",
 						"HostPort": "8080",
 					},
 				},
 			},
 		},
 		"Image": ctainr.GetImage(),
-		// TODO: manage state
 		"State": gin.H{
 			"Health": gin.H{
-				"Status": "healthy",
+				"Status": status["Status"],
 			},
-			"Running": true,
-			"Status":  "running",
+			"Running": status["Running"] == "running",
+			"Status":  status["Running"],
 		},
 	})
 }
