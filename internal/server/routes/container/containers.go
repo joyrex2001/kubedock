@@ -2,6 +2,7 @@ package container
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -85,8 +86,11 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 		return
 	}
 
+	log.Printf("status = %#v", status)
+
 	c.JSON(http.StatusOK, gin.H{
-		"Id": id,
+		"Id":    id,
+		"Image": ctainr.GetImage(),
 		"Config": gin.H{
 			"Image":  ctainr.GetImage(),
 			"Labels": ctainr.GetLabels(),
@@ -98,19 +102,26 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			"Ports": gin.H{
 				"9000/tcp": []gin.H{
 					{
-						"HostIp":   "127.0.0.1",
+						"HostIp":   "localhost",
 						"HostPort": "8080",
 					},
 				},
 			},
 		},
-		"Image": ctainr.GetImage(),
 		"State": gin.H{
 			"Health": gin.H{
 				"Status": status["Status"],
 			},
-			"Running": status["Running"] == "running",
-			"Status":  status["Running"],
+			"Running":    status["Running"] == "running",
+			"Status":     status["Running"],
+			"Paused":     false,
+			"Restarting": false,
+			"OOMKilled":  false,
+			"Dead":       false,
+			"StartedAt":  "2021-01-01T00:00:00Z",
+			"FinishedAt": "0001-01-01T00:00:00Z",
+			"ExitCode":   0,
+			"Error":      "",
 		},
 	})
 }

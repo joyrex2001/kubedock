@@ -23,6 +23,6 @@ func (in *instance) GetContainerStatus(tainr container.Container) (map[string]st
 	}
 	return map[string]string{
 		"Status":  "unhealthy",
-		"Running": "starting",
+		"Running": "created",
 	}, nil
 }

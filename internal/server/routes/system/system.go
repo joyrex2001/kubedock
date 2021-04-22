@@ -40,3 +40,8 @@ func (sr *systemRouter) Version(c *gin.Context) {
 		"Arch":       config.GOARCH,
 	})
 }
+
+// GET "/_ping"
+func (sr *systemRouter) Ping(c *gin.Context) {
+	c.String(http.StatusOK, "OK")
+}

@@ -13,6 +13,7 @@ var (
 	GOOS      = runtime.GOOS
 	GOARCH    = runtime.GOARCH
 
-	DockerVersion    = "1.18"
-	DockerAPIVersion = "1.18"
+	DockerVersion     = "1.18"
+	DockerAPIVersion  = "1.18"
+	DockerMaxAPIMinor = 40
 )

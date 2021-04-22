@@ -1,6 +1,8 @@
 package images
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,15 +11,19 @@ type imagesRouter struct {
 }
 
 // New will instantiate a imagesRouter object.
-func New(router *gin.Engine) *imagesRouter {
+func New(version int, router *gin.Engine) *imagesRouter {
+	vprefix := ""
+	if version != 0 {
+		vprefix = fmt.Sprintf("/v1.%d", version)
+	}
 	ir := &imagesRouter{}
-	ir.initRoutes(router)
+	ir.initRoutes(vprefix, router)
 	return ir
 }
 
 // initRoutes will add all suported routes.
-func (ir *imagesRouter) initRoutes(router *gin.Engine) {
-	router.GET("/images/json", ir.ImageList)
-	router.POST("/images/create", ir.ImageCreate)
-	router.GET("/images/:image/*json", ir.ImageJSON)
+func (ir *imagesRouter) initRoutes(version string, router *gin.Engine) {
+	router.GET(version+"/images/json", ir.ImageList)
+	router.POST(version+"/images/create", ir.ImageCreate)
+	router.GET(version+"/images/:image/*json", ir.ImageJSON)
 }
