@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"io"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -17,7 +18,7 @@ type Kubernetes interface {
 	ExecContainer(container.Container, container.Exec) error
 	GetExecStatus(container.Exec) (map[string]string, error)
 	IsContainerRunning(container.Container) (bool, error)
-	GetPodNames(container.Container) ([]string, error)
+	GetPods(container.Container) ([]corev1.Pod, error)
 	GetPodsLabelSelector(tainr container.Container) string
 	GetLogs(container.Container, bool, io.Writer) error
 }

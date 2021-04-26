@@ -18,18 +18,12 @@ func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer)
 		TailLines: &count,
 	}
 
-	pod, err := in.GetPodNames(tainr)
+	name, err := in.getFirstPodName(tainr)
 	if err != nil {
 		return err
 	}
 
-	if len(pod) == 0 {
-		return fmt.Errorf("no running pods for %s", tainr.GetKubernetesName())
-	}
-
-	req := in.cli.CoreV1().
-		Pods(in.namespace).
-		GetLogs(pod[0], &options)
+	req := in.cli.CoreV1().Pods(in.namespace).GetLogs(name, &options)
 	stream, err := req.Stream(context.TODO())
 	if err != nil {
 		return err
@@ -59,4 +53,24 @@ func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer)
 	}
 
 	return nil
+}
+
+// getFirstPodName returns the pod name of the first pod that matches
+// the container deployment.
+func (in *instance) getFirstPodName(tainr container.Container) (string, error) {
+	pods, err := in.GetPods(tainr)
+	if err != nil {
+		return "", err
+	}
+
+	names := []string{}
+	for _, p := range pods {
+		names = append(names, p.Name)
+	}
+
+	if len(names) == 0 {
+		return "", fmt.Errorf("no running pods for %s", tainr.GetKubernetesName())
+	}
+
+	return names[0], nil
 }

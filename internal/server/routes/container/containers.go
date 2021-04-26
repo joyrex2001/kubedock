@@ -124,12 +124,12 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 // as k8s ports structure to be used in network settings.
 func (cr *containerRouter) getNetworkSettingsPorts(tainr container.Container) gin.H {
 	res := gin.H{}
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		p := fmt.Sprintf("%d/tcp", pp)
+	for dst, src := range tainr.GetMappedPorts() {
+		p := fmt.Sprintf("%d/tcp", dst)
 		res[p] = []gin.H{
 			{
 				"HostIp":   "localhost",
-				"HostPort": "8080", // TODO: implement port mapping
+				"HostPort": fmt.Sprintf("%d", src),
 			},
 		}
 	}

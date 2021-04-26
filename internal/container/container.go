@@ -25,8 +25,10 @@ type Container interface {
 	GetEnvVar() []corev1.EnvVar
 	SetEnv([]string)
 	GetExposedPorts() map[string]interface{}
-	GetContainerTCPPorts() []int32
 	SetExposedPorts(map[string]interface{})
+	MapPort(int, int)
+	GetMappedPorts() map[int]int
+	GetContainerTCPPorts() []int
 	GetLabels() map[string]string
 	SetLabels(map[string]string)
 	Delete() error
@@ -43,6 +45,7 @@ type Object struct {
 	Env          []string
 	ExposedPorts map[string]interface{}
 	Labels       map[string]string
+	MappedPorts  map[int]int
 }
 
 // GetID will return the current internal ID of the container.
@@ -122,10 +125,28 @@ func (co *Object) GetExposedPorts() map[string]interface{} {
 	return co.ExposedPorts
 }
 
+// SetExposedPorts will update the mapped ports of the container.
+func (co *Object) SetExposedPorts(ports map[string]interface{}) {
+	co.ExposedPorts = ports
+}
+
+// MapPort will map a pod port to a local port.
+func (co *Object) MapPort(pod, local int) {
+	if co.MappedPorts == nil {
+		co.MappedPorts = map[int]int{}
+	}
+	co.MappedPorts[pod] = local
+}
+
+// GetMappedPorts will return the port mapping setup for the container.
+func (co *Object) GetMappedPorts() map[int]int {
+	return co.MappedPorts
+}
+
 // GetContainerTCPPorts will return a list of all ports that are
 // exposed by this container.
-func (co *Object) GetContainerTCPPorts() []int32 {
-	ports := []int32{}
+func (co *Object) GetContainerTCPPorts() []int {
+	ports := []int{}
 	for p := range co.ExposedPorts {
 		f := strings.Split(p, "/")
 		if len(f) != 2 {
@@ -141,14 +162,9 @@ func (co *Object) GetContainerTCPPorts() []int32 {
 			log.Printf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
 			continue
 		}
-		ports = append(ports, int32(pp))
+		ports = append(ports, pp)
 	}
 	return ports
-}
-
-// SetExposedPorts will update the mapped ports of the container.
-func (co *Object) SetExposedPorts(ports map[string]interface{}) {
-	co.ExposedPorts = ports
 }
 
 // GetLabels will return the labels of the container.

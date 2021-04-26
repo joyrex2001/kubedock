@@ -3,12 +3,15 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"os"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/util/portforward"
 )
 
 // StartContainer will start given container object in kubernetes.
@@ -45,8 +48,38 @@ func (in *instance) StartContainer(tainr container.Container) error {
 		return err
 	}
 
-	// TODO: create port-forward https://github.com/kubernetes/client-go/issues/51
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		tainr.MapPort(pp, portforward.RandomPort())
+	}
 
+	// TODO: improve port-forwarding
+	go in.PortForward(tainr)
+
+	return nil
+}
+
+// StartContainer will start given container object in kubernetes.
+func (in *instance) PortForward(tainr container.Container) error {
+	pods, err := in.GetPods(tainr)
+	if err != nil {
+		return err
+	}
+	for src, dst := range tainr.GetMappedPorts() {
+		stream := genericclioptions.IOStreams{
+			In:     os.Stdin,
+			Out:    os.Stdout,
+			ErrOut: os.Stderr,
+		}
+		portforward.ForwardAPod(portforward.Request{
+			RestConfig: in.cfg,
+			Pod:        pods[0],
+			LocalPort:  dst,
+			PodPort:    src,
+			Streams:    stream,
+			StopCh:     make(chan struct{}, 1),
+			ReadyCh:    make(chan struct{}, 1),
+		})
+	}
 	return nil
 }
 
@@ -72,18 +105,17 @@ func (in *instance) getDeploymentMatchLabels(tainr container.Container) map[stri
 }
 
 // GetPodNames will return a list of pods that are spun up for this deployment.
-func (in *instance) GetPodNames(tainr container.Container) ([]string, error) {
+func (in *instance) GetPods(tainr container.Container) ([]corev1.Pod, error) {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: in.GetPodsLabelSelector(tainr),
 	})
 	if err != nil {
 		return nil, err
 	}
-	names := []string{}
-	for _, p := range pods.Items {
-		names = append(names, p.Name)
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("no pods found")
 	}
-	return names, nil
+	return pods.Items, nil
 }
 
 // GetPodsLabelSelector will return a label selector that can be used to
