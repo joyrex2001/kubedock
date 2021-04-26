@@ -15,7 +15,7 @@ import (
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(tainr container.Container, exec container.Exec) error {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "kubedock=" + tainr.GetID(),
+		LabelSelector: in.GetPodsLabelSelector(tainr),
 	})
 	if err != nil {
 		return err

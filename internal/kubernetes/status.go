@@ -26,3 +26,12 @@ func (in *instance) GetContainerStatus(tainr container.Container) (map[string]st
 		"Running": "created",
 	}, nil
 }
+
+// IsContainerRunning will return true if the container is in running state.
+func (in *instance) IsContainerRunning(tainr container.Container) (bool, error) {
+	status, err := in.GetContainerStatus(tainr)
+	if err != nil {
+		return false, err
+	}
+	return status["Running"] == "running", nil
+}

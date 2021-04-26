@@ -13,26 +13,20 @@ import (
 
 // StartContainer will start given container object in kubernetes.
 func (in *instance) StartContainer(tainr container.Container) error {
-	name := tainr.GetKubernetesName()
-	matchlabels := map[string]string{
-		"app":      name,
-		"tier":     "kubedock",
-		"kubedock": tainr.GetID(),
-	}
-
+	match := in.getDeploymentMatchLabels(tainr)
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
 			Namespace: in.namespace,
+			Name:      tainr.GetKubernetesName(),
 			Labels:    tainr.GetLabels(), // TODO: add generic label, add ttl annotation, template?)
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: matchlabels,
+				MatchLabels: match,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: matchlabels,
+					Labels: match,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
@@ -65,4 +59,35 @@ func (in *instance) getContainerPorts(tainr container.Container) []corev1.Contai
 		res = append(res, corev1.ContainerPort{ContainerPort: int32(pp), Name: n, Protocol: corev1.ProtocolTCP})
 	}
 	return res
+}
+
+// getDeploymentMatchLabels will return the map of labels that can be used to match
+// running pods for this container.
+func (in *instance) getDeploymentMatchLabels(tainr container.Container) map[string]string {
+	return map[string]string{
+		"app":      tainr.GetKubernetesName(),
+		"kubedock": tainr.GetID(),
+		"tier":     "kubedock",
+	}
+}
+
+// GetPodNames will return a list of pods that are spun up for this deployment.
+func (in *instance) GetPodNames(tainr container.Container) ([]string, error) {
+	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: in.GetPodsLabelSelector(tainr),
+	})
+	if err != nil {
+		return nil, err
+	}
+	names := []string{}
+	for _, p := range pods.Items {
+		names = append(names, p.Name)
+	}
+	return names, nil
+}
+
+// GetPodsLabelSelector will return a label selector that can be used to
+// uniquely idenitify pods that belong to this deployment.
+func (in *instance) GetPodsLabelSelector(tainr container.Container) string {
+	return "kubedock=" + tainr.GetID()
 }

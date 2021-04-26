@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"io"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -14,6 +16,10 @@ type Kubernetes interface {
 	DeleteContainer(container.Container) error
 	ExecContainer(container.Container, container.Exec) error
 	GetExecStatus(container.Exec) (map[string]string, error)
+	IsContainerRunning(container.Container) (bool, error)
+	GetPodNames(container.Container) ([]string, error)
+	GetPodsLabelSelector(tainr container.Container) string
+	GetLogs(container.Container, bool, io.Writer) error
 }
 
 // instance is the internal representation of the Kubernetes object.

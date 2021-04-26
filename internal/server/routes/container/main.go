@@ -38,11 +38,11 @@ func (cr *containerRouter) initRoutes(version string, router *gin.Engine) {
 	router.GET(version+"/containers/:id/json", cr.ContainerInfo)
 	router.DELETE(version+"/containers/:id", cr.ContainerDelete)
 	router.POST(version+"/containers/:id/exec", cr.ContainerExec)
+	router.GET(version+"/containers/:id/logs", cr.ContainerLogs)
 	router.POST(version+"/exec/:id/start", cr.ExecStart)
 	router.GET(version+"/exec/:id/json", cr.ExecInfo)
 
 	// not supported at the moment
-	router.GET(version+"/containers/:id/logs", httputil.NotImplemented)
 	router.POST(version+"/containers/:id/stop", httputil.NotImplemented)
 	router.POST(version+"/containers/:id/kill", httputil.NotImplemented)
 	router.GET(version+"/containers/json", httputil.NotImplemented)
