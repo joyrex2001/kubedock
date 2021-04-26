@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/joyrex2001/kubedock/internal/container"
 	v1 "k8s.io/api/core/v1"
@@ -38,9 +37,10 @@ func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer)
 	defer stream.Close()
 
 	for {
+		// read log input
 		buf := make([]byte, 2000)
-		num, err := stream.Read(buf)
-		if num == 0 {
+		n, err := stream.Read(buf)
+		if n == 0 {
 			if !follow {
 				break
 			}
@@ -52,10 +52,11 @@ func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer)
 		if err != nil {
 			return err
 		}
-		w.Write(buf[:num])
+		// write log to output
+		if n, err = w.Write(buf[:n]); n == 0 || err != nil {
+			break
+		}
 	}
-
-	log.Printf("log done... for %s", tainr.GetKubernetesName())
 
 	return nil
 }
