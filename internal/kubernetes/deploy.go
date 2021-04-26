@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -35,11 +36,11 @@ func (in *instance) StartContainer(tainr container.Container) error {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   tainr.GetImage(),
-						Name:    tainr.GetKubernetesName(),
-						Command: tainr.GetCmd(),
-						Env:     tainr.GetEnvVar(),
-						Ports:   tainr.GetContainerPorts(),
+						Image: tainr.GetImage(),
+						Name:  tainr.GetKubernetesName(),
+						Args:  tainr.GetCmd(),
+						Env:   tainr.GetEnvVar(),
+						Ports: in.getContainerPorts(tainr),
 					}},
 				},
 			},
@@ -53,4 +54,15 @@ func (in *instance) StartContainer(tainr container.Container) error {
 	// TODO: create port-forward https://github.com/kubernetes/client-go/issues/51
 
 	return nil
+}
+
+// getContainerPorts will return the mapped ports of the container
+// as k8s ContainerPorts.
+func (in *instance) getContainerPorts(tainr container.Container) []corev1.ContainerPort {
+	res := []corev1.ContainerPort{}
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		n := fmt.Sprintf("kd-tcp-%d", pp)
+		res = append(res, corev1.ContainerPort{ContainerPort: int32(pp), Name: n, Protocol: corev1.ProtocolTCP})
+	}
+	return res
 }

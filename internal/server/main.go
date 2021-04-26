@@ -52,6 +52,7 @@ func (s *Server) Run(port string) error {
 	}
 
 	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
+
 	for v := 0; v <= config.DockerMaxAPIMinor; v++ {
 		routes_container.New(v, router, cf, kube)
 		routes_system.New(v, router)

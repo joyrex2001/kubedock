@@ -1,7 +1,6 @@
 package container
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -26,7 +25,7 @@ type Container interface {
 	GetEnvVar() []corev1.EnvVar
 	SetEnv([]string)
 	GetExposedPorts() map[string]interface{}
-	GetContainerPorts() []corev1.ContainerPort
+	GetContainerTCPPorts() []int32
 	SetExposedPorts(map[string]interface{})
 	GetLabels() map[string]string
 	SetLabels(map[string]string)
@@ -123,10 +122,10 @@ func (co *Object) GetExposedPorts() map[string]interface{} {
 	return co.ExposedPorts
 }
 
-// GetContainerPorts will return the mapped ports of the container
-// as k8s ContainerPorts.
-func (co *Object) GetContainerPorts() []corev1.ContainerPort {
-	ports := []corev1.ContainerPort{}
+// GetContainerTCPPorts will return a list of all ports that are
+// exposed by this container.
+func (co *Object) GetContainerTCPPorts() []int32 {
+	ports := []int32{}
 	for p := range co.ExposedPorts {
 		f := strings.Split(p, "/")
 		if len(f) != 2 {
@@ -142,8 +141,7 @@ func (co *Object) GetContainerPorts() []corev1.ContainerPort {
 			log.Printf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
 			continue
 		}
-		n := fmt.Sprintf("kd-%s-%d", f[1], pp)
-		ports = append(ports, corev1.ContainerPort{ContainerPort: int32(pp), Name: n, Protocol: corev1.ProtocolTCP})
+		ports = append(ports, int32(pp))
 	}
 	return ports
 }

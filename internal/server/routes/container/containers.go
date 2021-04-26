@@ -2,11 +2,12 @@ package container
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
@@ -86,8 +87,6 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 		return
 	}
 
-	log.Printf("status = %#v", status)
-
 	c.JSON(http.StatusOK, gin.H{
 		"Id":    id,
 		"Image": ctainr.GetImage(),
@@ -97,16 +96,11 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			"Env":    ctainr.GetEnv(),
 			"Cmd":    ctainr.GetCmd(),
 		},
-		// TODO: implement port mapping
 		"NetworkSettings": gin.H{
-			"Ports": gin.H{
-				"9000/tcp": []gin.H{
-					{
-						"HostIp":   "localhost",
-						"HostPort": "8080",
-					},
-				},
-			},
+			"Ports": cr.getNetworkSettingsPorts(ctainr),
+		},
+		"HostConfig": gin.H{
+			"NetworkMode": "host",
 		},
 		"State": gin.H{
 			"Health": gin.H{
@@ -124,4 +118,20 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 			"Error":      "",
 		},
 	})
+}
+
+// getNetworkSettingsPorts will return the mapped ports of the container
+// as k8s ports structure to be used in network settings.
+func (cr *containerRouter) getNetworkSettingsPorts(tainr container.Container) gin.H {
+	res := gin.H{}
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		p := fmt.Sprintf("%d/tcp", pp)
+		res[p] = []gin.H{
+			{
+				"HostIp":   "localhost",
+				"HostPort": "8080", // TODO: implement port mapping
+			},
+		}
+	}
+	return res
 }
