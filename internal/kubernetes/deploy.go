@@ -16,7 +16,8 @@ import (
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
 )
 
-// StartContainer will start given container object in kubernetes.
+// StartContainer will start given container object in kubernetes and
+// waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr container.Container) error {
 	match := in.getDeploymentMatchLabels(tainr)
 	dep := &appsv1.Deployment{
@@ -50,25 +51,21 @@ func (in *instance) StartContainer(tainr container.Container) error {
 		return err
 	}
 
+	if err := in.waitReadyState(tainr); err != nil {
+		return err
+	}
+
 	for _, pp := range tainr.GetContainerTCPPorts() {
 		tainr.MapPort(pp, portforward.RandomPort())
 	}
 
 	// TODO: improve port-forwarding
 	go func() {
-		for {
-			running, err := in.IsContainerRunning(tainr)
-			if running {
-				break
-			}
-			if err != nil {
-				return
-			}
-			log.Printf("Waiting for container to be ready")
-			time.Sleep(1000)
-		}
 		err := in.PortForward(tainr)
-		log.Printf("portforward failed: %s", err)
+		if err != nil {
+			log.Printf("portforward failed: %s", err)
+			return
+		}
 	}()
 
 	return nil
@@ -120,6 +117,38 @@ func (in *instance) getDeploymentMatchLabels(tainr container.Container) map[stri
 	}
 }
 
+// WaitReadyState will wait for the deploymemt to be ready.
+func (in *instance) waitReadyState(tainr container.Container) error {
+	name := tainr.GetKubernetesName()
+	for max := 0; max < 30; max++ {
+		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if dep.Status.ReadyReplicas > 0 {
+			return nil
+		}
+		pods, err := in.GetPods(tainr)
+		if err != nil {
+			return err
+		}
+		if len(pods) > 0 {
+			for _, pod := range pods {
+				if pod.Status.Phase == corev1.PodFailed {
+					return fmt.Errorf("failed to start container")
+				}
+				for _, status := range pod.Status.ContainerStatuses {
+					if status.RestartCount > 0 {
+						return fmt.Errorf("failed to start container...")
+					}
+				}
+			}
+		}
+		time.Sleep(time.Second)
+	}
+	return fmt.Errorf("timeout starting container...")
+}
+
 // GetPodNames will return a list of pods that are spun up for this deployment.
 func (in *instance) GetPods(tainr container.Container) ([]corev1.Pod, error) {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
@@ -127,9 +156,6 @@ func (in *instance) GetPods(tainr container.Container) ([]corev1.Pod, error) {
 	})
 	if err != nil {
 		return nil, err
-	}
-	if len(pods.Items) == 0 {
-		return nil, fmt.Errorf("no pods found")
 	}
 	return pods.Items, nil
 }
