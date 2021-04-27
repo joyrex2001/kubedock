@@ -132,21 +132,19 @@ func (in *instance) waitReadyState(tainr container.Container) error {
 		if err != nil {
 			return err
 		}
-		if len(pods) > 0 {
-			for _, pod := range pods {
-				if pod.Status.Phase == corev1.PodFailed {
+		for _, pod := range pods {
+			if pod.Status.Phase == corev1.PodFailed {
+				return fmt.Errorf("failed to start container")
+			}
+			for _, status := range pod.Status.ContainerStatuses {
+				if status.RestartCount > 0 {
 					return fmt.Errorf("failed to start container")
-				}
-				for _, status := range pod.Status.ContainerStatuses {
-					if status.RestartCount > 0 {
-						return fmt.Errorf("failed to start container...")
-					}
 				}
 			}
 		}
 		time.Sleep(time.Second)
 	}
-	return fmt.Errorf("timeout starting container...")
+	return fmt.Errorf("timeout starting container")
 }
 
 // GetPodNames will return a list of pods that are spun up for this deployment.

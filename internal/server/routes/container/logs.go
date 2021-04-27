@@ -14,8 +14,9 @@ import (
 func (cr *containerRouter) ContainerLogs(c *gin.Context) {
 	id := c.Param("id")
 	follow, _ := strconv.ParseBool(c.Query("follow"))
-	// TODO: implement stdin/stdout filters
 	// TODO: implement since
+	// TODO: implement until
+	// TODO: implement tail
 	tainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)

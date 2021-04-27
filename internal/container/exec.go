@@ -11,6 +11,10 @@ type Exec interface {
 	GetContainerID() string
 	GetCmd() []string
 	SetCmd([]string)
+	GetStdout() bool
+	SetStdout(flag bool)
+	GetStderr() bool
+	SetStderr(flag bool)
 	Delete() error
 	Update() error
 }
@@ -21,6 +25,8 @@ type ExecObject struct {
 	ID          string
 	ContainerID string
 	Cmd         []string
+	Stdout      bool
+	Stderr      bool
 }
 
 // GetID will return the current internal ID of the exec.
@@ -41,6 +47,26 @@ func (eo *ExecObject) GetCmd() []string {
 // SetCmd will update the cmd args of the exec.
 func (eo *ExecObject) SetCmd(cmd []string) {
 	eo.Cmd = cmd
+}
+
+// GetStdout will return the stdout flag of the exec.
+func (eo *ExecObject) GetStdout() bool {
+	return eo.Stdout
+}
+
+// SetStdout will update the stdout flag of the exec.
+func (eo *ExecObject) SetStdout(flag bool) {
+	eo.Stdout = flag
+}
+
+// GetStdout will return the stdout flag of the exec.
+func (eo *ExecObject) GetStderr() bool {
+	return eo.Stderr
+}
+
+// SetStdout will update the stdout flag of the exec.
+func (eo *ExecObject) SetStderr(flag bool) {
+	eo.Stderr = flag
 }
 
 // Delete will delete the ExecObject instance.

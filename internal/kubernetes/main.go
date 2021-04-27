@@ -15,7 +15,7 @@ type Kubernetes interface {
 	StartContainer(container.Container) error
 	GetContainerStatus(container.Container) (map[string]string, error)
 	DeleteContainer(container.Container) error
-	ExecContainer(container.Container, container.Exec) error
+	ExecContainer(container.Container, container.Exec, io.Writer) error
 	GetExecStatus(container.Exec) (map[string]string, error)
 	IsContainerRunning(container.Container) (bool, error)
 	GetPods(container.Container) ([]corev1.Pod, error)
@@ -37,9 +37,4 @@ func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernet
 		cfg:       cfg,
 		namespace: namespace,
 	}
-}
-
-// GetExecStatus will return current status of given exec object in kubernetes.
-func (in *instance) GetExecStatus(exec container.Exec) (map[string]string, error) {
-	return nil, nil
 }

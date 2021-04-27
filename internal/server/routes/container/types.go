@@ -15,7 +15,12 @@ type ContainerCreateRequest struct {
 // ContainerExecRequest represents the json structure that
 // is used for the /conteiner/:id/exec request.
 type ContainerExecRequest struct {
-	Cmd []string `json:"Cmd"`
+	Cmd    []string `json:"Cmd"`
+	Stdin  bool     `json:"AttachStdin"`
+	Stdout bool     `json:"AttachStdout"`
+	Stderr bool     `json:"AttachStderr"`
+	Tty    bool     `json:"Tty"`
+	Env    []string `json:"Env"`
 }
 
 // ExecStartRequest represents the json structure that is
