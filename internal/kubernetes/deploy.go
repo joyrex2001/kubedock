@@ -3,7 +3,9 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +55,21 @@ func (in *instance) StartContainer(tainr container.Container) error {
 	}
 
 	// TODO: improve port-forwarding
-	go in.PortForward(tainr)
+	go func() {
+		for {
+			running, err := in.IsContainerRunning(tainr)
+			if running {
+				break
+			}
+			if err != nil {
+				return
+			}
+			log.Printf("Waiting for container to be ready")
+			time.Sleep(1000)
+		}
+		err := in.PortForward(tainr)
+		log.Printf("portforward failed: %s", err)
+	}()
 
 	return nil
 }
@@ -70,7 +86,7 @@ func (in *instance) PortForward(tainr container.Container) error {
 			Out:    os.Stdout,
 			ErrOut: os.Stderr,
 		}
-		portforward.ForwardAPod(portforward.Request{
+		portforward.ToPod(portforward.Request{
 			RestConfig: in.cfg,
 			Pod:        pods[0],
 			LocalPort:  dst,
