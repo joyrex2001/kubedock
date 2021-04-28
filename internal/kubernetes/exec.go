@@ -46,8 +46,3 @@ func (in *instance) ExecContainer(tainr *container.Container, exec *container.Ex
 	}
 	return ex.Stream(opts)
 }
-
-// GetExecStatus will return current status of given exec object in kubernetes.
-func (in *instance) GetExecStatus(exec *container.Exec) (map[string]string, error) {
-	return nil, nil
-}

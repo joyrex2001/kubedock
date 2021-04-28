@@ -21,6 +21,7 @@ type Container struct {
 	ExposedPorts map[string]interface{}
 	Labels       map[string]string
 	MappedPorts  map[int]int
+	StopChannels []chan struct{}
 }
 
 // GetShortName will return the a k8s compatible name of the container.
@@ -80,6 +81,21 @@ func (co *Container) GetContainerTCPPorts() []int {
 		ports = append(ports, pp)
 	}
 	return ports
+}
+
+// MapPort will map a pod port to a local port.
+func (co *Container) AddStopChannel(stop chan struct{}) {
+	if co.StopChannels == nil {
+		co.StopChannels = []chan struct{}{}
+	}
+	co.StopChannels = append(co.StopChannels, stop)
+}
+
+// SignalStop will signal all stop channels.
+func (co *Container) SignalStop() {
+	for _, stop := range co.StopChannels {
+		stop <- struct{}{}
+	}
 }
 
 // Delete will delete the Container instance.

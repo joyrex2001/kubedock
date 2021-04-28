@@ -94,13 +94,7 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 func (cr *containerRouter) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 
-	exec, err := cr.factory.LoadExec(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	_, err = cr.kubernetes.GetExecStatus(exec)
+	_, err := cr.factory.LoadExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

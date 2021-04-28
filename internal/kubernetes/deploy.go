@@ -83,13 +83,15 @@ func (in *instance) PortForward(tainr *container.Container) error {
 			Out:    os.Stdout,
 			ErrOut: os.Stderr,
 		}
+		stop := make(chan struct{}, 1)
+		tainr.AddStopChannel(stop)
 		portforward.ToPod(portforward.Request{
 			RestConfig: in.cfg,
 			Pod:        pods[0],
 			LocalPort:  dst,
 			PodPort:    src,
 			Streams:    stream,
-			StopCh:     make(chan struct{}, 1),
+			StopCh:     stop,
 			ReadyCh:    make(chan struct{}, 1),
 		})
 	}

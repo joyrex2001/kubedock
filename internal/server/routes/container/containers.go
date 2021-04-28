@@ -67,6 +67,7 @@ func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+	tainr.SignalStop()
 	if err := cr.kubernetes.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return

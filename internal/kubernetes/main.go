@@ -17,7 +17,6 @@ type Kubernetes interface {
 	DeleteContainer(*container.Container) error
 	CopyToContainer(*container.Container, []byte, string) error
 	ExecContainer(*container.Container, *container.Exec, io.Writer) error
-	GetExecStatus(*container.Exec) (map[string]string, error)
 	IsContainerRunning(*container.Container) (bool, error)
 	GetPods(*container.Container) ([]corev1.Pod, error)
 	GetPodsLabelSelector(*container.Container) string

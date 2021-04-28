@@ -30,6 +30,9 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 	}
 	defer stream.Close()
 
+	stop := make(chan struct{}, 1)
+	tainr.AddStopChannel(stop)
+
 	for {
 		// read log input
 		buf := make([]byte, 2000)
@@ -49,6 +52,12 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 		// write log to output
 		if n, err = w.Write(buf[:n]); n == 0 || err != nil {
 			break
+		}
+		// close when container is done
+		select {
+		case <-stop:
+			return nil
+		default:
 		}
 	}
 
