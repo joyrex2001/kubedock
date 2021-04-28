@@ -12,15 +12,15 @@ import (
 
 // Kubernetes is the interface to orchestrate and manage kubernetes objects.
 type Kubernetes interface {
-	StartContainer(container.Container) error
-	GetContainerStatus(container.Container) (map[string]string, error)
-	DeleteContainer(container.Container) error
-	ExecContainer(container.Container, container.Exec, io.Writer) error
-	GetExecStatus(container.Exec) (map[string]string, error)
-	IsContainerRunning(container.Container) (bool, error)
-	GetPods(container.Container) ([]corev1.Pod, error)
-	GetPodsLabelSelector(tainr container.Container) string
-	GetLogs(container.Container, bool, io.Writer) error
+	StartContainer(*container.Container) error
+	GetContainerStatus(*container.Container) (map[string]string, error)
+	DeleteContainer(*container.Container) error
+	ExecContainer(*container.Container, *container.Exec, io.Writer) error
+	GetExecStatus(*container.Exec) (map[string]string, error)
+	IsContainerRunning(*container.Container) (bool, error)
+	GetPods(*container.Container) ([]corev1.Pod, error)
+	GetPodsLabelSelector(*container.Container) string
+	GetLogs(*container.Container, bool, io.Writer) error
 }
 
 // instance is the internal representation of the Kubernetes object.

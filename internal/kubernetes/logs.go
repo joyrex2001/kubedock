@@ -10,7 +10,7 @@ import (
 )
 
 // GetPodLogs will write the logs for given container to given writer.
-func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer) error {
+func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer) error {
 	count := int64(100)
 	options := v1.PodLogOptions{
 		Container: tainr.GetKubernetesName(),
@@ -57,7 +57,7 @@ func (in *instance) GetLogs(tainr container.Container, follow bool, w io.Writer)
 
 // getFirstPodName returns the pod name of the first pod that matches
 // the container deployment.
-func (in *instance) getFirstPodName(tainr container.Container) (string, error) {
+func (in *instance) getFirstPodName(tainr *container.Container) (string, error) {
 	pods, err := in.GetPods(tainr)
 	if err != nil {
 		return "", err

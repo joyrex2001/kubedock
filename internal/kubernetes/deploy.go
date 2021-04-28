@@ -18,13 +18,13 @@ import (
 
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
-func (in *instance) StartContainer(tainr container.Container) error {
+func (in *instance) StartContainer(tainr *container.Container) error {
 	match := in.getDeploymentMatchLabels(tainr)
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: in.namespace,
 			Name:      tainr.GetKubernetesName(),
-			Labels:    tainr.GetLabels(), // TODO: add generic label, add ttl annotation, template?)
+			Labels:    tainr.Labels, // TODO: add generic label, add ttl annotation, template?)
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -36,9 +36,9 @@ func (in *instance) StartContainer(tainr container.Container) error {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: tainr.GetImage(),
+						Image: tainr.Image,
 						Name:  tainr.GetKubernetesName(),
-						Args:  tainr.GetCmd(),
+						Args:  tainr.Cmd,
 						Env:   tainr.GetEnvVar(),
 						Ports: in.getContainerPorts(tainr),
 					}},
@@ -72,12 +72,12 @@ func (in *instance) StartContainer(tainr container.Container) error {
 }
 
 // StartContainer will start given container object in kubernetes.
-func (in *instance) PortForward(tainr container.Container) error {
+func (in *instance) PortForward(tainr *container.Container) error {
 	pods, err := in.GetPods(tainr)
 	if err != nil {
 		return err
 	}
-	for src, dst := range tainr.GetMappedPorts() {
+	for src, dst := range tainr.MappedPorts {
 		stream := genericclioptions.IOStreams{
 			In:     os.Stdin,
 			Out:    os.Stdout,
@@ -98,7 +98,7 @@ func (in *instance) PortForward(tainr container.Container) error {
 
 // getContainerPorts will return the mapped ports of the container
 // as k8s ContainerPorts.
-func (in *instance) getContainerPorts(tainr container.Container) []corev1.ContainerPort {
+func (in *instance) getContainerPorts(tainr *container.Container) []corev1.ContainerPort {
 	res := []corev1.ContainerPort{}
 	for _, pp := range tainr.GetContainerTCPPorts() {
 		n := fmt.Sprintf("kd-tcp-%d", pp)
@@ -109,16 +109,16 @@ func (in *instance) getContainerPorts(tainr container.Container) []corev1.Contai
 
 // getDeploymentMatchLabels will return the map of labels that can be used to match
 // running pods for this container.
-func (in *instance) getDeploymentMatchLabels(tainr container.Container) map[string]string {
+func (in *instance) getDeploymentMatchLabels(tainr *container.Container) map[string]string {
 	return map[string]string{
 		"app":      tainr.GetKubernetesName(),
-		"kubedock": tainr.GetID(),
+		"kubedock": tainr.ID,
 		"tier":     "kubedock",
 	}
 }
 
 // WaitReadyState will wait for the deploymemt to be ready.
-func (in *instance) waitReadyState(tainr container.Container) error {
+func (in *instance) waitReadyState(tainr *container.Container) error {
 	name := tainr.GetKubernetesName()
 	for max := 0; max < 30; max++ {
 		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
@@ -148,7 +148,7 @@ func (in *instance) waitReadyState(tainr container.Container) error {
 }
 
 // GetPodNames will return a list of pods that are spun up for this deployment.
-func (in *instance) GetPods(tainr container.Container) ([]corev1.Pod, error) {
+func (in *instance) GetPods(tainr *container.Container) ([]corev1.Pod, error) {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: in.GetPodsLabelSelector(tainr),
 	})
@@ -160,6 +160,6 @@ func (in *instance) GetPods(tainr container.Container) ([]corev1.Pod, error) {
 
 // GetPodsLabelSelector will return a label selector that can be used to
 // uniquely idenitify pods that belong to this deployment.
-func (in *instance) GetPodsLabelSelector(tainr container.Container) string {
-	return "kubedock=" + tainr.GetID()
+func (in *instance) GetPodsLabelSelector(tainr *container.Container) string {
+	return "kubedock=" + tainr.ID
 }

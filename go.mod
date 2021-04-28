@@ -3,12 +3,10 @@ module github.com/joyrex2001/kubedock
 go 1.16
 
 require (
-	github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.5.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/gophercloud/gophercloud v0.0.0-20190126172459-c818fa66e4c8 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -20,8 +18,6 @@ require (
 	golang.org/x/text v0.3.6 // indirect
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
-	k8s.io/cli-runtime v0.21.0 // indirect
+	k8s.io/cli-runtime v0.21.0
 	k8s.io/client-go v0.21.0
-	k8s.io/klog v0.3.1 // indirect
-	sigs.k8s.io/kustomize v2.0.3+incompatible // indirect
 )

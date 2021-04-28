@@ -19,34 +19,34 @@ func (cr *containerRouter) ContainerCreate(c *gin.Context) {
 		return
 	}
 
-	ctainr, err := cr.factory.Create()
+	tainr, err := cr.factory.Create()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	ctainr.SetName(in.Name)
-	ctainr.SetImage(in.Image)
-	ctainr.SetCmd(in.Cmd)
-	ctainr.SetEnv(in.Env)
-	ctainr.SetExposedPorts(in.ExposedPorts)
-	ctainr.SetLabels(in.Labels)
-	ctainr.Update()
+	tainr.Name = in.Name
+	tainr.Image = in.Image
+	tainr.Cmd = in.Cmd
+	tainr.Env = in.Env
+	tainr.ExposedPorts = in.ExposedPorts
+	tainr.Labels = in.Labels
+	tainr.Update()
 
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": ctainr.GetID(),
+		"Id": tainr.ID,
 	})
 }
 
 // POST "/containers/:id/start"
 func (cr *containerRouter) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
-	ctainr, err := cr.factory.Load(id)
+	tainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := cr.kubernetes.StartContainer(ctainr); err != nil {
+	if err := cr.kubernetes.StartContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -56,16 +56,16 @@ func (cr *containerRouter) ContainerStart(c *gin.Context) {
 // DELETE "/containers/:id"
 func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
-	ctainr, err := cr.factory.Load(id)
+	tainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := cr.kubernetes.DeleteContainer(ctainr); err != nil {
+	if err := cr.kubernetes.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	if err := ctainr.Delete(); err != nil {
+	if err := tainr.Delete(); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
@@ -75,13 +75,13 @@ func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 // GET "/containers/:id/json"
 func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
-	ctainr, err := cr.factory.Load(id)
+	tainr, err := cr.factory.Load(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
-	status, err := cr.kubernetes.GetContainerStatus(ctainr)
+	status, err := cr.kubernetes.GetContainerStatus(tainr)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -89,15 +89,15 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"Id":    id,
-		"Image": ctainr.GetImage(),
+		"Image": tainr.Image,
 		"Config": gin.H{
-			"Image":  ctainr.GetImage(),
-			"Labels": ctainr.GetLabels(),
-			"Env":    ctainr.GetEnv(),
-			"Cmd":    ctainr.GetCmd(),
+			"Image":  tainr.Image,
+			"Labels": tainr.Labels,
+			"Env":    tainr.Env,
+			"Cmd":    tainr.Cmd,
 		},
 		"NetworkSettings": gin.H{
-			"Ports": cr.getNetworkSettingsPorts(ctainr),
+			"Ports": cr.getNetworkSettingsPorts(tainr),
 		},
 		"HostConfig": gin.H{
 			"NetworkMode": "host",
@@ -122,9 +122,9 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 
 // getNetworkSettingsPorts will return the mapped ports of the container
 // as k8s ports structure to be used in network settings.
-func (cr *containerRouter) getNetworkSettingsPorts(tainr container.Container) gin.H {
+func (cr *containerRouter) getNetworkSettingsPorts(tainr *container.Container) gin.H {
 	res := gin.H{}
-	for dst, src := range tainr.GetMappedPorts() {
+	for dst, src := range tainr.MappedPorts {
 		p := fmt.Sprintf("%d/tcp", dst)
 		res[p] = []gin.H{
 			{

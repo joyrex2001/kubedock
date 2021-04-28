@@ -12,7 +12,7 @@ import (
 )
 
 // ExecContainer will execute given exec object in kubernetes.
-func (in *instance) ExecContainer(tainr container.Container, exec container.Exec, out io.Writer) error {
+func (in *instance) ExecContainer(tainr *container.Container, exec *container.Exec, out io.Writer) error {
 	pods, err := in.GetPods(tainr)
 	if err != nil {
 		return err
@@ -26,10 +26,10 @@ func (in *instance) ExecContainer(tainr container.Container, exec container.Exec
 		Namespace(pods[0].Namespace).
 		SubResource("exec")
 	req.VersionedParams(&corev1.PodExecOptions{
-		Command: exec.GetCmd(),
+		Command: exec.Cmd,
 		Stdin:   false,
-		Stdout:  exec.GetStdout(),
-		Stderr:  exec.GetStderr(),
+		Stdout:  exec.Stdout,
+		Stderr:  exec.Stderr,
 		TTY:     false,
 	}, scheme.ParameterCodec)
 	ex, err := remotecommand.NewSPDYExecutor(in.cfg, "POST", req.URL())
@@ -38,16 +38,16 @@ func (in *instance) ExecContainer(tainr container.Container, exec container.Exec
 	}
 
 	opts := remotecommand.StreamOptions{}
-	if exec.GetStdout() {
+	if exec.Stdout {
 		opts.Stdout = out
 	}
-	if exec.GetStderr() {
+	if exec.Stderr {
 		opts.Stderr = out
 	}
 	return ex.Stream(opts)
 }
 
 // GetExecStatus will return current status of given exec object in kubernetes.
-func (in *instance) GetExecStatus(exec container.Exec) (map[string]string, error) {
+func (in *instance) GetExecStatus(exec *container.Exec) (map[string]string, error) {
 	return nil, nil
 }

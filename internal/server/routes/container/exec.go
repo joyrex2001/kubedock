@@ -46,12 +46,12 @@ func (cr *containerRouter) ContainerExec(c *gin.Context) {
 		return
 	}
 
-	exec.SetCmd(in.Cmd)
-	exec.SetStderr(in.Stderr)
-	exec.SetStdout(in.Stdout)
+	exec.Cmd = in.Cmd
+	exec.Stderr = in.Stderr
+	exec.Stdout = in.Stdout
 
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": exec.GetID(),
+		"Id": exec.ID,
 	})
 }
 
@@ -75,7 +75,7 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 		return
 	}
 
-	tainr, err := cr.factory.Load(exec.GetContainerID())
+	tainr, err := cr.factory.Load(exec.ContainerID)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
