@@ -3,6 +3,7 @@ package container
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,9 +47,14 @@ func (cr *containerRouter) ContainerStart(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := cr.kubernetes.StartContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
+	running, _ := cr.kubernetes.IsContainerRunning(tainr)
+	if !running {
+		if err := cr.kubernetes.StartContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		log.Printf("container %s already running", id)
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }

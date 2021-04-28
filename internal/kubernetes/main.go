@@ -15,6 +15,7 @@ type Kubernetes interface {
 	StartContainer(*container.Container) error
 	GetContainerStatus(*container.Container) (map[string]string, error)
 	DeleteContainer(*container.Container) error
+	CopyToContainer(*container.Container, []byte, string) error
 	ExecContainer(*container.Container, *container.Exec, io.Writer) error
 	GetExecStatus(*container.Exec) (map[string]string, error)
 	IsContainerRunning(*container.Container) (bool, error)

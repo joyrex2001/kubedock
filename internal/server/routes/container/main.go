@@ -41,6 +41,7 @@ func (cr *containerRouter) initRoutes(version string, router *gin.Engine) {
 	router.GET(version+"/containers/:id/logs", cr.ContainerLogs)
 	router.POST(version+"/exec/:id/start", cr.ExecStart)
 	router.GET(version+"/exec/:id/json", cr.ExecInfo)
+	router.PUT(version+"/containers/:id/archive", cr.PutArchive)
 
 	// not supported at the moment
 	router.POST(version+"/containers/:id/stop", httputil.NotImplemented)
@@ -61,6 +62,5 @@ func (cr *containerRouter) initRoutes(version string, router *gin.Engine) {
 	router.POST(version+"/containers/:id/wait", httputil.NotImplemented)
 	router.HEAD(version+"/containers/:id/archive", httputil.NotImplemented)
 	router.GET(version+"/containers/:id/archive", httputil.NotImplemented)
-	router.PUT(version+"/containers/:id/archive", httputil.NotImplemented)
 	router.POST(version+"/containers/prune", httputil.NotImplemented)
 }
