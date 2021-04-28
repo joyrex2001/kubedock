@@ -30,7 +30,7 @@ func (co *Container) GetKubernetesName() string {
 		n = co.ID
 	}
 	if len(n) > 63 {
-		return n[0:63]
+		return n[:63]
 	}
 	return n
 }
