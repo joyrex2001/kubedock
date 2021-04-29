@@ -70,11 +70,14 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 	return nil
 }
 
-// StartContainer will start given container object in kubernetes.
+// PortForward will create port-forwards for all mapped ports.
 func (in *instance) PortForward(tainr *container.Container) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
+	}
+	if len(pods) == 0 {
+		return fmt.Errorf("no matching pod found")
 	}
 	for src, dst := range tainr.MappedPorts {
 		stream := genericclioptions.IOStreams{
@@ -124,7 +127,7 @@ func (in *instance) getPodsLabelSelector(tainr *container.Container) string {
 	return "kubedock=" + tainr.ID
 }
 
-// WaitReadyState will wait for the deploymemt to be ready.
+// waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *container.Container) error {
 	name := tainr.GetKubernetesName()
 	for max := 0; max < 30; max++ {

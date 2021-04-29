@@ -24,7 +24,7 @@ type Container struct {
 	StopChannels []chan struct{}
 }
 
-// GetShortName will return the a k8s compatible name of the container.
+// GetKubernetesName will return the a k8s compatible name of the container.
 func (co *Container) GetKubernetesName() string {
 	n := co.Name
 	if n == "" {
@@ -36,7 +36,7 @@ func (co *Container) GetKubernetesName() string {
 	return n
 }
 
-// GetEnvMap will return the environment variables of the container
+// GetEnvVar will return the environment variables of the container
 // as k8s EnvVars.
 func (co *Container) GetEnvVar() []corev1.EnvVar {
 	env := []corev1.EnvVar{}
@@ -83,7 +83,8 @@ func (co *Container) GetContainerTCPPorts() []int {
 	return ports
 }
 
-// MapPort will map a pod port to a local port.
+// AddStopChannel will add channels that should be notified when
+// SignalStop is called.
 func (co *Container) AddStopChannel(stop chan struct{}) {
 	if co.StopChannels == nil {
 		co.StopChannels = []chan struct{}{}

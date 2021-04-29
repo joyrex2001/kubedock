@@ -9,7 +9,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-// GetPodLogs will write the logs for given container to given writer.
+// GetLogs will write the logs for given container to given writer.
 func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer) error {
 	count := int64(100)
 	options := v1.PodLogOptions{
