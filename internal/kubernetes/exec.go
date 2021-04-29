@@ -13,7 +13,7 @@ import (
 
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(tainr *container.Container, exec *container.Exec, out io.Writer) error {
-	pods, err := in.GetPods(tainr)
+	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
 	}

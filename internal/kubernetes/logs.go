@@ -34,6 +34,12 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 	tainr.AddStopChannel(stop)
 
 	for {
+		// close when container is done
+		select {
+		case <-stop:
+			return nil
+		default:
+		}
 		// read log input
 		buf := make([]byte, 2000)
 		n, err := stream.Read(buf)
@@ -53,12 +59,6 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 		if n, err = w.Write(buf[:n]); n == 0 || err != nil {
 			break
 		}
-		// close when container is done
-		select {
-		case <-stop:
-			return nil
-		default:
-		}
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 // getFirstPodName returns the pod name of the first pod that matches
 // the container deployment.
 func (in *instance) getFirstPodName(tainr *container.Container) (string, error) {
-	pods, err := in.GetPods(tainr)
+	pods, err := in.getPods(tainr)
 	if err != nil {
 		return "", err
 	}

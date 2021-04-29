@@ -28,7 +28,7 @@ func (cr *containerRouter) PutArchive(c *gin.Context) {
 		return
 	}
 
-	// TODO: hmm... how to do this without a running container...
+	// hmm... how to do this without a running container...
 	running, _ := cr.kubernetes.IsContainerRunning(tainr)
 	if !running {
 		if err := cr.kubernetes.StartContainer(tainr); err != nil {

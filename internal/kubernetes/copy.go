@@ -15,7 +15,7 @@ import (
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
 func (in *instance) CopyToContainer(tainr *container.Container, archive []byte, path string) error {
-	pods, err := in.GetPods(tainr)
+	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
 	}

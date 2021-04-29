@@ -59,7 +59,6 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 		tainr.MapPort(pp, portforward.RandomPort())
 	}
 
-	// TODO: improve port-forwarding
 	go func() {
 		err := in.PortForward(tainr)
 		if err != nil {
@@ -73,7 +72,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 
 // StartContainer will start given container object in kubernetes.
 func (in *instance) PortForward(tainr *container.Container) error {
-	pods, err := in.GetPods(tainr)
+	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
 	}
@@ -119,6 +118,12 @@ func (in *instance) getDeploymentMatchLabels(tainr *container.Container) map[str
 	}
 }
 
+// getPodsLabelSelector will return a label selector that can be used to
+// uniquely idenitify pods that belong to this deployment.
+func (in *instance) getPodsLabelSelector(tainr *container.Container) string {
+	return "kubedock=" + tainr.ID
+}
+
 // WaitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *container.Container) error {
 	name := tainr.GetKubernetesName()
@@ -130,7 +135,7 @@ func (in *instance) waitReadyState(tainr *container.Container) error {
 		if dep.Status.ReadyReplicas > 0 {
 			return nil
 		}
-		pods, err := in.GetPods(tainr)
+		pods, err := in.getPods(tainr)
 		if err != nil {
 			return err
 		}
@@ -149,19 +154,13 @@ func (in *instance) waitReadyState(tainr *container.Container) error {
 	return fmt.Errorf("timeout starting container")
 }
 
-// GetPodNames will return a list of pods that are spun up for this deployment.
-func (in *instance) GetPods(tainr *container.Container) ([]corev1.Pod, error) {
+// getPods will return a list of pods that are spun up for this deployment.
+func (in *instance) getPods(tainr *container.Container) ([]corev1.Pod, error) {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: in.GetPodsLabelSelector(tainr),
+		LabelSelector: in.getPodsLabelSelector(tainr),
 	})
 	if err != nil {
 		return nil, err
 	}
 	return pods.Items, nil
-}
-
-// GetPodsLabelSelector will return a label selector that can be used to
-// uniquely idenitify pods that belong to this deployment.
-func (in *instance) GetPodsLabelSelector(tainr *container.Container) string {
-	return "kubedock=" + tainr.ID
 }

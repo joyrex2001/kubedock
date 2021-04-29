@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"io"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -13,13 +12,11 @@ import (
 // Kubernetes is the interface to orchestrate and manage kubernetes objects.
 type Kubernetes interface {
 	StartContainer(*container.Container) error
-	GetContainerStatus(*container.Container) (map[string]string, error)
 	DeleteContainer(*container.Container) error
 	CopyToContainer(*container.Container, []byte, string) error
 	ExecContainer(*container.Container, *container.Exec, io.Writer) error
+	GetContainerStatus(*container.Container) (map[string]string, error)
 	IsContainerRunning(*container.Container) (bool, error)
-	GetPods(*container.Container) ([]corev1.Pod, error)
-	GetPodsLabelSelector(*container.Container) string
 	GetLogs(*container.Container, bool, io.Writer) error
 }
 
