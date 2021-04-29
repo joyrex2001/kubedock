@@ -1,4 +1,4 @@
-package container
+package routes
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 // POST "/containers/:id/logs"
-func (cr *containerRouter) ContainerLogs(c *gin.Context) {
+func (cr *Router) ContainerLogs(c *gin.Context) {
 	id := c.Param("id")
 	follow, _ := strconv.ParseBool(c.Query("follow"))
 	// TODO: implement since

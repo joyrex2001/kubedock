@@ -9,10 +9,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
-	routes_container "github.com/joyrex2001/kubedock/internal/server/routes/container"
-	routes_images "github.com/joyrex2001/kubedock/internal/server/routes/images"
-	routes_networks "github.com/joyrex2001/kubedock/internal/server/routes/networks"
-	routes_system "github.com/joyrex2001/kubedock/internal/server/routes/system"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
@@ -54,10 +51,7 @@ func (s *Server) Run(port string) error {
 	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
 
 	for v := 0; v <= config.DockerMaxAPIMinor; v++ {
-		routes_container.New(v, router, cf, kube)
-		routes_system.New(v, router)
-		routes_images.New(v, router)
-		routes_networks.New(v, router)
+		routes.New(v, router, cf, kube)
 	}
 
 	router.Run(port)

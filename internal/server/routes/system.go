@@ -1,4 +1,4 @@
-package system
+package routes
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 )
 
 // GET "/healthz"
-func (sr *systemRouter) Healthz(c *gin.Context) {
+func (cr *Router) Healthz(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":    "OK",
 		"timestamp": time.Now().Unix(),
@@ -18,7 +18,7 @@ func (sr *systemRouter) Healthz(c *gin.Context) {
 }
 
 // GET "/info"
-func (sr *systemRouter) Info(c *gin.Context) {
+func (cr *Router) Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"ID":              config.ID,
 		"Name":            config.Name,
@@ -29,7 +29,7 @@ func (sr *systemRouter) Info(c *gin.Context) {
 }
 
 // GET "/version"
-func (sr *systemRouter) Version(c *gin.Context) {
+func (cr *Router) Version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Version":    config.DockerVersion,
 		"ApiVersion": config.DockerAPIVersion,
@@ -42,6 +42,6 @@ func (sr *systemRouter) Version(c *gin.Context) {
 }
 
 // GET "/_ping"
-func (sr *systemRouter) Ping(c *gin.Context) {
+func (cr *Router) Ping(c *gin.Context) {
 	c.String(http.StatusOK, "OK")
 }

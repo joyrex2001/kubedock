@@ -1,4 +1,4 @@
-package container
+package routes
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 )
 
 // POST "/containers/create"
-func (cr *containerRouter) ContainerCreate(c *gin.Context) {
+func (cr *Router) ContainerCreate(c *gin.Context) {
 	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -40,7 +40,7 @@ func (cr *containerRouter) ContainerCreate(c *gin.Context) {
 }
 
 // POST "/containers/:id/start"
-func (cr *containerRouter) ContainerStart(c *gin.Context) {
+func (cr *Router) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.factory.Load(id)
 	if err != nil {
@@ -60,7 +60,7 @@ func (cr *containerRouter) ContainerStart(c *gin.Context) {
 }
 
 // DELETE "/containers/:id"
-func (cr *containerRouter) ContainerDelete(c *gin.Context) {
+func (cr *Router) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.factory.Load(id)
 	if err != nil {
@@ -80,7 +80,7 @@ func (cr *containerRouter) ContainerDelete(c *gin.Context) {
 }
 
 // GET "/containers/:id/json"
-func (cr *containerRouter) ContainerInfo(c *gin.Context) {
+func (cr *Router) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.factory.Load(id)
 	if err != nil {
@@ -129,7 +129,7 @@ func (cr *containerRouter) ContainerInfo(c *gin.Context) {
 
 // getNetworkSettingsPorts will return the mapped ports of the container
 // as k8s ports structure to be used in network settings.
-func (cr *containerRouter) getNetworkSettingsPorts(tainr *container.Container) gin.H {
+func (cr *Router) getNetworkSettingsPorts(tainr *container.Container) gin.H {
 	res := gin.H{}
 	for dst, src := range tainr.MappedPorts {
 		p := fmt.Sprintf("%d/tcp", dst)

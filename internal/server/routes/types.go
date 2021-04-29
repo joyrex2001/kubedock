@@ -1,4 +1,4 @@
-package container
+package routes
 
 // ContainerCreateRequest represents the json structure that
 // is used for the /container/create post endpoint.

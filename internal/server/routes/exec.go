@@ -1,4 +1,4 @@
-package container
+package routes
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 )
 
 // POST "/containers/:id/exec"
-func (cr *containerRouter) ContainerExec(c *gin.Context) {
+func (cr *Router) ContainerExec(c *gin.Context) {
 	in := &ContainerExecRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -56,7 +56,7 @@ func (cr *containerRouter) ContainerExec(c *gin.Context) {
 }
 
 // POST "/exec/:id/start"
-func (cr *containerRouter) ExecStart(c *gin.Context) {
+func (cr *Router) ExecStart(c *gin.Context) {
 	req := &ExecStartRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -91,7 +91,7 @@ func (cr *containerRouter) ExecStart(c *gin.Context) {
 }
 
 // GET "/exec/:id/json"
-func (cr *containerRouter) ExecInfo(c *gin.Context) {
+func (cr *Router) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 
 	_, err := cr.factory.LoadExec(id)

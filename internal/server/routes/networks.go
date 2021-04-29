@@ -1,4 +1,4 @@
-package networks
+package routes
 
 import (
 	"net/http"
@@ -7,12 +7,12 @@ import (
 )
 
 // GET "/networks"
-func (nr *networksRouter) NetworksList(c *gin.Context) {
+func (nr *Router) NetworksList(c *gin.Context) {
 	c.JSON(http.StatusOK, []string{})
 }
 
 // POST "/networks/create"
-func (nr *networksRouter) NetworksCreate(c *gin.Context) {
+func (nr *Router) NetworksCreate(c *gin.Context) {
 	// from := c.Query("fromImage")
 	c.JSON(http.StatusOK, gin.H{
 		"status": "Download complete",

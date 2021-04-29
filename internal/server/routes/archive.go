@@ -1,4 +1,4 @@
-package container
+package routes
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 // PUT "/containers/:id/archive"
-func (cr *containerRouter) PutArchive(c *gin.Context) {
+func (cr *Router) PutArchive(c *gin.Context) {
 	// TODO: implement noOverwriteDirNonDir
 	// TODO: implement copyUIDGID
 	id := c.Param("id")
