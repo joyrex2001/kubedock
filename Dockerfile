@@ -8,10 +8,9 @@ ARG CODE=github.com/joyrex2001/kubedock
 
 ADD . /go/src/${CODE}/
 RUN cd /go/src/${CODE} \
- && go test ./... \
- && make build \
- && mkdir /app \
- && cp kubedock /app
+    && make test build \
+    && mkdir /app \
+    && cp kubedock /app
 
 #################
 ## Final image ## ------------------------------------------------------------

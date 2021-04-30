@@ -41,7 +41,6 @@ func init() {
 	viper.BindPFlag("kubernetes.namespace", rootCmd.PersistentFlags().Lookup("namespace"))
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("kubernetes.namespace", "NAMESPACE")
-
 }
 
 func homeDir() string {
