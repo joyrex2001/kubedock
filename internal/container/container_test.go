@@ -117,3 +117,27 @@ func TestStop(t *testing.T) {
 		t.Errorf("failed stop channels")
 	}
 }
+
+func TestGetMounts(t *testing.T) {
+	tests := []struct {
+		in  *Container
+		out map[string]string
+	}{
+		{
+			in: &Container{Binds: []string{
+				"/tmp/code:/usr/wbass2/code:ro",
+				"/tmp/config:/etc/wbass2:ro",
+			}},
+			out: map[string]string{
+				"/usr/wbass2/code": "/tmp/code",
+				"/etc/wbass2":      "/tmp/config",
+			},
+		},
+	}
+	for i, tst := range tests {
+		res := tst.in.GetMounts()
+		if !reflect.DeepEqual(res, tst.out) {
+			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
+		}
+	}
+}

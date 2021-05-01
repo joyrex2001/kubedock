@@ -27,7 +27,9 @@ func init() {
 	rootCmd.PersistentFlags().String("listen-addr", ":8080", "Webserver listen address")
 	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose mode")
+	rootCmd.PersistentFlags().BoolP("logrequest", "r", false, "Log requests and responses (can contain credentials)")
 	viper.BindPFlag("generic.verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("generic.logrequest", rootCmd.PersistentFlags().Lookup("logrequest"))
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
 
 	// kubeconfig

@@ -9,6 +9,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
 	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
@@ -30,6 +31,10 @@ func (s *Server) Run(port string) error {
 	}
 
 	router := gin.Default()
+	if viper.GetBool("generic.logrequest") {
+		router.Use(httputil.RequestLoggerMiddleware())
+		router.Use(httputil.ResponseLoggerMiddleware())
+	}
 
 	kv, err := keyval.New()
 	if err != nil {

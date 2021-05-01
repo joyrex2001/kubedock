@@ -32,6 +32,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	tainr.Env = in.Env
 	tainr.ExposedPorts = in.ExposedPorts
 	tainr.Labels = in.Labels
+	tainr.Binds = in.HostConfig.Binds
 	tainr.Update()
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -104,6 +105,9 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 			"Cmd":    tainr.Cmd,
 		},
 		"NetworkSettings": gin.H{
+			"Networks": gin.H{
+				"bridge": gin.H{},
+			},
 			"Ports": cr.getNetworkSettingsPorts(tainr),
 		},
 		"HostConfig": gin.H{

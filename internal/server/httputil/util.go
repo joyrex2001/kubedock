@@ -1,7 +1,9 @@
 package httputil
 
 import (
+	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -43,5 +45,41 @@ func CloseStreams(streams ...interface{}) {
 		} else if closer, ok := stream.(io.Closer); ok {
 			_ = closer.Close()
 		}
+	}
+}
+
+// RequestLoggerMiddleware is a gin-gonic middleware that will log the
+// raw request.
+func RequestLoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var buf bytes.Buffer
+		tee := io.TeeReader(c.Request.Body, &buf)
+		body, _ := ioutil.ReadAll(tee)
+		c.Request.Body = ioutil.NopCloser(&buf)
+		// log.Printf("Request Headers: %#v", c.Request.Header)
+		log.Printf("Request Body: %s", string(body))
+		c.Next()
+	}
+}
+
+// reponseWriter is the writer interface used by the ResponseLoggerMiddleware
+type reponseWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+// Write is the writer implementation used by the ResponseLoggerMiddleware
+func (w reponseWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
+// ResponseLoggerMiddleware is a gin-gonic middleware that will the raw response.
+func ResponseLoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		w := &reponseWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
+		c.Writer = w
+		c.Next()
+		log.Printf("Response Body: %s", w.body.String())
 	}
 }

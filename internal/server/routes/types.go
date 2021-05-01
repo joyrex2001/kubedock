@@ -9,7 +9,12 @@ type ContainerCreateRequest struct {
 	Labels       map[string]string      `json:"Labels"`
 	Cmd          []string               `json:"Cmd"`
 	Env          []string               `json:"Env"`
-	// Mounts
+	HostConfig   ContainerHostConfig    `json:"HostConfig"`
+}
+
+// ContainerHostConfig contains to be mounted files from the host system.
+type ContainerHostConfig struct {
+	Binds []string `json:"Binds"`
 }
 
 // ContainerExecRequest represents the json structure that
