@@ -51,7 +51,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 		return err
 	}
 
-	if err := in.waitReadyState(tainr); err != nil {
+	if err := in.waitReadyState(tainr, 30); err != nil {
 		return err
 	}
 
@@ -128,9 +128,9 @@ func (in *instance) getPodsLabelSelector(tainr *container.Container) string {
 }
 
 // waitReadyState will wait for the deploymemt to be ready.
-func (in *instance) waitReadyState(tainr *container.Container) error {
+func (in *instance) waitReadyState(tainr *container.Container, wait int) error {
 	name := tainr.GetKubernetesName()
-	for max := 0; max < 30; max++ {
+	for max := 0; max < wait; max++ {
 		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return err

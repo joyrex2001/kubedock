@@ -22,7 +22,7 @@ type Kubernetes interface {
 
 // instance is the internal representation of the Kubernetes object.
 type instance struct {
-	cli       *kubernetes.Clientset
+	cli       kubernetes.Interface
 	cfg       *rest.Config
 	namespace string
 }

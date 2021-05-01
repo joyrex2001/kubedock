@@ -42,6 +42,7 @@ func TestGetEnvVar(t *testing.T) {
 	}{
 		{
 			in: &Container{Env: []string{
+				"rc738",
 				"rc743=Penguin Adventure",
 				"rc768=Space Manbow",
 			}},
@@ -78,6 +79,7 @@ func TestGetContainerTCPPorts(t *testing.T) {
 	}{
 		{
 			in: &Container{ExposedPorts: map[string]interface{}{
+				"sh101":     0,
 				"303/tcp":   0,
 				"606/udp":   0,
 				"tr808/tcp": 0,
