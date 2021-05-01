@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -11,29 +10,6 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/container"
 )
-
-func TestGetContainerPorts(t *testing.T) {
-	tests := []struct {
-		in  *container.Container
-		out []corev1.ContainerPort
-	}{
-		{
-			in: &container.Container{ExposedPorts: map[string]interface{}{
-				"909/tcp": 0,
-			}},
-			out: []corev1.ContainerPort{
-				{ContainerPort: 909, Name: "kd-tcp-909", Protocol: corev1.ProtocolTCP},
-			},
-		},
-	}
-	kub := &instance{}
-	for i, tst := range tests {
-		res := kub.getContainerPorts(tst.in)
-		if !reflect.DeepEqual(res, tst.out) {
-			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
-		}
-	}
-}
 
 func TestWaitReadyState(t *testing.T) {
 	tests := []struct {
@@ -46,11 +22,7 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in: &container.Container{
-				Name: "f1spirit",
-				ExposedPorts: map[string]interface{}{
-					"909/tcp": 0,
-				}},
+			in:  &container.Container{Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -63,11 +35,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in: &container.Container{
-				Name: "f1spirit",
-				ExposedPorts: map[string]interface{}{
-					"909/tcp": 0,
-				}},
+			in:  &container.Container{Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -83,12 +51,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in: &container.Container{
-				ID:   "rc752",
-				Name: "f1spirit",
-				ExposedPorts: map[string]interface{}{
-					"909/tcp": 0,
-				}},
+			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
 			out: false,
 		},
 		{
@@ -110,12 +73,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in: &container.Container{
-				ID:   "rc752",
-				Name: "f1spirit",
-				ExposedPorts: map[string]interface{}{
-					"909/tcp": 0,
-				}},
+			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -139,12 +97,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in: &container.Container{
-				ID:   "rc752",
-				Name: "f1spirit",
-				ExposedPorts: map[string]interface{}{
-					"909/tcp": 0,
-				}},
+			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
 			out: true,
 		},
 	}
