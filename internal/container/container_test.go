@@ -118,10 +118,11 @@ func TestStop(t *testing.T) {
 	}
 }
 
-func TestGetMounts(t *testing.T) {
+func TestVolumes(t *testing.T) {
 	tests := []struct {
 		in  *Container
 		out map[string]string
+		vol bool
 	}{
 		{
 			in: &Container{Binds: []string{
@@ -132,12 +133,21 @@ func TestGetMounts(t *testing.T) {
 				"/usr/wbass2/code": "/tmp/code",
 				"/etc/wbass2":      "/tmp/config",
 			},
+			vol: true,
+		},
+		{
+			in:  &Container{Binds: []string{}},
+			out: map[string]string{},
+			vol: false,
 		},
 	}
 	for i, tst := range tests {
-		res := tst.in.GetMounts()
+		res := tst.in.GetVolumes()
 		if !reflect.DeepEqual(res, tst.out) {
 			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
+		}
+		if tst.in.HasVolumes() != tst.vol {
+			t.Errorf("failed test %d - expected %t, but got %t", i, tst.in.HasVolumes(), tst.vol)
 		}
 	}
 }

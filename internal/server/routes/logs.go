@@ -69,7 +69,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	fmt.Fprint(out, "\r\n")
 
 	if err := cr.kubernetes.GetLogs(tainr, follow, out); err != nil {
-		log.Errorf("error retrieving logs: %s", err)
+		log.Printf("error retrieving logs: %s", err)
 		return
 	}
 }

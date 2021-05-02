@@ -3,8 +3,10 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"regexp"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,13 +15,17 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/util/exec"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
+	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr *container.Container) error {
 	match := in.getDeploymentMatchLabels(tainr)
+
+	// base deploment
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: in.namespace,
@@ -35,11 +41,6 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 					Labels: match,
 				},
 				Spec: corev1.PodSpec{
-					InitContainers: []corev1.Container{{
-						Name:  "prepare",
-						Image: "busybox:latest", // TODO: configureable, default to kubedock image
-						// Command: []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
-					}},
 					Containers: []corev1.Container{{
 						Image: tainr.Image,
 						Name:  "main",
@@ -51,20 +52,58 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 			},
 		},
 	}
+	if tainr.HasVolumes() {
+		in.addVolumes(tainr, dep)
+	}
 
 	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
 		return err
 	}
 
-	// TODO: wait initcontainer ready
-	// TODO: tar bindings
-	// TODO: copy archives
-	// TODO: signal done
+	// in case of volumes, copy the data into the initcontainer, and signal the init
+	// container when finished with copying.
+	if tainr.HasVolumes() {
+		if err := in.waitInitContainerRunning(tainr, "prepare", 30); err != nil {
+			return err
+		}
 
+		pods, err := in.getPods(tainr)
+		if err != nil {
+			return err
+		}
+
+		volumes := tainr.GetVolumes()
+		for rm, src := range volumes {
+			reader, writer := io.Pipe()
+			go func() {
+				defer writer.Close()
+				if err := tar.PackFolder(src, writer); err != nil {
+					log.Printf("error during tar: %s", err)
+					return
+				}
+			}()
+			if err := exec.RemoteCmd(exec.Request{
+				Client:     in.cli,
+				RestConfig: in.cfg,
+				Pod:        pods[0],
+				Container:  "prepare",
+				Cmd:        []string{"tar", "-xf", "-", "-C", rm},
+				Stdin:      reader,
+			}); err != nil {
+				return err
+			}
+		}
+		if err := in.signalDone(tainr); err != nil {
+			return err
+		}
+	}
+
+	// wait until the main container is in a ready state.
 	if err := in.waitReadyState(tainr, 30); err != nil {
 		return err
 	}
 
+	// port-forward all exposed ports
 	for _, pp := range tainr.GetContainerTCPPorts() {
 		tainr.MapPort(pp, portforward.RandomPort())
 	}
@@ -165,6 +204,77 @@ func (in *instance) waitReadyState(tainr *container.Container, wait int) error {
 		time.Sleep(time.Second)
 	}
 	return fmt.Errorf("timeout starting container")
+}
+
+// waitReadyContainer will wait for a specific container in the deployment to be ready.
+func (in *instance) waitInitContainerRunning(tainr *container.Container, name string, wait int) error {
+	for max := 0; max < wait; max++ {
+		pods, err := in.getPods(tainr)
+		if err != nil {
+			return err
+		}
+		for _, pod := range pods {
+			if pod.Status.Phase == corev1.PodFailed {
+				return fmt.Errorf("failed to start container")
+			}
+			for _, status := range pod.Status.InitContainerStatuses {
+				if status.Name != name {
+					continue
+				}
+				if status.State.Running != nil {
+					return nil
+				}
+			}
+		}
+		time.Sleep(time.Second)
+	}
+	return fmt.Errorf("timeout starting container")
+}
+
+// signalDone will signal the prepare init container to exit.
+func (in *instance) signalDone(tainr *container.Container) error {
+	pods, err := in.getPods(tainr)
+	if err != nil {
+		return err
+	}
+	return exec.RemoteCmd(exec.Request{
+		Client:     in.cli,
+		RestConfig: in.cfg,
+		Pod:        pods[0],
+		Container:  "prepare",
+		Cmd:        []string{"touch", "/tmp/done"},
+		Stderr:     os.Stderr,
+	})
+}
+
+func (in *instance) addVolumes(tainr *container.Container, dep *appsv1.Deployment) {
+	volumes := tainr.GetVolumes()
+	dep.Spec.Template.Spec.InitContainers = []corev1.Container{{
+		Name:    "prepare",
+		Image:   "busybox:latest", // TODO: configureable, default to kubedock image
+		Command: []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
+	}}
+
+	dep.Spec.Template.Spec.Volumes = []corev1.Volume{}
+	mounts := []corev1.VolumeMount{}
+	for rm := range volumes {
+		id := in.getVolumeId(rm)
+		dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes,
+			corev1.Volume{Name: id, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
+		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: rm})
+	}
+	dep.Spec.Template.Spec.Containers[0].VolumeMounts = mounts
+	dep.Spec.Template.Spec.InitContainers[0].VolumeMounts = mounts
+}
+
+// getVolumeId creates an id to use for the volume mapping
+func (in *instance) getVolumeId(path string) string {
+	re := regexp.MustCompile(`[^A-Za-z0-9-]`)
+	id := re.ReplaceAllString(path, ``)
+	if len(id) > 63 {
+		id = id[len(id)-63:]
+	}
+	return id
 }
 
 // getPods will return a list of pods that are spun up for this deployment.

@@ -84,16 +84,21 @@ func (co *Container) GetContainerTCPPorts() []int {
 	return ports
 }
 
-// GetMounts will return a map of volumes that should be mounted on the
+// GetVolumes will return a map of volumes that should be mounted on the
 // target container. The key is the target location, and the value is the
 // local location.
-func (co *Container) GetMounts() map[string]string {
+func (co *Container) GetVolumes() map[string]string {
 	mounts := map[string]string{}
 	for _, bind := range co.Binds {
 		f := strings.Split(bind, ":")
 		mounts[f[1]] = f[0]
 	}
 	return mounts
+}
+
+// HasVolumes will return true if the container has volumes configured.
+func (co *Container) HasVolumes() bool {
+	return len(co.Binds) > 0
 }
 
 // AddStopChannel will add channels that should be notified when
