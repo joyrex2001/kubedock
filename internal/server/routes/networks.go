@@ -14,6 +14,6 @@ func (nr *Router) NetworksList(c *gin.Context) {
 // POST "/networks/create"
 func (nr *Router) NetworksCreate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"status": "sure, fine. Party time. Excellent.",
+		"status": "Sure, fine. Party time. Excellent.",
 	})
 }

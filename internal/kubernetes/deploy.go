@@ -75,7 +75,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 	}
 
 	go func() {
-		err := in.PortForward(tainr)
+		err := in.portForward(tainr)
 		if err != nil {
 			log.Printf("portforward failed: %s", err)
 			return
@@ -86,7 +86,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 }
 
 // PortForward will create port-forwards for all mapped ports.
-func (in *instance) PortForward(tainr *container.Container) error {
+func (in *instance) portForward(tainr *container.Container) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err

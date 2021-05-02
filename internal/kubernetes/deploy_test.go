@@ -109,3 +109,144 @@ func TestWaitReadyState(t *testing.T) {
 		}
 	}
 }
+
+func TestWaitInitContainerRunning(t *testing.T) {
+	tests := []struct {
+		in   *container.Container
+		name string
+		kub  *instance
+		out  bool
+	}{
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "rc752"},
+					},
+					Status: corev1.PodStatus{
+						InitContainerStatuses: []corev1.ContainerStatus{
+							{Name: "setup", State: corev1.ContainerState{Running: nil}},
+						},
+					},
+				}),
+			},
+			name: "setup",
+			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			out:  true,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "rc752"},
+					},
+					Status: corev1.PodStatus{
+						InitContainerStatuses: []corev1.ContainerStatus{
+							{Name: "setup", State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{}}},
+						},
+					},
+				}),
+			},
+			name: "setup",
+			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			out:  false,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "rc752"},
+					},
+					Status: corev1.PodStatus{
+						Phase: corev1.PodFailed,
+					},
+				}),
+			},
+			name: "setup",
+			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			out:  true,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "rc752"},
+					},
+					Status: corev1.PodStatus{
+						InitContainerStatuses: []corev1.ContainerStatus{
+							{Name: "setup"},
+						},
+					},
+				}),
+			},
+			name: "main",
+			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			out:  true,
+		},
+	}
+
+	for i, tst := range tests {
+		res := tst.kub.waitInitContainerRunning(tst.in, tst.name, 1)
+		if (res != nil && !tst.out) || (res == nil && tst.out) {
+			t.Errorf("failed test %d - unexpected return value %s", i, res)
+		}
+	}
+}
+
+func TestAddVolumes(t *testing.T) {
+	tests := []struct {
+		in    *container.Container
+		count int
+	}{
+		{in: &container.Container{}, count: 0},
+		{in: &container.Container{Binds: []string{"/local:/remote:rw"}}, count: 1},
+	}
+
+	for i, tst := range tests {
+		dep := &appsv1.Deployment{
+			Spec: appsv1.DeploymentSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{corev1.Container{}},
+					},
+				},
+			},
+		}
+		kub := &instance{}
+		kub.addVolumes(tst.in, dep)
+		count := len(dep.Spec.Template.Spec.Volumes)
+		if count != tst.count {
+			t.Errorf("failed test %d - expected %d initContainers, but got %d", i, tst.count, count)
+		}
+	}
+}
+
+func TestTestContainerPorts(t *testing.T) {
+	tests := []struct {
+		in    *container.Container
+		count int
+	}{
+		{in: &container.Container{}, count: 0},
+		{in: &container.Container{ExposedPorts: map[string]interface{}{"909/tcp": 0}}, count: 1},
+	}
+
+	for i, tst := range tests {
+		kub := &instance{}
+		count := len(kub.getContainerPorts(tst.in))
+		if count != tst.count {
+			t.Errorf("failed test %d - expected %d container ports, but got %d", i, tst.count, count)
+		}
+	}
+}
