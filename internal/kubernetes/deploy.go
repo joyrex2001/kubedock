@@ -35,9 +35,14 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 					Labels: match,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{{
+						Name:  "prepare",
+						Image: "busybox:latest", // TODO: configureable, default to kubedock image
+						// Command: []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
+					}},
 					Containers: []corev1.Container{{
 						Image: tainr.Image,
-						Name:  tainr.GetKubernetesName(),
+						Name:  "main",
 						Args:  tainr.Cmd,
 						Env:   tainr.GetEnvVar(),
 						Ports: in.getContainerPorts(tainr),
@@ -50,6 +55,11 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
 		return err
 	}
+
+	// TODO: wait initcontainer ready
+	// TODO: tar bindings
+	// TODO: copy archives
+	// TODO: signal done
 
 	if err := in.waitReadyState(tainr, 30); err != nil {
 		return err

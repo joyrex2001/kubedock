@@ -13,7 +13,7 @@ import (
 func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer) error {
 	count := int64(100)
 	options := v1.PodLogOptions{
-		Container: tainr.GetKubernetesName(),
+		Container: "main",
 		Follow:    follow,
 		TailLines: &count,
 	}
