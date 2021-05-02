@@ -24,6 +24,7 @@ type Kubernetes interface {
 type instance struct {
 	cli       kubernetes.Interface
 	cfg       *rest.Config
+	initImage string
 	namespace string
 }
 
@@ -32,6 +33,7 @@ func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernet
 	return &instance{
 		cli:       cli,
 		cfg:       cfg,
+		initImage: "busybox:latest", // TODO: configureable, default to kubedock image
 		namespace: namespace,
 	}
 }
