@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/transport/spdy"
 )
 
+// Request is the structure used as argument for ToPod
 type Request struct {
 	// RestConfig is the kubernetes config
 	RestConfig *rest.Config
@@ -32,6 +33,7 @@ type Request struct {
 	ReadyCh chan struct{}
 }
 
+// ToPod will portforward to given pod.
 func ToPod(req Request) error {
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward",
 		req.Pod.Namespace, req.Pod.Name)

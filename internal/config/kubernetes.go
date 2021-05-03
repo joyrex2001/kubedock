@@ -5,10 +5,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	// enable auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-// getKubernetes will return a kubernetes config object.
+// GetKubernetes will return a kubernetes config object.
 func GetKubernetes() (*rest.Config, error) {
 	var err error
 	config := &rest.Config{}

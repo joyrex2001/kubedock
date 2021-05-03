@@ -30,7 +30,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: in.namespace,
 			Name:      tainr.GetKubernetesName(),
-			Labels:    tainr.Labels, // TODO: add generic label, add ttl annotation, template?)
+			Labels:    in.getLabels(tainr),
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -126,6 +126,20 @@ func (in *instance) getContainerPorts(tainr *container.Container) []corev1.Conta
 	return res
 }
 
+// getLabels will return a map of labels to be added to the container. This
+// map contains the labels as specified in the container definition, as well
+// as additional labels which are used internally by kubedock.
+func (in *instance) getLabels(tainr *container.Container) map[string]string {
+	l := tainr.Labels
+	if l == nil {
+		l = map[string]string{}
+	}
+	for k, v := range map[string]string{"kubedock": "true"} {
+		l[k] = v
+	}
+	return l
+}
+
 // getDeploymentMatchLabels will return the map of labels that can be used to
 // match running pods for this container.
 func (in *instance) getDeploymentMatchLabels(tainr *container.Container) map[string]string {
@@ -212,7 +226,7 @@ func (in *instance) addVolumes(tainr *container.Container, dep *appsv1.Deploymen
 	dep.Spec.Template.Spec.Volumes = []corev1.Volume{}
 	mounts := []corev1.VolumeMount{}
 	for rm := range volumes {
-		id := in.getVolumeId(rm)
+		id := in.getVolumeID(rm)
 		dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes,
 			corev1.Volume{Name: id, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
 		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: rm})
@@ -276,7 +290,7 @@ func (in *instance) signalDone(tainr *container.Container) error {
 }
 
 // getVolumeId creates an id to use for the volume mapping
-func (in *instance) getVolumeId(path string) string {
+func (in *instance) getVolumeID(path string) string {
 	re := regexp.MustCompile(`[^A-Za-z0-9-]`)
 	id := re.ReplaceAllString(path, ``)
 	if len(id) > 63 {

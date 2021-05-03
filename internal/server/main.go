@@ -7,7 +7,6 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 
 	"github.com/joyrex2001/kubedock/internal/config"
-	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
@@ -81,8 +80,7 @@ func (s *Server) setUpRoutes(router *gin.Engine) error {
 	}
 
 	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
-	cf := container.NewFactory(s.db)
-	routes.New(router, cf, kube)
+	routes.New(router, s.db, kube)
 
 	return nil
 }

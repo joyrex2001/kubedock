@@ -6,6 +6,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
 // containerRouter is the object that facilitate all container
@@ -16,9 +17,10 @@ type Router struct {
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, factory container.Factory, kube kubernetes.Kubernetes) *Router {
+func New(router *gin.Engine, db keyval.Database, kube kubernetes.Kubernetes) *Router {
+	f := container.NewFactory(db)
 	cr := &Router{
-		factory:    factory,
+		factory:    f,
 		kubernetes: kube,
 	}
 	cr.initRoutes(router)

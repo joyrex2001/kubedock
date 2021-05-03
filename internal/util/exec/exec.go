@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
+// Request is the structure used as argument for RemoteCmd
 type Request struct {
 	// Clent is the kubernetes clientset
 	Client kubernetes.Interface
@@ -30,7 +31,7 @@ type Request struct {
 	Stderr io.Writer
 }
 
-// ExecContainer will execute given exec object in kubernetes.
+// RemoteCmd will execute given exec object in kubernetes.
 func RemoteCmd(req Request) error {
 	r := req.Client.CoreV1().RESTClient().Post().Resource("pods").
 		Name(req.Pod.Name).

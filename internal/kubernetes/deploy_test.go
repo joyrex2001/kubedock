@@ -233,7 +233,7 @@ func TestAddVolumes(t *testing.T) {
 	}
 }
 
-func TestTestContainerPorts(t *testing.T) {
+func TestContainerPorts(t *testing.T) {
 	tests := []struct {
 		in    *container.Container
 		count int
@@ -247,6 +247,24 @@ func TestTestContainerPorts(t *testing.T) {
 		count := len(kub.getContainerPorts(tst.in))
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d container ports, but got %d", i, tst.count, count)
+		}
+	}
+}
+
+func TestGetLabels(t *testing.T) {
+	tests := []struct {
+		in    *container.Container
+		count int
+	}{
+		{in: &container.Container{}, count: 1},
+		{in: &container.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
+	}
+
+	for i, tst := range tests {
+		kub := &instance{}
+		count := len(kub.getLabels(tst.in))
+		if count != tst.count {
+			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
 		}
 	}
 }

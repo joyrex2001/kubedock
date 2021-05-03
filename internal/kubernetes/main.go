@@ -28,7 +28,7 @@ type instance struct {
 	namespace string
 }
 
-// NewFactory will return an ContainerFactory instance.
+// New will return an ContainerFactory instance.
 func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernetes {
 	return &instance{
 		cli:       cli,

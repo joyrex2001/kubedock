@@ -52,10 +52,10 @@ func (f instance) Load(id string) (*Container, error) {
 
 // CreateExec will create fresh Exec objects for given container
 // and will return an error if failed.
-func (f instance) CreateExec(containerId string) (*Exec, error) {
+func (f instance) CreateExec(containerID string) (*Exec, error) {
 	res := &Exec{
 		db:          f.db,
-		ContainerID: containerId,
+		ContainerID: containerID,
 	}
 	id, err := f.db.Create(res)
 	if err != nil {
