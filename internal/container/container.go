@@ -1,11 +1,11 @@
 package container
 
 import (
-	"log"
 	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
@@ -44,7 +44,7 @@ func (co *Container) GetEnvVar() []corev1.EnvVar {
 	for _, e := range co.Env {
 		f := strings.Split(e, "=")
 		if len(f) != 2 {
-			log.Printf("could not parse env %s", e)
+			klog.Errorf("could not parse env %s", e)
 			continue
 		}
 		env = append(env, corev1.EnvVar{Name: f[0], Value: f[1]})
@@ -67,16 +67,16 @@ func (co *Container) GetContainerTCPPorts() []int {
 	for p := range co.ExposedPorts {
 		f := strings.Split(p, "/")
 		if len(f) != 2 {
-			log.Printf("could not parse exposed port %s", p)
+			klog.Errorf("could not parse exposed port %s", p)
 			continue
 		}
 		pp, err := strconv.Atoi(f[0])
 		if err != nil {
-			log.Printf("could not parse exposed port %s: %s", p, err)
+			klog.Errorf("could not parse exposed port %s: %s", p, err)
 			continue
 		}
 		if f[1] != "tcp" {
-			log.Printf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
+			klog.Errorf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
 			continue
 		}
 		ports = append(ports, pp)

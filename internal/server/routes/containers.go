@@ -3,10 +3,10 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
@@ -55,7 +55,7 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 			return
 		}
 	} else {
-		log.Printf("container %s already running", id)
+		klog.Warningf("container %s already running", id)
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }

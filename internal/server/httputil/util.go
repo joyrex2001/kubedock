@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 )
 
 // Error will return an error response in json.
 func Error(c *gin.Context, status int, err error) {
-	log.Print(err)
+	klog.Error(err)
 	c.JSON(status, gin.H{
 		"error": err.Error(),
 	})
@@ -58,8 +58,8 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 		tee := io.TeeReader(c.Request.Body, &buf)
 		body, _ := ioutil.ReadAll(tee)
 		c.Request.Body = ioutil.NopCloser(&buf)
-		// log.Printf("Request Headers: %#v", c.Request.Header)
-		log.Printf("Request Body: %s", string(body))
+		klog.V(4).Infof("Request Headers: %#v", c.Request.Header)
+		klog.V(3).Infof("Request Body: %s", string(body))
 		c.Next()
 	}
 }
@@ -82,7 +82,7 @@ func ResponseLoggerMiddleware() gin.HandlerFunc {
 		w := &reponseWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = w
 		c.Next()
-		log.Printf("Response Body: %s", w.body.String())
+		klog.V(3).Infof("Response Body: %s", w.body.String())
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 
 	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
@@ -26,7 +27,7 @@ func New(db keyval.Database) *Server {
 // Run will initialize the http api server and configure all available
 // routers.
 func (s *Server) Run() error {
-	if !viper.GetBool("generic.verbose") {
+	if !klog.V(2) {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -59,10 +60,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 	router := gin.New()
 	router.Use(httputil.VersionAliasMiddleware(router))
 	router.Use(gin.Logger())
-	if viper.GetBool("generic.logrequest") {
-		router.Use(httputil.RequestLoggerMiddleware())
-		router.Use(httputil.ResponseLoggerMiddleware())
-	}
+	router.Use(httputil.RequestLoggerMiddleware())
+	router.Use(httputil.ResponseLoggerMiddleware())
 	router.Use(gin.Recovery())
 	return router
 }

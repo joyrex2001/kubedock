@@ -2,11 +2,11 @@ package routes
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -69,7 +69,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	fmt.Fprint(out, "\r\n")
 
 	if err := cr.kubernetes.GetLogs(tainr, follow, out); err != nil {
-		log.Printf("error retrieving logs: %s", err)
+		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}
 }

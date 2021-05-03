@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal"
 )
@@ -22,6 +25,9 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	klog.InitFlags(nil)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
 	rootCmd.PersistentFlags().String("listen-addr", ":8080", "Webserver listen address")
@@ -30,10 +36,6 @@ func init() {
 	rootCmd.PersistentFlags().String("cert-file", "", "TLS certificate file")
 	rootCmd.PersistentFlags().StringP("socket", "s", "", "Unix socket to listen to (instead of port)")
 	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose mode")
-	rootCmd.PersistentFlags().BoolP("logrequest", "r", false, "Log requests and responses (can contain credentials)")
-	viper.BindPFlag("generic.verbose", rootCmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("generic.logrequest", rootCmd.PersistentFlags().Lookup("logrequest"))
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", rootCmd.PersistentFlags().Lookup("socket"))
 	viper.BindPFlag("server.enable-tls", rootCmd.PersistentFlags().Lookup("enable-tls"))

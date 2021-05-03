@@ -14,7 +14,7 @@ func init() {
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Print the version number of kubedock",
+	Short: "Display kubedock version details",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("-------------------------------------------------\n")
 		fmt.Printf("kubedock\n")

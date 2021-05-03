@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"time"
@@ -13,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/container"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
@@ -77,7 +77,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 	go func() {
 		err := in.portForward(tainr)
 		if err != nil {
-			log.Printf("portforward failed: %s", err)
+			klog.Errorf("portforward failed: %s", err)
 			return
 		}
 	}()
@@ -254,7 +254,7 @@ func (in *instance) copyVolumeFolders(tainr *container.Container) error {
 		go func() {
 			defer writer.Close()
 			if err := tar.PackFolder(src, writer); err != nil {
-				log.Printf("error during tar: %s", err)
+				klog.Errorf("error during tar: %s", err)
 				return
 			}
 		}()
