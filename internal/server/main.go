@@ -30,7 +30,10 @@ func (s *Server) Run(port string) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(httputil.VersionAliasMiddleware(router))
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 	if viper.GetBool("generic.logrequest") {
 		router.Use(httputil.RequestLoggerMiddleware())
 		router.Use(httputil.ResponseLoggerMiddleware())
@@ -55,10 +58,7 @@ func (s *Server) Run(port string) error {
 
 	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
 
-	for v := 0; v <= config.DockerMaxAPIMinor; v++ {
-		routes.New(v, router, cf, kube)
-	}
-
+	routes.New(router, cf, kube)
 	router.Run(port)
 
 	return nil
