@@ -46,6 +46,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/info", cr.Info)
 	router.GET("/version", cr.Version)
 	router.GET("/healthz", cr.Healthz)
+
 	// not supported at the moment
 	router.POST("/containers/:id/stop", httputil.NotImplemented)
 	router.POST("/containers/:id/kill", httputil.NotImplemented)
