@@ -16,13 +16,17 @@ type Router struct {
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, db *model.Database, kube kubernetes.Kubernetes) *Router {
+func New(router *gin.Engine, kube kubernetes.Kubernetes) (*Router, error) {
+	db, err := model.New()
+	if err != nil {
+		return nil, err
+	}
 	cr := &Router{
 		db:         db,
 		kubernetes: kube,
 	}
 	cr.initRoutes(router)
-	return cr
+	return cr, nil
 }
 
 // initRoutes will add all suported routes.

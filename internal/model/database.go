@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -67,6 +68,9 @@ func (in *Database) LoadContainer(id string) (*types.Container, error) {
 	if err != nil {
 		return nil, err
 	}
+	if raw == nil {
+		return nil, fmt.Errorf("container %s not found", id)
+	}
 	return raw.(*types.Container), nil
 }
 
@@ -98,6 +102,9 @@ func (in *Database) LoadExec(id string) (*types.Exec, error) {
 	raw, err := txn.First("exec", "id", id)
 	if err != nil {
 		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("exec %s not found", id)
 	}
 	return raw.(*types.Exec), nil
 }

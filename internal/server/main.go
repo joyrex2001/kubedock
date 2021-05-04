@@ -9,19 +9,17 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
-	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // Server is the API server.
 type Server struct {
-	db *model.Database
 }
 
 // New will instantiate a Server object.
-func New(db *model.Database) *Server {
-	return &Server{db: db}
+func New() *Server {
+	return &Server{}
 }
 
 // Run will initialize the http api server and configure all available
@@ -79,7 +77,7 @@ func (s *Server) setUpRoutes(router *gin.Engine) error {
 	}
 
 	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
-	routes.New(router, s.db, kube)
+	_, err = routes.New(router, kube)
 
-	return nil
+	return err
 }
