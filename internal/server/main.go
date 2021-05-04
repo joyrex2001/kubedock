@@ -9,18 +9,18 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
-	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
 // Server is the API server.
 type Server struct {
-	db keyval.Database
+	db *model.Database
 }
 
 // New will instantiate a Server object.
-func New(db keyval.Database) *Server {
+func New(db *model.Database) *Server {
 	return &Server{db: db}
 }
 

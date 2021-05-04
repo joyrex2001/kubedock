@@ -1,18 +1,16 @@
-package container
+package types
 
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
-
-	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
 // Container describes the details of a container.
 type Container struct {
-	db           keyval.Database
 	ID           string
 	Name         string
 	Image        string
@@ -23,6 +21,7 @@ type Container struct {
 	Labels       map[string]string
 	MappedPorts  map[int]int
 	StopChannels []chan struct{}
+	Created      time.Time
 }
 
 // GetKubernetesName will return the a k8s compatible name of the container.
@@ -115,14 +114,4 @@ func (co *Container) SignalStop() {
 	for _, stop := range co.StopChannels {
 		stop <- struct{}{}
 	}
-}
-
-// Delete will delete the Container instance.
-func (co *Container) Delete() error {
-	return co.db.Delete(co.ID)
-}
-
-// Update will update the Container instance.
-func (co *Container) Update() error {
-	return co.db.Update(co.ID, co)
 }

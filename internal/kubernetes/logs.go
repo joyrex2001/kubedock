@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/joyrex2001/kubedock/internal/container"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 // GetLogs will write the logs for given container to given writer.
-func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer) error {
+func (in *instance) GetLogs(tainr *types.Container, follow bool, w io.Writer) error {
 	count := int64(100)
 	options := v1.PodLogOptions{
 		Container: "main",
@@ -66,7 +67,7 @@ func (in *instance) GetLogs(tainr *container.Container, follow bool, w io.Writer
 
 // getFirstPodName returns the pod name of the first pod that matches
 // the container deployment.
-func (in *instance) getFirstPodName(tainr *container.Container) (string, error) {
+func (in *instance) getFirstPodName(tainr *types.Container) (string, error) {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return "", err

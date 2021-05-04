@@ -7,12 +7,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 func TestDeleteContainer(t *testing.T) {
 	tests := []struct {
-		in  *container.Container
+		in  *types.Container
 		kub *instance
 		out bool
 	}{
@@ -29,7 +29,7 @@ func TestDeleteContainer(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: false,
 		},
 	}

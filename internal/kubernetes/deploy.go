@@ -14,7 +14,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
@@ -22,7 +22,7 @@ import (
 
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
-func (in *instance) StartContainer(tainr *container.Container) error {
+func (in *instance) StartContainer(tainr *types.Container) error {
 	match := in.getDeploymentMatchLabels(tainr)
 
 	// base deploment
@@ -86,7 +86,7 @@ func (in *instance) StartContainer(tainr *container.Container) error {
 }
 
 // PortForward will create port-forwards for all mapped ports.
-func (in *instance) portForward(tainr *container.Container) error {
+func (in *instance) portForward(tainr *types.Container) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (in *instance) portForward(tainr *container.Container) error {
 
 // getContainerPorts will return the mapped ports of the container
 // as k8s ContainerPorts.
-func (in *instance) getContainerPorts(tainr *container.Container) []corev1.ContainerPort {
+func (in *instance) getContainerPorts(tainr *types.Container) []corev1.ContainerPort {
 	res := []corev1.ContainerPort{}
 	for _, pp := range tainr.GetContainerTCPPorts() {
 		n := fmt.Sprintf("kd-tcp-%d", pp)
@@ -129,7 +129,7 @@ func (in *instance) getContainerPorts(tainr *container.Container) []corev1.Conta
 // getLabels will return a map of labels to be added to the container. This
 // map contains the labels as specified in the container definition, as well
 // as additional labels which are used internally by kubedock.
-func (in *instance) getLabels(tainr *container.Container) map[string]string {
+func (in *instance) getLabels(tainr *types.Container) map[string]string {
 	l := tainr.Labels
 	if l == nil {
 		l = map[string]string{}
@@ -142,7 +142,7 @@ func (in *instance) getLabels(tainr *container.Container) map[string]string {
 
 // getDeploymentMatchLabels will return the map of labels that can be used to
 // match running pods for this container.
-func (in *instance) getDeploymentMatchLabels(tainr *container.Container) map[string]string {
+func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]string {
 	return map[string]string{
 		"app":      tainr.GetKubernetesName(),
 		"kubedock": tainr.ID,
@@ -152,12 +152,12 @@ func (in *instance) getDeploymentMatchLabels(tainr *container.Container) map[str
 
 // getPodsLabelSelector will return a label selector that can be used to
 // uniquely idenitify pods that belong to this deployment.
-func (in *instance) getPodsLabelSelector(tainr *container.Container) string {
+func (in *instance) getPodsLabelSelector(tainr *types.Container) string {
 	return "kubedock=" + tainr.ID
 }
 
 // waitReadyState will wait for the deploymemt to be ready.
-func (in *instance) waitReadyState(tainr *container.Container, wait int) error {
+func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
 	name := tainr.GetKubernetesName()
 	for max := 0; max < wait; max++ {
 		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
@@ -188,7 +188,7 @@ func (in *instance) waitReadyState(tainr *container.Container, wait int) error {
 
 // waitReadyContainer will wait for a specific container in the deployment
 // to be ready.
-func (in *instance) waitInitContainerRunning(tainr *container.Container, name string, wait int) error {
+func (in *instance) waitInitContainerRunning(tainr *types.Container, name string, wait int) error {
 	for max := 0; max < wait; max++ {
 		pods, err := in.getPods(tainr)
 		if err != nil {
@@ -215,7 +215,7 @@ func (in *instance) waitInitContainerRunning(tainr *container.Container, name st
 // addVolumes will add an init-container "setup" and creates volumes and
 // volume mounts in both the init container and "main" container in order
 // to copy data before the container is started.
-func (in *instance) addVolumes(tainr *container.Container, dep *appsv1.Deployment) {
+func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) {
 	volumes := tainr.GetVolumes()
 	dep.Spec.Template.Spec.InitContainers = []corev1.Container{{
 		Name:    "setup",
@@ -238,7 +238,7 @@ func (in *instance) addVolumes(tainr *container.Container, dep *appsv1.Deploymen
 // copyVolumeFolders will copy the configured volumes of the container to
 // the running init container, and signal the init container when finished
 // with copying.
-func (in *instance) copyVolumeFolders(tainr *container.Container) error {
+func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 	if err := in.waitInitContainerRunning(tainr, "setup", 30); err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func (in *instance) copyVolumeFolders(tainr *container.Container) error {
 }
 
 // signalDone will signal the prepare init container to exit.
-func (in *instance) signalDone(tainr *container.Container) error {
+func (in *instance) signalDone(tainr *types.Container) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
@@ -300,7 +300,7 @@ func (in *instance) getVolumeID(path string) string {
 }
 
 // getPods will return a list of pods that are spun up for this deployment.
-func (in *instance) getPods(tainr *container.Container) ([]corev1.Pod, error) {
+func (in *instance) getPods(tainr *types.Container) ([]corev1.Pod, error) {
 	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: in.getPodsLabelSelector(tainr),
 	})

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
@@ -34,21 +35,22 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	_, err := cr.factory.Load(id)
+	_, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
-	exec, err := cr.factory.CreateExec(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
+	exec := &types.Exec{
+		ContainerID: id,
+		Cmd:         in.Cmd,
+		Stderr:      in.Stderr,
+		Stdout:      in.Stdout,
+	}
+	if err := cr.db.SaveExec(exec); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-
-	exec.Cmd = in.Cmd
-	exec.Stderr = in.Stderr
-	exec.Stdout = in.Stdout
 
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": exec.ID,
@@ -69,13 +71,13 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	exec, err := cr.factory.LoadExec(id)
+	exec, err := cr.db.LoadExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
-	tainr, err := cr.factory.Load(exec.ContainerID)
+	tainr, err := cr.db.LoadContainer(exec.ContainerID)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -94,7 +96,7 @@ func (cr *Router) ExecStart(c *gin.Context) {
 func (cr *Router) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 
-	_, err := cr.factory.LoadExec(id)
+	_, err := cr.db.LoadExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

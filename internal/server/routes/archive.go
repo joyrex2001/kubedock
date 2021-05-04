@@ -22,7 +22,7 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		return
 	}
 
-	tainr, err := cr.factory.Load(id)
+	tainr, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

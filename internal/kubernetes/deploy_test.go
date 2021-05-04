@@ -8,12 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 func TestWaitReadyState(t *testing.T) {
 	tests := []struct {
-		in  *container.Container
+		in  *types.Container
 		kub *instance
 		out bool
 	}{
@@ -22,7 +22,7 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &container.Container{Name: "f1spirit"},
+			in:  &types.Container{Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -35,7 +35,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{Name: "f1spirit"},
+			in:  &types.Container{Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -51,7 +51,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: false,
 		},
 		{
@@ -73,7 +73,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -97,7 +97,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: true,
 		},
 	}
@@ -112,7 +112,7 @@ func TestWaitReadyState(t *testing.T) {
 
 func TestWaitInitContainerRunning(t *testing.T) {
 	tests := []struct {
-		in   *container.Container
+		in   *types.Container
 		name string
 		kub  *instance
 		out  bool
@@ -134,7 +134,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
 			out:  true,
 		},
 		{
@@ -154,7 +154,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
 			out:  false,
 		},
 		{
@@ -172,7 +172,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
 			out:  true,
 		},
 		{
@@ -192,7 +192,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "main",
-			in:   &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
 			out:  true,
 		},
 	}
@@ -207,11 +207,11 @@ func TestWaitInitContainerRunning(t *testing.T) {
 
 func TestAddVolumes(t *testing.T) {
 	tests := []struct {
-		in    *container.Container
+		in    *types.Container
 		count int
 	}{
-		{in: &container.Container{}, count: 0},
-		{in: &container.Container{Binds: []string{"/local:/remote:rw"}}, count: 1},
+		{in: &types.Container{}, count: 0},
+		{in: &types.Container{Binds: []string{"/local:/remote:rw"}}, count: 1},
 	}
 
 	for i, tst := range tests {
@@ -235,11 +235,11 @@ func TestAddVolumes(t *testing.T) {
 
 func TestContainerPorts(t *testing.T) {
 	tests := []struct {
-		in    *container.Container
+		in    *types.Container
 		count int
 	}{
-		{in: &container.Container{}, count: 0},
-		{in: &container.Container{ExposedPorts: map[string]interface{}{"909/tcp": 0}}, count: 1},
+		{in: &types.Container{}, count: 0},
+		{in: &types.Container{ExposedPorts: map[string]interface{}{"909/tcp": 0}}, count: 1},
 	}
 
 	for i, tst := range tests {
@@ -253,11 +253,11 @@ func TestContainerPorts(t *testing.T) {
 
 func TestGetLabels(t *testing.T) {
 	tests := []struct {
-		in    *container.Container
+		in    *types.Container
 		count int
 	}{
-		{in: &container.Container{}, count: 1},
-		{in: &container.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
+		{in: &types.Container{}, count: 1},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
 	}
 
 	for i, tst := range tests {

@@ -6,18 +6,18 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 // Kubernetes is the interface to orchestrate and manage kubernetes objects.
 type Kubernetes interface {
-	StartContainer(*container.Container) error
-	DeleteContainer(*container.Container) error
-	CopyToContainer(*container.Container, []byte, string) error
-	ExecContainer(*container.Container, *container.Exec, io.Writer) error
-	GetContainerStatus(*container.Container) (map[string]string, error)
-	IsContainerRunning(*container.Container) (bool, error)
-	GetLogs(*container.Container, bool, io.Writer) error
+	StartContainer(*types.Container) error
+	DeleteContainer(*types.Container) error
+	CopyToContainer(*types.Container, []byte, string) error
+	ExecContainer(*types.Container, *types.Exec, io.Writer) error
+	GetContainerStatus(*types.Container) (map[string]string, error)
+	IsContainerRunning(*types.Container) (bool, error)
+	GetLogs(*types.Container, bool, io.Writer) error
 }
 
 // instance is the internal representation of the Kubernetes object.

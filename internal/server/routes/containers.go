@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
@@ -20,20 +20,19 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		return
 	}
 
-	tainr, err := cr.factory.Create()
-	if err != nil {
+	tainr := &types.Container{
+		Name:         in.Name,
+		Image:        in.Image,
+		Cmd:          in.Cmd,
+		Env:          in.Env,
+		ExposedPorts: in.ExposedPorts,
+		Labels:       in.Labels,
+		Binds:        in.HostConfig.Binds,
+	}
+	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-
-	tainr.Name = in.Name
-	tainr.Image = in.Image
-	tainr.Cmd = in.Cmd
-	tainr.Env = in.Env
-	tainr.ExposedPorts = in.ExposedPorts
-	tainr.Labels = in.Labels
-	tainr.Binds = in.HostConfig.Binds
-	tainr.Update()
 
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": tainr.ID,
@@ -43,7 +42,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 // POST "/containers/:id/start"
 func (cr *Router) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.factory.Load(id)
+	tainr, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -63,7 +62,7 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 // DELETE "/containers/:id"
 func (cr *Router) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.factory.Load(id)
+	tainr, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -73,7 +72,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	if err := tainr.Delete(); err != nil {
+	if err := cr.db.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
@@ -83,7 +82,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 // GET "/containers/:id/json"
 func (cr *Router) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.factory.Load(id)
+	tainr, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -133,7 +132,7 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 
 // getNetworkSettingsPorts will return the mapped ports of the container
 // as k8s ports structure to be used in network settings.
-func (cr *Router) getNetworkSettingsPorts(tainr *container.Container) gin.H {
+func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 	res := gin.H{}
 	for dst, src := range tainr.MappedPorts {
 		p := fmt.Sprintf("%d/tcp", dst)

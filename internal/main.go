@@ -4,18 +4,17 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server"
-	"github.com/joyrex2001/kubedock/internal/util/keyval"
 )
 
 // Main is the main entry point for starting this service, based the settings
 // initiated by cmd.
 func Main(cmd *cobra.Command, args []string) {
-	kv, err := keyval.New()
+	db, err := model.New()
 	if err != nil {
-		klog.Fatalf("error initializing internal database: %s", err)
+		klog.Fatalf("error instantiating database: %s", err)
 	}
-
-	s := server.New(kv)
+	s := server.New(db)
 	s.Run()
 }

@@ -8,12 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/joyrex2001/kubedock/internal/container"
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 func TestGetLogs(t *testing.T) {
 	tests := []struct {
-		in  *container.Container
+		in  *types.Container
 		kub *instance
 		out bool
 	}{
@@ -22,7 +22,7 @@ func TestGetLogs(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: true,
 		},
 		// {
@@ -36,7 +36,7 @@ func TestGetLogs(t *testing.T) {
 		// 			},
 		// 		}),
 		// 	},
-		// 	in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+		// 	in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 		// 	out: false,
 		// },
 	}
@@ -54,7 +54,7 @@ func TestGetLogs(t *testing.T) {
 
 func TestGetFirstPodName(t *testing.T) {
 	tests := []struct {
-		in  *container.Container
+		in  *types.Container
 		kub *instance
 		out string
 		suc bool
@@ -64,7 +64,7 @@ func TestGetFirstPodName(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: "",
 			suc: false,
 		},
@@ -78,7 +78,7 @@ func TestGetFirstPodName(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: "",
 			suc: false,
 		},
@@ -93,7 +93,7 @@ func TestGetFirstPodName(t *testing.T) {
 					},
 				}),
 			},
-			in:  &container.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
 			out: "f1spirit",
 			suc: true,
 		},

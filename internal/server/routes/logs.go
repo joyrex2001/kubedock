@@ -18,7 +18,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	// TODO: implement since
 	// TODO: implement until
 	// TODO: implement tail
-	tainr, err := cr.factory.Load(id)
+	tainr, err := cr.db.LoadContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
