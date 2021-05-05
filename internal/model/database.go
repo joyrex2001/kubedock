@@ -35,20 +35,20 @@ func New() (*Database, error) {
 func (in *Database) createSchema() (*memdb.MemDB, error) {
 	schema := &memdb.DBSchema{
 		Tables: map[string]*memdb.TableSchema{
-			"container": &memdb.TableSchema{
+			"container": {
 				Name: "container",
 				Indexes: map[string]*memdb.IndexSchema{
-					"id": &memdb.IndexSchema{
+					"id": {
 						Name:    "id",
 						Unique:  true,
 						Indexer: &memdb.StringFieldIndex{Field: "ID"},
 					},
 				},
 			},
-			"exec": &memdb.TableSchema{
+			"exec": {
 				Name: "exec",
 				Indexes: map[string]*memdb.IndexSchema{
-					"id": &memdb.IndexSchema{
+					"id": {
 						Name:    "id",
 						Unique:  true,
 						Indexer: &memdb.StringFieldIndex{Field: "ID"},
@@ -74,6 +74,20 @@ func (in *Database) LoadContainer(id string) (*types.Container, error) {
 	return raw.(*types.Container), nil
 }
 
+// GetContainers will return all stored containers.
+func (in *Database) GetContainers() ([]*types.Container, error) {
+	rec := []*types.Container{}
+	txn := in.db.Txn(false)
+	it, err := txn.Get("container", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		rec = append(rec, obj.(*types.Container))
+	}
+	return rec, nil
+}
+
 // SaveContainer will either update the given container, or create a new
 // record. If ID is not provided, it will generate an ID and adds the
 // current time in Created.
@@ -92,7 +106,6 @@ func (in *Database) SaveContainer(con *types.Container) error {
 // DeleteContainer will delete provided container.
 func (in *Database) DeleteContainer(con *types.Container) error {
 	return in.delete("container", con)
-
 }
 
 // LoadExec will return a exec with given id, or an error if the
@@ -107,6 +120,20 @@ func (in *Database) LoadExec(id string) (*types.Exec, error) {
 		return nil, fmt.Errorf("exec %s not found", id)
 	}
 	return raw.(*types.Exec), nil
+}
+
+// GetExecs will return all stored execs.
+func (in *Database) GetExecs() ([]*types.Exec, error) {
+	rec := []*types.Exec{}
+	txn := in.db.Txn(false)
+	it, err := txn.Get("exec", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		rec = append(rec, obj.(*types.Exec))
+	}
+	return rec, nil
 }
 
 // SaveExec will either update the given exec, or create a new

@@ -39,6 +39,13 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("Loaded container differs to saved container")
 		}
 	}
+	if cons, err := db.GetContainers(); err != nil {
+		t.Errorf("Unexpected error when loading all existing containers")
+	} else {
+		if len(cons) != 1 {
+			t.Errorf("Expected 1 container records, but got %d", len(cons))
+		}
+	}
 	conid := con.ID
 	if err := db.DeleteContainer(con); err != nil {
 		t.Errorf("Unexpected error when deleting a container")
@@ -69,6 +76,13 @@ func TestDatabase(t *testing.T) {
 	} else {
 		if excl.ID != exc.ID || excl.ContainerID != exc.ContainerID {
 			t.Errorf("Loaded container differs to saved exec")
+		}
+	}
+	if excs, err := db.GetExecs(); err != nil {
+		t.Errorf("Unexpected error when loading all existing execs")
+	} else {
+		if len(excs) != 1 {
+			t.Errorf("Expected 1 exec records, but got %d", len(excs))
 		}
 	}
 	excid := exc.ID

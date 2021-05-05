@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal"
+	"github.com/joyrex2001/kubedock/internal/config"
 )
 
 var cfgFile string
@@ -30,25 +32,30 @@ func init() {
 
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
+	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("listen-addr", ":8080", "Webserver listen address")
+	rootCmd.PersistentFlags().StringP("socket", "s", "", "Unix socket to listen to (instead of port)")
 	rootCmd.PersistentFlags().Bool("enable-tls", false, "Enable TLS on admin webserver")
 	rootCmd.PersistentFlags().String("key-file", "", "TLS keyfile")
 	rootCmd.PersistentFlags().String("cert-file", "", "TLS certificate file")
-	rootCmd.PersistentFlags().StringP("socket", "s", "", "Unix socket to listen to (instead of port)")
-	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
+	rootCmd.PersistentFlags().Duration("keepmax", 5*time.Minute, "Reap all resources older than this time")
+	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", rootCmd.PersistentFlags().Lookup("socket"))
 	viper.BindPFlag("server.enable-tls", rootCmd.PersistentFlags().Lookup("enable-tls"))
 	viper.BindPFlag("server.cert-file", rootCmd.PersistentFlags().Lookup("cert-file"))
 	viper.BindPFlag("server.key-file", rootCmd.PersistentFlags().Lookup("key-file"))
 	viper.BindPFlag("kubernetes.namespace", rootCmd.PersistentFlags().Lookup("namespace"))
+	viper.BindPFlag("kubernetes.initimage", rootCmd.PersistentFlags().Lookup("initimage"))
+	viper.BindPFlag("reaper.keepmax", rootCmd.PersistentFlags().Lookup("keepmax"))
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.socket", "SERVER_SOCKET")
 	viper.BindEnv("server.enable-tls", "SERVER_ENABLE_TLS")
 	viper.BindEnv("server.cert-file", "SERVER_CERT_FILE")
 	viper.BindEnv("server.key-file", "SERVER_KEY_FILE")
 	viper.BindEnv("kubernetes.namespace", "NAMESPACE")
-
+	viper.BindEnv("kubernetes.initimage", "INIT_IMAGE")
+	viper.BindEnv("reaper.keepmax", "REAPER_KEEPMAX")
 	// kubeconfig
 	if home := homeDir(); home != "" {
 		rootCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")

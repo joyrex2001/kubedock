@@ -58,8 +58,8 @@ func RequestLoggerMiddleware() gin.HandlerFunc {
 		tee := io.TeeReader(c.Request.Body, &buf)
 		body, _ := ioutil.ReadAll(tee)
 		c.Request.Body = ioutil.NopCloser(&buf)
-		klog.V(4).Infof("Request Headers: %#v", c.Request.Header)
-		klog.V(3).Infof("Request Body: %s", string(body))
+		klog.V(5).Infof("Request Headers: %#v", c.Request.Header)
+		klog.V(4).Infof("Request Body: %s", string(body))
 		c.Next()
 	}
 }
@@ -82,7 +82,7 @@ func ResponseLoggerMiddleware() gin.HandlerFunc {
 		w := &reponseWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = w
 		c.Next()
-		klog.V(3).Infof("Response Body: %s", w.body.String())
+		klog.V(4).Infof("Response Body: %s", w.body.String())
 	}
 }
 

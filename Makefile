@@ -3,16 +3,18 @@ run:
 
 build:
 	CGO_ENABLED=0 go build -ldflags \
-		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S` \
+		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
 		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
-		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`" \
+		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
+		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`" \
 		 -o kubedock
 
 docker:
 	docker build . -t joyrex2001/kubedock:latest
 
 clean:
-	rm kubedock
+	rm -f kubedock
+	go mod tidy
 
 cloc:
 	cloc --exclude-dir=vendor,node_modules,dist,_notes .

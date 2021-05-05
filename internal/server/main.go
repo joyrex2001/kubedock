@@ -4,10 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 
-	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/kubernetes"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
@@ -15,11 +13,12 @@ import (
 
 // Server is the API server.
 type Server struct {
+	kub kubernetes.Kubernetes
 }
 
 // New will instantiate a Server object.
-func New() *Server {
-	return &Server{}
+func New(kub kubernetes.Kubernetes) *Server {
+	return &Server{kub: kub}
 }
 
 // Run will initialize the http api server and configure all available
@@ -30,10 +29,6 @@ func (s *Server) Run() error {
 	}
 
 	router := s.getGinEngine()
-	err := s.setUpRoutes(router)
-	if err != nil {
-		return err
-	}
 
 	socket := viper.GetString("server.socket")
 	if socket == "" {
@@ -61,23 +56,6 @@ func (s *Server) getGinEngine() *gin.Engine {
 	router.Use(httputil.RequestLoggerMiddleware())
 	router.Use(httputil.ResponseLoggerMiddleware())
 	router.Use(gin.Recovery())
+	routes.New(router, s.kub)
 	return router
-}
-
-// setUpRoutes will configure the routes for the server.
-func (s *Server) setUpRoutes(router *gin.Engine) error {
-	cfg, err := config.GetKubernetes()
-	if err != nil {
-		return err
-	}
-
-	cli, err := clientset.NewForConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	kube := kubernetes.New(cfg, cli, viper.GetString("kubernetes.namespace"))
-	_, err = routes.New(router, kube)
-
-	return err
 }

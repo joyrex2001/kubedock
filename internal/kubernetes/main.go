@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"io"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -13,6 +14,7 @@ import (
 type Kubernetes interface {
 	StartContainer(*types.Container) error
 	DeleteContainer(*types.Container) error
+	DeleteContainersOlderThan(time.Duration) error
 	CopyToContainer(*types.Container, []byte, string) error
 	ExecContainer(*types.Container, *types.Exec, io.Writer) error
 	GetContainerStatus(*types.Container) (map[string]string, error)
@@ -28,12 +30,24 @@ type instance struct {
 	namespace string
 }
 
+// Request is the structure used as argument for RemoteCmd
+type Config struct {
+	// Clent is the kubernetes clientset
+	Client kubernetes.Interface
+	// RestConfig is the kubernetes config
+	RestConfig *rest.Config
+	// Namespace is the namespace in which all actions are performed
+	Namespace string
+	// InitImage is the image that is used as init container to prepare vols
+	InitImage string
+}
+
 // New will return an ContainerFactory instance.
-func New(cfg *rest.Config, cli *kubernetes.Clientset, namespace string) Kubernetes {
+func New(cfg Config) Kubernetes {
 	return &instance{
-		cli:       cli,
-		cfg:       cfg,
-		initImage: "busybox:latest", // TODO: configureable, default to kubedock image
-		namespace: namespace,
+		cli:       cfg.Client,
+		cfg:       cfg.RestConfig,
+		initImage: cfg.InitImage,
+		namespace: cfg.Namespace,
 	}
 }
