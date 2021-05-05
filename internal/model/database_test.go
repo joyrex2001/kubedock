@@ -94,3 +94,17 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Expected error when loading an exec that doesn't exist")
 	}
 }
+
+func TestContainerIDWorkaround(t *testing.T) {
+	db, _ := New()
+	for i := 0; i < 1000; i++ {
+		con := &types.Container{}
+		if err := db.SaveContainer(con); err != nil {
+			t.Errorf("Unexpected error when creating a new container")
+		}
+		if con.ID[:1] == "c" {
+			t.Errorf("Container ID that start with a c cause problems in the server router setup...")
+			return
+		}
+	}
+}

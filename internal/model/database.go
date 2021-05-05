@@ -97,6 +97,9 @@ func (in *Database) SaveContainer(con *types.Container) error {
 		if err != nil {
 			return err
 		}
+		if id[:1] == "c" {
+			id = "b" + id[1:]
+		}
 		con.ID = id
 		con.Created = time.Now()
 	}

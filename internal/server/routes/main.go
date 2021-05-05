@@ -30,8 +30,12 @@ func New(router *gin.Engine, kube kubernetes.Kubernetes) (*Router, error) {
 
 // initRoutes will add all suported routes.
 func (cr *Router) initRoutes(router *gin.Engine) {
+	// DEBT: "POST /containers/create" and "POST /containers/:id/start" overlap
+	// which (currently) means :id that start with a c will 404 by the router;
+	// as work around, no container-ids are generated that start with a 'c'...
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
+
 	router.GET("/containers/:id/json", cr.ContainerInfo)
 	router.DELETE("/containers/:id", cr.ContainerDelete)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
