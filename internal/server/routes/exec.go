@@ -11,6 +11,8 @@ import (
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
+// ContainerExec - create an exec instance.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // POST "/containers/:id/exec"
 func (cr *Router) ContainerExec(c *gin.Context) {
 	in := &ContainerExecRequest{}
@@ -57,6 +59,8 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 	})
 }
 
+// ExecStart - start an exec instance.
+// https://docs.docker.com/engine/api/v1.41/#operation/ExecStart
 // POST "/exec/:id/start"
 func (cr *Router) ExecStart(c *gin.Context) {
 	req := &ExecStartRequest{}
@@ -92,6 +96,8 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	}
 }
 
+// ExecInfo - return low-level information about an exec instance.
+// https://docs.docker.com/engine/api/v1.41/#operation/ExecInspect
 // GET "/exec/:id/json"
 func (cr *Router) ExecInfo(c *gin.Context) {
 	id := c.Param("id")

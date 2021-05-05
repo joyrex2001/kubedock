@@ -9,15 +9,15 @@ import (
 	"k8s.io/klog"
 )
 
-// reaper is the object handles reaping of resources.
-type reaper struct {
+// Reaper is the object handles reaping of resources.
+type Reaper struct {
 	db      *model.Database
 	keepMax time.Duration
 	kub     kubernetes.Kubernetes
 	quit    chan struct{}
 }
 
-var instance *reaper
+var instance *Reaper
 var once sync.Once
 
 // Config is the configuration to be used for the Reaper proces.
@@ -29,11 +29,11 @@ type Config struct {
 }
 
 // New will create return the singleton Reaper instance.
-func New(cfg Config) (*reaper, error) {
+func New(cfg Config) (*Reaper, error) {
 	var err error
 	var db *model.Database
 	once.Do(func() {
-		instance = &reaper{}
+		instance = &Reaper{}
 		db, err = model.New()
 		instance.db = db
 		instance.kub = cfg.Kubernetes
@@ -43,18 +43,18 @@ func New(cfg Config) (*reaper, error) {
 }
 
 // Start will start the reaper background process.
-func (in *reaper) Start() {
+func (in *Reaper) Start() {
 	in.quit = make(chan struct{})
-	in.reaper()
+	in.runloop()
 }
 
 // Stop will stop the reaper process.
-func (in *reaper) Stop() {
+func (in *Reaper) Stop() {
 	in.quit <- struct{}{}
 }
 
-// reaper will reap all lingering resources at a steady interval.
-func (in *reaper) reaper() {
+// Reaper will reap all lingering resources at a steady interval.
+func (in *Reaper) runloop() {
 	go func() {
 		for {
 			tmr := time.NewTimer(time.Minute)
@@ -71,7 +71,7 @@ func (in *reaper) reaper() {
 }
 
 // clean will run all cleaners.
-func (in *reaper) clean() {
+func (in *Reaper) clean() {
 	if err := in.CleanExecs(); err != nil {
 		klog.Errorf("error cleaning execs: %s", err)
 	}

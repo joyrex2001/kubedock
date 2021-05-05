@@ -4,22 +4,34 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
+// PutArchive - extract an archive of files or folders to a directory in a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive
 // PUT "/containers/:id/archive"
 func (cr *Router) PutArchive(c *gin.Context) {
-	// TODO: implement noOverwriteDirNonDir
-	// TODO: implement copyUIDGID
 	id := c.Param("id")
-	path := c.Query("path")
 
+	path := c.Query("path")
 	if path == "" {
 		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("missing required path parameter"))
 		return
+	}
+
+	ovw, _ := strconv.ParseBool(c.Query("noOverwriteDirNonDir"))
+	if ovw {
+		klog.Warning("noOverwriteDirNonDir is not supported, ignoring setting.")
+	}
+
+	cgid, _ := strconv.ParseBool(c.Query("copyUIDGID"))
+	if cgid {
+		klog.Warning("copyUIDGID is not supported, ignoring setting.")
 	}
 
 	tainr, err := cr.db.LoadContainer(id)

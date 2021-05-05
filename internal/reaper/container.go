@@ -9,7 +9,7 @@ import (
 // CleanContainers will clean all lingering containers that are
 // older than the configured keepMax duration, and stored locally
 // in the in memory database.
-func (in *reaper) CleanContainers() error {
+func (in *Reaper) CleanContainers() error {
 	tainrs, err := in.db.GetContainers()
 	if err != nil {
 		return err
@@ -33,6 +33,6 @@ func (in *reaper) CleanContainers() error {
 // CleanContainersKubernetes will clean all lingering containers
 // that are older than the configured keepMax duration, and stored
 // not stored in the local in memory database.
-func (in *reaper) CleanContainersKubernetes() error {
+func (in *Reaper) CleanContainersKubernetes() error {
 	return in.kub.DeleteContainersOlderThan(in.keepMax * 2)
 }

@@ -29,7 +29,7 @@ test:
 
 lint:
 	golint ./internal/...
-	errcheck ./internal/... ./cmd/...
+	# errcheck ./internal/... ./cmd/...
 
 cover:
 	go test ./... -cover -coverprofile=coverage.out
@@ -37,5 +37,6 @@ cover:
 	
 deps:
 	go get -u golang.org/x/lint/golint
+	go get -u github.com/kisielk/errcheck
 
 .PHONY: run build docker clean cloc fmt test lint cover deps

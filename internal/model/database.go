@@ -151,7 +151,7 @@ func (in *Database) SaveExec(exc *types.Exec) error {
 	return in.save("exec", exc)
 }
 
-// DeleteContainer will delete provided exec.
+// DeleteExec will delete provided exec.
 func (in *Database) DeleteExec(exc *types.Exec) error {
 	return in.delete("exec", exc)
 }

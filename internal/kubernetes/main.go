@@ -30,9 +30,9 @@ type instance struct {
 	namespace string
 }
 
-// Request is the structure used as argument for RemoteCmd
+// Config is the structure to instantiate a Kubernetes object
 type Config struct {
-	// Clent is the kubernetes clientset
+	// Client is the kubernetes clientset
 	Client kubernetes.Interface
 	// RestConfig is the kubernetes config
 	RestConfig *rest.Config

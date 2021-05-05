@@ -12,6 +12,8 @@ import (
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
+// ContainerCreate - create a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerCreate
 // POST "/containers/create"
 func (cr *Router) ContainerCreate(c *gin.Context) {
 	in := &ContainerCreateRequest{}
@@ -39,6 +41,8 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	})
 }
 
+// ContainerStart - start a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart
 // POST "/containers/:id/start"
 func (cr *Router) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
@@ -59,6 +63,8 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
+// ContainerDelete - remove a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
 // DELETE "/containers/:id"
 func (cr *Router) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
@@ -79,6 +85,8 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
+// ContainerInfo - return low-level information about a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // GET "/containers/:id/json"
 func (cr *Router) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")

@@ -9,6 +9,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 )
 
+// Healthz - generic k8s health endpoint. Not part of the docker API.
 // GET "/healthz"
 func (cr *Router) Healthz(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -17,6 +18,8 @@ func (cr *Router) Healthz(c *gin.Context) {
 	})
 }
 
+// Info - get system information.
+// https://docs.docker.com/engine/api/v1.41/#operation/SystemInfo
 // GET "/info"
 func (cr *Router) Info(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -28,6 +31,8 @@ func (cr *Router) Info(c *gin.Context) {
 	})
 }
 
+// Version - get version.
+// https://docs.docker.com/engine/api/v1.41/#operation/SystemVersion
 // GET "/version"
 func (cr *Router) Version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -41,6 +46,9 @@ func (cr *Router) Version(c *gin.Context) {
 	})
 }
 
+// Ping - dummy endpoint you can use to test if the server is accessible.
+// https://docs.docker.com/engine/api/v1.41/#operation/SystemPing
+// HEAD "/_ping"
 // GET "/_ping"
 func (cr *Router) Ping(c *gin.Context) {
 	c.String(http.StatusOK, "OK")

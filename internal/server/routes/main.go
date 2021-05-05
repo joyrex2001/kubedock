@@ -8,8 +8,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
-// containerRouter is the object that facilitate all container
-// related API endpoints.
+// Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
 	db         *model.Database
 	kubernetes kubernetes.Kubernetes

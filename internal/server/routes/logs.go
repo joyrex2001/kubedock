@@ -11,6 +11,8 @@ import (
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
+// ContainerLogs - get container logs.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerLogs
 // POST "/containers/:id/logs"
 func (cr *Router) ContainerLogs(c *gin.Context) {
 	id := c.Param("id")

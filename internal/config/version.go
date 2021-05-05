@@ -7,6 +7,6 @@ var (
 	Build = "<undef>"
 	// Date of build as injected during buildtime.
 	Date = "<undef>"
-	// Current image as injected during buildtime.
+	// Image is the current image as injected during buildtime.
 	Image = "busybox:latest"
 )

@@ -6,9 +6,9 @@ import (
 	"k8s.io/klog"
 )
 
-// CleanExec will clean all lingering execs that are older than the
+// CleanExecs will clean all lingering execs that are older than the
 // configured keepMax duration.
-func (in *reaper) CleanExecs() error {
+func (in *Reaper) CleanExecs() error {
 	excs, err := in.db.GetExecs()
 	if err != nil {
 		return err
