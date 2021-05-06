@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.16
+
+    working_directory: /go/src/github.com/joyrex2001/kubedock
+    steps:
+      - checkout
+      - run: go vet ./...
+      - run: go test -v ./...

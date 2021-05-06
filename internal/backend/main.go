@@ -42,7 +42,7 @@ type Config struct {
 	InitImage string
 }
 
-// New will return an ContainerFactory instance.
+// New will return an Backend instance.
 func New(cfg Config) Backend {
 	return &instance{
 		cli:       cfg.Client,
