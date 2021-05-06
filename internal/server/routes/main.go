@@ -3,26 +3,26 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
 // Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
-	db         *model.Database
-	kubernetes kubernetes.Kubernetes
+	db  *model.Database
+	kub backend.Backend
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, kube kubernetes.Kubernetes) (*Router, error) {
+func New(router *gin.Engine, kub backend.Backend) (*Router, error) {
 	db, err := model.New()
 	if err != nil {
 		return nil, err
 	}
 	cr := &Router{
-		db:         db,
-		kubernetes: kube,
+		db:  db,
+		kub: kub,
 	}
 	cr.initRoutes(router)
 	return cr, nil

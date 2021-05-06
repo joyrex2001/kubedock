@@ -26,7 +26,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 		return
 	}
 
-	running, err := cr.kubernetes.IsContainerRunning(tainr)
+	running, err := cr.kub.IsContainerRunning(tainr)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -43,7 +43,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 
 	if !follow {
-		if err := cr.kubernetes.GetLogs(tainr, follow, w); err != nil {
+		if err := cr.kub.GetLogs(tainr, follow, w); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -70,7 +70,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	}
 	fmt.Fprint(out, "\r\n")
 
-	if err := cr.kubernetes.GetLogs(tainr, follow, out); err != nil {
+	if err := cr.kub.GetLogs(tainr, follow, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}

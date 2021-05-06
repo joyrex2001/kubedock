@@ -1,4 +1,4 @@
-package kubernetes
+package backend
 
 import (
 	"io"
@@ -10,8 +10,8 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
-// Kubernetes is the interface to orchestrate and manage kubernetes objects.
-type Kubernetes interface {
+// Backend is the interface to orchestrate and manage kubernetes objects.
+type Backend interface {
 	StartContainer(*types.Container) error
 	DeleteContainer(*types.Container) error
 	DeleteContainersOlderThan(time.Duration) error
@@ -22,7 +22,7 @@ type Kubernetes interface {
 	GetLogs(*types.Container, bool, io.Writer) error
 }
 
-// instance is the internal representation of the Kubernetes object.
+// instance is the internal representation of the Backend object.
 type instance struct {
 	cli       kubernetes.Interface
 	cfg       *rest.Config
@@ -30,7 +30,7 @@ type instance struct {
 	namespace string
 }
 
-// Config is the structure to instantiate a Kubernetes object
+// Config is the structure to instantiate a Backend object
 type Config struct {
 	// Client is the kubernetes clientset
 	Client kubernetes.Interface
@@ -43,7 +43,7 @@ type Config struct {
 }
 
 // New will return an ContainerFactory instance.
-func New(cfg Config) Kubernetes {
+func New(cfg Config) Backend {
 	return &instance{
 		cli:       cfg.Client,
 		cfg:       cfg.RestConfig,

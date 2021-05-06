@@ -41,9 +41,9 @@ func (cr *Router) PutArchive(c *gin.Context) {
 	}
 
 	// hmm... how to do this without a running container...
-	running, _ := cr.kubernetes.IsContainerRunning(tainr)
+	running, _ := cr.kub.IsContainerRunning(tainr)
 	if !running {
-		if err := cr.kubernetes.StartContainer(tainr); err != nil {
+		if err := cr.kub.StartContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -55,7 +55,7 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		return
 	}
 
-	if err := cr.kubernetes.CopyToContainer(tainr, archive, path); err != nil {
+	if err := cr.kub.CopyToContainer(tainr, archive, path); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}

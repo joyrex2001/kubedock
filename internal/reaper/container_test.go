@@ -6,20 +6,20 @@ import (
 
 	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/spf13/viper"
 )
 
 func TestCleanContainers(t *testing.T) {
-	kub := kubernetes.New(kubernetes.Config{
+	kub := backend.New(backend.Config{
 		Client:    fake.NewSimpleClientset(),
 		Namespace: viper.GetString("kubernetes.namespace"),
 		InitImage: viper.GetString("kubernetes.initimage"),
 	})
 	rp, _ := New(Config{
-		KeepMax:    20 * time.Millisecond,
-		Kubernetes: kub,
+		KeepMax: 20 * time.Millisecond,
+		Backend: kub,
 	})
 	rp.db.SaveContainer(&types.Container{})
 	if err := rp.CleanContainers(); err != nil {

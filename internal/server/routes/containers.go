@@ -51,9 +51,9 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	running, _ := cr.kubernetes.IsContainerRunning(tainr)
+	running, _ := cr.kub.IsContainerRunning(tainr)
 	if !running {
-		if err := cr.kubernetes.StartContainer(tainr); err != nil {
+		if err := cr.kub.StartContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -74,7 +74,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		return
 	}
 	tainr.SignalStop()
-	if err := cr.kubernetes.DeleteContainer(tainr); err != nil {
+	if err := cr.kub.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -96,7 +96,7 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 		return
 	}
 
-	status, err := cr.kubernetes.GetContainerStatus(tainr)
+	status, err := cr.kub.GetContainerStatus(tainr)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

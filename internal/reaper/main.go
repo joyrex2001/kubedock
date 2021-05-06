@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model"
 	"k8s.io/klog"
 )
@@ -13,7 +13,7 @@ import (
 type Reaper struct {
 	db      *model.Database
 	keepMax time.Duration
-	kub     kubernetes.Kubernetes
+	kub     backend.Backend
 	quit    chan struct{}
 }
 
@@ -22,10 +22,10 @@ var once sync.Once
 
 // Config is the configuration to be used for the Reaper proces.
 type Config struct {
-	// KeepMax is the maximum age of resources, older resources are deleted
+	// KeepMax is the maximum age of resources, older resources are deleted.
 	KeepMax time.Duration
-	// Kubernetes is the kubedock kubernetes helper object
-	Kubernetes kubernetes.Kubernetes
+	// Backend is the kubedock backend object.
+	Backend backend.Backend
 }
 
 // New will create return the singleton Reaper instance.
@@ -36,7 +36,7 @@ func New(cfg Config) (*Reaper, error) {
 		instance = &Reaper{}
 		db, err = model.New()
 		instance.db = db
-		instance.kub = cfg.Kubernetes
+		instance.kub = cfg.Backend
 		instance.keepMax = cfg.KeepMax
 	})
 	return instance, err
@@ -53,7 +53,7 @@ func (in *Reaper) Stop() {
 	in.quit <- struct{}{}
 }
 
-// Reaper will reap all lingering resources at a steady interval.
+// runloop will reap all lingering resources at a steady interval.
 func (in *Reaper) runloop() {
 	go func() {
 		for {

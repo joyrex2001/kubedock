@@ -6,18 +6,18 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/kubernetes"
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // Server is the API server.
 type Server struct {
-	kub kubernetes.Kubernetes
+	kub backend.Backend
 }
 
 // New will instantiate a Server object.
-func New(kub kubernetes.Kubernetes) *Server {
+func New(kub backend.Backend) *Server {
 	return &Server{kub: kub}
 }
 

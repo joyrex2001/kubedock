@@ -90,7 +90,7 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	w := c.Writer
 	w.WriteHeader(http.StatusOK)
 
-	if err := cr.kubernetes.ExecContainer(tainr, exec, w); err != nil {
+	if err := cr.kub.ExecContainer(tainr, exec, w); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
