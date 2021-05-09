@@ -4,9 +4,10 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model"
-	"k8s.io/klog"
 )
 
 // Reaper is the object handles reaping of resources.

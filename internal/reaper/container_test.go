@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"github.com/spf13/viper"
 )
 
 func TestCleanContainers(t *testing.T) {

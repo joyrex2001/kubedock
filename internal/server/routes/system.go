@@ -22,12 +22,17 @@ func (cr *Router) Healthz(c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/SystemInfo
 // GET "/info"
 func (cr *Router) Info(c *gin.Context) {
+	labels := []string{}
+	for k, v := range config.DefaultLabels {
+		labels = append(labels, k+"="+v)
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"ID":              config.ID,
 		"Name":            config.Name,
 		"ServerVersion":   config.Version,
 		"OperatingSystem": config.OS,
 		"MemTotal":        0,
+		"Labels":          labels,
 	})
 }
 

@@ -14,6 +14,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
@@ -134,7 +135,7 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 	if l == nil {
 		l = map[string]string{}
 	}
-	for k, v := range map[string]string{"kubedock": "true"} {
+	for k, v := range config.DefaultLabels {
 		l[k] = v
 	}
 	return l
@@ -296,6 +297,8 @@ func (in *instance) getVolumeID(path string) string {
 	if len(id) > 63 {
 		id = id[len(id)-63:]
 	}
+	re = regexp.MustCompile(`-*$`)
+	id = re.ReplaceAllString(id, ``)
 	return id
 }
 

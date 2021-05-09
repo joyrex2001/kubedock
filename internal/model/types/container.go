@@ -1,6 +1,7 @@
 package types
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -27,11 +28,15 @@ type Container struct {
 // GetKubernetesName will return the a k8s compatible name of the container.
 func (co *Container) GetKubernetesName() string {
 	n := co.Name
-	if n == "" {
-		n = co.ID
-	}
+	re := regexp.MustCompile(`[^A-Za-z0-9-]`)
+	n = re.ReplaceAllString(n, ``)
 	if len(n) > 63 {
 		return n[:63]
+	}
+	re = regexp.MustCompile(`-*$`)
+	n = re.ReplaceAllString(n, ``)
+	if n == "" {
+		n = co.ID
 	}
 	return n
 }

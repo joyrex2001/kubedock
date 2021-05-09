@@ -113,7 +113,9 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 		},
 		"NetworkSettings": gin.H{
 			"Networks": gin.H{
-				"bridge": gin.H{},
+				"bridge": gin.H{
+					"IPAddress": "127.0.0.1",
+				},
 			},
 			"Ports": cr.getNetworkSettingsPorts(tainr),
 		},

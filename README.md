@@ -6,7 +6,7 @@ The current implementation is limited, but able to run containers that just expo
 
 ## Quick start
 
-Running this locally with a testcontainers enabled unit-test requires to run kubedock (`make run`). After that start the unit tests in another termninal with the below environment variables set, for example:
+Running this locally with a testcontainers enabled unit-test requires to run kubedock (`make run`). After that start the unit tests in another terminal with the below environment variables set, for example:
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
@@ -20,7 +20,7 @@ To see a complete list of available options: `kubedock --help`.
 
 ## Compatibility
 
-This project is mainly focussed on getting [testcontainers-java](https://www.testcontainers.org) test running. Therefor it has limited support of the docker api, only the minimum that is typically used in testcontainers-java backed test.
+This project is mainly focussed on getting [testcontainers-java](https://www.testcontainers.org) tests running. Therefor it has limited support of the docker api, only the minimum that is typically used in testcontainers-java backed test.
 
 Most of the below use-cases as described by testcontainers are working:
 
@@ -40,4 +40,8 @@ The below use-cases are mostly not working:
 
 ## Resource reaping
 
-kubedock will dynamically create deployments in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment. However, if e.g. a test fails and didn't clean up its started containers, deployments will remain in the namespace. To prevent unused deployments lingering around, kubedock will automatically delete deployments that are older than 5 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 10 minutes if the deployment has the label `kubedock=true`.
+Kubedock will dynamically create deployments in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment. However, if e.g. a test fails and didn't clean up its started containers, deployments will remain in the namespace. To prevent unused deployments lingering around, kubedock will automatically delete deployments that are older than 5 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 10 minutes if the deployment has the label `kubedock=true`.
+
+# See also
+
+* https://hub.docker.com/r/joyrex2001/kubedock
