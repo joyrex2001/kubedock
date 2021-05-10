@@ -34,3 +34,21 @@ type ExecStartRequest struct {
 	Detach bool `json:"Detach"`
 	Tty    bool `json:"Tty"`
 }
+
+// NetworkCreateRequest represents the json structure that
+// is used for the /networks/create post endpoint.
+type NetworkCreateRequest struct {
+	Name string `json:"name"`
+}
+
+// NetworkConnectRequest represents the json structure that
+// is used for the /networks/:id/connect post endpoint.
+type NetworkConnectRequest struct {
+	Container string `json:"container"`
+}
+
+// NetworkDisconnectRequest represents the json structure that
+// is used for the /networks/:id/disconnect post endpoint.
+type NetworkDisconnectRequest struct {
+	Container string `json:"container"`
+}

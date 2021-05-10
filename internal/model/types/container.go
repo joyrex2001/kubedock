@@ -1,7 +1,7 @@
 package types
 
 import (
-	"regexp"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -19,26 +19,11 @@ type Container struct {
 	Env          []string
 	Binds        []string
 	ExposedPorts map[string]interface{}
+	Networks     map[string]interface{}
 	Labels       map[string]string
 	MappedPorts  map[int]int
 	StopChannels []chan struct{}
 	Created      time.Time
-}
-
-// GetKubernetesName will return the a k8s compatible name of the container.
-func (co *Container) GetKubernetesName() string {
-	n := co.Name
-	re := regexp.MustCompile(`[^A-Za-z0-9-]`)
-	n = re.ReplaceAllString(n, ``)
-	if len(n) > 63 {
-		return n[:63]
-	}
-	re = regexp.MustCompile(`-*$`)
-	n = re.ReplaceAllString(n, ``)
-	if n == "" {
-		n = co.ID
-	}
-	return n
 }
 
 // GetEnvVar will return the environment variables of the container
@@ -119,4 +104,24 @@ func (co *Container) SignalStop() {
 	for _, stop := range co.StopChannels {
 		stop <- struct{}{}
 	}
+}
+
+// ConnectNetwork will attach a network to the container,
+func (co *Container) ConnectNetwork(id string) {
+	if co.Networks == nil {
+		co.Networks = map[string]interface{}{}
+	}
+	co.Networks[id] = nil
+}
+
+// DisconnectNetwork will detach a network from the container,
+func (co *Container) DisconnectNetwork(id string) error {
+	if id == "bridge" {
+		return fmt.Errorf("can't delete bridge network")
+	}
+	if _, ok := co.Networks[id]; !ok {
+		return fmt.Errorf("container is not connected to network %s", id)
+	}
+	delete(co.Networks, id)
+	return nil
 }

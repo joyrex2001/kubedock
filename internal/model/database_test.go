@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -16,7 +17,7 @@ func TestDatabase(t *testing.T) {
 	}
 
 	// container tests
-	if _, err := db.LoadContainer("someid"); err == nil {
+	if _, err := db.GetContainer("someid"); err == nil {
 		t.Errorf("Expected error when loading a container that doesn't exist")
 	}
 	con := &types.Container{}
@@ -32,7 +33,7 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Unexpected error when updating a container")
 
 	}
-	if conl, err := db.LoadContainer(con.ID); err != nil {
+	if conl, err := db.GetContainer(con.ID); err != nil {
 		t.Errorf("Unexpected error when loading an existing container")
 	} else {
 		if conl.ID != con.ID || conl.Image != con.Image {
@@ -51,12 +52,12 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Unexpected error when deleting a container")
 
 	}
-	if _, err := db.LoadContainer(conid); err == nil {
+	if _, err := db.GetContainer(conid); err == nil {
 		t.Errorf("Expected error when loading a container that doesn't exist")
 	}
 
 	// exec tests
-	if _, err := db.LoadExec("someid"); err == nil {
+	if _, err := db.GetExec("someid"); err == nil {
 		t.Errorf("Expected error when loading an exec that doesn't exist")
 	}
 	exc := &types.Exec{}
@@ -71,7 +72,7 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Unexpected error when updating an exec")
 	}
 
-	if excl, err := db.LoadExec(exc.ID); err != nil {
+	if excl, err := db.GetExec(exc.ID); err != nil {
 		t.Errorf("Unexpected error when loading an existing exec")
 	} else {
 		if excl.ID != exc.ID || excl.ContainerID != exc.ContainerID {
@@ -90,7 +91,7 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Unexpected error when deleting an exec")
 
 	}
-	if _, err := db.LoadExec(excid); err == nil {
+	if _, err := db.GetExec(excid); err == nil {
 		t.Errorf("Expected error when loading an exec that doesn't exist")
 	}
 }
@@ -106,5 +107,67 @@ func TestContainerIDWorkaround(t *testing.T) {
 			t.Errorf("Container ID that start with a c cause problems in the server router setup...")
 			return
 		}
+	}
+}
+
+func TestNetwork(t *testing.T) {
+	db, _ := New()
+
+	if _, err := db.GetNetworkByNameOrID("bridge"); err != nil {
+		t.Errorf("Unexpected error when loading the bridge network")
+	}
+
+	netw := &types.Network{Name: "net0"}
+	if err := db.SaveNetwork(netw); err != nil {
+		t.Errorf("Unexpected error when creating network net0")
+	}
+
+	for i, n := range []string{"net1", "net2", "net3"} {
+		netw := &types.Network{Name: n, ID: fmt.Sprintf("%d", i+1)}
+		if err := db.SaveNetwork(netw); err != nil {
+			t.Errorf("Unexpected error when creating network %s", n)
+		}
+	}
+
+	if netws, err := db.GetNetworks(); err != nil {
+		t.Errorf("Unexpected error when loading all existing networks")
+	} else {
+		if len(netws) != 5 {
+			t.Errorf("Expected 5 exec records, but got %d", len(netws))
+		}
+	}
+
+	net1, err := db.GetNetworkByNameOrID("net1")
+	if err != nil {
+		t.Errorf("Unexpected error when loading network net1")
+	}
+	if net1.ID != "1" {
+		t.Errorf("Invalid id for network net1")
+	}
+	net1, err = db.GetNetworkByNameOrID("1")
+	if err != nil {
+		t.Errorf("Unexpected error when loading network net1")
+	}
+	if err := db.DeleteNetwork(net1); err != nil {
+		t.Errorf("Unexpected error when deleting network net1")
+	}
+	net1, err = db.GetNetworkByNameOrID("net1")
+	if err == nil {
+		t.Errorf("Expected error when loading deleted network net1")
+	}
+
+	netws, err := db.GetNetworksByIDs(map[string]interface{}{})
+	if err != nil {
+		t.Errorf("Unexpected error when loading networks by empty ids mapping")
+	}
+	if len(netws) != 0 {
+		t.Errorf("Expected 0 networks for empty ids mapping")
+	}
+	netws, err = db.GetNetworksByIDs(map[string]interface{}{"2": 1, "3": 1})
+	if err != nil {
+		t.Errorf("Unexpected error when loading networks by ids mapping")
+	}
+	if len(netws) != 2 {
+		t.Errorf("Expected 2 networks for empty ids mapping, but got %#v", netws)
 	}
 }

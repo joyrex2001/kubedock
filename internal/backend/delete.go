@@ -12,7 +12,7 @@ import (
 
 // DeleteContainer will delete given container object in kubernetes.
 func (in *instance) DeleteContainer(tainr *types.Container) error {
-	name := tainr.GetKubernetesName()
+	name := in.getContainerName(tainr)
 	return in.cli.AppsV1().Deployments(in.namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 }
 

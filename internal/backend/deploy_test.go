@@ -256,8 +256,8 @@ func TestGetLabels(t *testing.T) {
 		in    *types.Container
 		count int
 	}{
-		{in: &types.Container{}, count: 1},
-		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
+		{in: &types.Container{}, count: 2},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 3},
 	}
 
 	for i, tst := range tests {

@@ -36,6 +36,14 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
 
+	// DEBT: "POST /networks/create" and "POST /networks/:id/connect"" overlap
+	// which (currently) means :id that start with a c will 404 by the router;
+	// as work around, no network-ids are generated that start with a 'c'...
+	router.POST("/networks/create", cr.NetworksCreate)
+	router.POST("/networks/:id/connect", cr.NetworksConnect)
+	router.POST("/networks/:id/disconnect", cr.NetworksDisconnect)
+
+	router.GET("/containers/json", cr.ContainerList)
 	router.GET("/containers/:id/json", cr.ContainerInfo)
 	router.DELETE("/containers/:id", cr.ContainerDelete)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
@@ -44,7 +52,8 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/exec/:id/json", cr.ExecInfo)
 	router.PUT("/containers/:id/archive", cr.PutArchive)
 	router.GET("/networks", cr.NetworksList)
-	router.POST("/networks/create", cr.NetworksCreate)
+	router.DELETE("/networks/:id", cr.NetworksDelete)
+	router.GET("/networks/:id", cr.NetworksInfo)
 	router.GET("/images/json", cr.ImageList)
 	router.POST("/images/create", cr.ImageCreate)
 	router.GET("/images/:image/*json", cr.ImageJSON)
@@ -54,10 +63,10 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/version", cr.Version)
 	router.GET("/healthz", cr.Healthz)
 
-	// not supported at the moment
 	router.POST("/containers/:id/stop", httputil.NotImplemented)
 	router.POST("/containers/:id/kill", httputil.NotImplemented)
-	router.GET("/containers/json", httputil.NotImplemented)
+
+	// not supported at the moment
 	router.GET("/containers/:id/top", httputil.NotImplemented)
 	router.GET("/containers/:id/changes", httputil.NotImplemented)
 	router.GET("/containers/:id/export", httputil.NotImplemented)

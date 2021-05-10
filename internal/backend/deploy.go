@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -30,7 +29,7 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: in.namespace,
-			Name:      tainr.GetKubernetesName(),
+			Name:      in.getContainerName(tainr),
 			Labels:    in.getLabels(tainr),
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -72,14 +71,22 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	}
 
 	for _, pp := range tainr.GetContainerTCPPorts() {
-		tainr.MapPort(pp, portforward.RandomPort())
+		tainr.MapPort(portforward.RandomPort(), pp)
+	}
+
+	ports := map[int]int{}
+	if in.keepPorts {
+		for _, pp := range tainr.GetContainerTCPPorts() {
+			ports[pp] = pp
+		}
 	}
 
 	go func() {
-		err := in.portForward(tainr)
-		if err != nil {
+		if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
 			klog.Errorf("portforward failed: %s", err)
-			return
+		}
+		if err := in.portForward(tainr, ports); err != nil {
+			klog.Errorf("portforward failed: %s", err)
 		}
 	}()
 
@@ -87,7 +94,7 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 }
 
 // PortForward will create port-forwards for all mapped ports.
-func (in *instance) portForward(tainr *types.Container) error {
+func (in *instance) portForward(tainr *types.Container, ports map[int]int) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
@@ -95,7 +102,7 @@ func (in *instance) portForward(tainr *types.Container) error {
 	if len(pods) == 0 {
 		return fmt.Errorf("no matching pod found")
 	}
-	for src, dst := range tainr.MappedPorts {
+	for dst, src := range ports {
 		stream := genericclioptions.IOStreams{
 			In:     os.Stdin,
 			Out:    os.Stdout,
@@ -131,9 +138,9 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 // map contains the labels as specified in the container definition, as well
 // as additional labels which are used internally by kubedock.
 func (in *instance) getLabels(tainr *types.Container) map[string]string {
-	l := tainr.Labels
-	if l == nil {
-		l = map[string]string{}
+	l := map[string]string{}
+	for k, v := range tainr.Labels {
+		l[k] = in.toKubernetesName(v)
 	}
 	for k, v := range config.DefaultLabels {
 		l[k] = v
@@ -145,7 +152,7 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 // match running pods for this container.
 func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]string {
 	return map[string]string{
-		"app":      tainr.GetKubernetesName(),
+		"app":      in.getContainerName(tainr),
 		"kubedock": tainr.ID,
 		"tier":     "kubedock",
 	}
@@ -159,7 +166,7 @@ func (in *instance) getPodsLabelSelector(tainr *types.Container) string {
 
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
-	name := tainr.GetKubernetesName()
+	name := in.getContainerName(tainr)
 	for max := 0; max < wait; max++ {
 		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
@@ -227,7 +234,7 @@ func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) {
 	dep.Spec.Template.Spec.Volumes = []corev1.Volume{}
 	mounts := []corev1.VolumeMount{}
 	for rm := range volumes {
-		id := in.getVolumeID(rm)
+		id := in.toKubernetesName(rm)
 		dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes,
 			corev1.Volume{Name: id, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
 		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: rm})
@@ -288,18 +295,6 @@ func (in *instance) signalDone(tainr *types.Container) error {
 		Cmd:        []string{"touch", "/tmp/done"},
 		Stderr:     os.Stderr,
 	})
-}
-
-// getVolumeId creates an id to use for the volume mapping
-func (in *instance) getVolumeID(path string) string {
-	re := regexp.MustCompile(`[^A-Za-z0-9-]`)
-	id := re.ReplaceAllString(path, ``)
-	if len(id) > 63 {
-		id = id[len(id)-63:]
-	}
-	re = regexp.MustCompile(`-*$`)
-	id = re.ReplaceAllString(id, ``)
-	return id
 }
 
 // getPods will return a list of pods that are spun up for this deployment.

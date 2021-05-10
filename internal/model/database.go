@@ -27,6 +27,7 @@ func New() (*Database, error) {
 		instance = &Database{}
 		db, err = instance.createSchema()
 		instance.db = db
+		instance.loadDefaults()
 	})
 	return instance, err
 }
@@ -55,14 +56,34 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 					},
 				},
 			},
+			"network": {
+				Name: "network",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ID"},
+					},
+					"name": {
+						Name:    "name",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Name"},
+					},
+				},
+			},
 		},
 	}
 	return memdb.NewMemDB(schema)
 }
 
-// LoadContainer will return a container with given id, or an error if
+// loadDefaults will insert default records into the database.
+func (in *Database) loadDefaults() {
+	in.SaveNetwork(&types.Network{Name: "bridge"})
+}
+
+// GetContainer will return a container with given id, or an error if
 // the instance does not exist.
-func (in *Database) LoadContainer(id string) (*types.Container, error) {
+func (in *Database) GetContainer(id string) (*types.Container, error) {
 	txn := in.db.Txn(false)
 	raw, err := txn.First("container", "id", id)
 	if err != nil {
@@ -111,9 +132,9 @@ func (in *Database) DeleteContainer(con *types.Container) error {
 	return in.delete("container", con)
 }
 
-// LoadExec will return a exec with given id, or an error if the
+// GetExec will return a exec with given id, or an error if the
 // instance does not exist.
-func (in *Database) LoadExec(id string) (*types.Exec, error) {
+func (in *Database) GetExec(id string) (*types.Exec, error) {
 	txn := in.db.Txn(false)
 	raw, err := txn.First("exec", "id", id)
 	if err != nil {
@@ -157,6 +178,99 @@ func (in *Database) SaveExec(exc *types.Exec) error {
 // DeleteExec will delete provided exec.
 func (in *Database) DeleteExec(exc *types.Exec) error {
 	return in.delete("exec", exc)
+}
+
+// GetNetwork will return a network with given id, or an error if the
+// instance does not exist.
+func (in *Database) GetNetwork(id string) (*types.Network, error) {
+	txn := in.db.Txn(false)
+	raw, err := txn.First("network", "id", id)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("network %s not found", id)
+	}
+	return raw.(*types.Network), nil
+}
+
+// GetNetworkByName will return a network with given name, or an error if the
+// instance does not exist.
+func (in *Database) GetNetworkByName(name string) (*types.Network, error) {
+	txn := in.db.Txn(false)
+	raw, err := txn.First("network", "name", name)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("network %s not found", name)
+	}
+	return raw.(*types.Network), nil
+}
+
+// GetNetworkByNameOrID will return a network with id/name, or an error if the
+// instance does not exist.
+func (in *Database) GetNetworkByNameOrID(id string) (*types.Network, error) {
+	netw, err := in.GetNetwork(id)
+	if err == nil {
+		return netw, nil
+	}
+	return in.GetNetworkByName(id)
+}
+
+// GetNetworks will return all stored networks.
+func (in *Database) GetNetworks() ([]*types.Network, error) {
+	rec := []*types.Network{}
+	txn := in.db.Txn(false)
+	it, err := txn.Get("network", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		rec = append(rec, obj.(*types.Network))
+	}
+	return rec, nil
+}
+
+// GetNetworksWithIDs will return all networks that are in the
+// given set of network ids.
+func (in *Database) GetNetworksByIDs(ids map[string]interface{}) ([]*types.Network, error) {
+	rec := []*types.Network{}
+	txn := in.db.Txn(false)
+	it, err := txn.Get("network", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		netw := obj.(*types.Network)
+		if _, ok := ids[netw.ID]; ok {
+			rec = append(rec, netw)
+		}
+	}
+	return rec, nil
+}
+
+// SaveNetwork will either update the given network, or create a new
+// record. If ID is not provided, it will generate an ID and adds the
+// current time in Created.
+func (in *Database) SaveNetwork(netw *types.Network) error {
+	if netw.ID == "" {
+		id, err := uuid.New()
+		if err != nil {
+			return err
+		}
+		if id[:1] == "c" {
+			id = "b" + id[1:]
+		}
+		netw.ID = id
+		netw.Created = time.Now()
+	}
+	return in.save("network", netw)
+}
+
+// DeleteNetwork will delete provided network.
+func (in *Database) DeleteNetwork(netw *types.Network) error {
+	return in.delete("network", netw)
 }
 
 // save is a generic save method to store or update a record in the

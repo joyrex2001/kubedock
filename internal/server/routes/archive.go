@@ -34,7 +34,7 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		klog.Warning("copyUIDGID is not supported, ignoring setting.")
 	}
 
-	tainr, err := cr.db.LoadContainer(id)
+	tainr, err := cr.db.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

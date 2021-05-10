@@ -31,6 +31,14 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		Labels:       in.Labels,
 		Binds:        in.HostConfig.Binds,
 	}
+
+	netw, err := cr.db.GetNetworkByName("bridge")
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+	tainr.ConnectNetwork(netw.ID)
+
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -46,7 +54,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 // POST "/containers/:id/start"
 func (cr *Router) ContainerStart(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.LoadContainer(id)
+	tainr, err := cr.db.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -68,7 +76,7 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 // DELETE "/containers/:id"
 func (cr *Router) ContainerDelete(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.LoadContainer(id)
+	tainr, err := cr.db.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -90,20 +98,48 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 // GET "/containers/:id/json"
 func (cr *Router) ContainerInfo(c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.LoadContainer(id)
+	tainr, err := cr.db.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+	c.JSON(http.StatusOK, cr.getContainerInfo(tainr, true))
+}
 
+// ContainerList - returns a list of containers.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerList
+// GET "/containers/json"
+func (cr *Router) ContainerList(c *gin.Context) {
+	tainrs, err := cr.db.GetContainers()
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+	res := []gin.H{}
+	for _, tainr := range tainrs {
+		res = append(res, cr.getContainerInfo(tainr, false))
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// getContainerInfo will return a gin.H containing the details of the
+// given container.
+func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
+	errstr := ""
 	status, err := cr.kub.GetContainerStatus(tainr)
 	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
+		errstr += err.Error()
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"Id":    id,
+	netws_, err := cr.db.GetNetworksByIDs(tainr.Networks)
+	if err != nil {
+		errstr += err.Error()
+	}
+	netws := gin.H{}
+	for _, netw := range netws_ {
+		netws[netw.Name] = gin.H{"NetworkID": netw.ID, "IPAddress": "127.0.0.1"}
+	}
+	res := gin.H{
+		"Id":    tainr.ID,
 		"Image": tainr.Image,
 		"Config": gin.H{
 			"Image":  tainr.Image,
@@ -111,18 +147,19 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 			"Env":    tainr.Env,
 			"Cmd":    tainr.Cmd,
 		},
+		"Names": []string{
+			tainr.ID,
+		},
 		"NetworkSettings": gin.H{
-			"Networks": gin.H{
-				"bridge": gin.H{
-					"IPAddress": "127.0.0.1",
-				},
-			},
-			"Ports": cr.getNetworkSettingsPorts(tainr),
+			"Networks": netws,
+			"Ports":    cr.getNetworkSettingsPorts(tainr),
 		},
 		"HostConfig": gin.H{
 			"NetworkMode": "host",
 		},
-		"State": gin.H{
+	}
+	if detail {
+		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": status["Status"],
 			},
@@ -135,16 +172,19 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 			"StartedAt":  "2021-01-01T00:00:00Z",
 			"FinishedAt": "0001-01-01T00:00:00Z",
 			"ExitCode":   0,
-			"Error":      "",
-		},
-	})
+			"Error":      errstr,
+		}
+	} else {
+		res["State"] = status["Status"]
+	}
+	return res
 }
 
 // getNetworkSettingsPorts will return the mapped ports of the container
 // as k8s ports structure to be used in network settings.
 func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 	res := gin.H{}
-	for dst, src := range tainr.MappedPorts {
+	for src, dst := range tainr.MappedPorts {
 		p := fmt.Sprintf("%d/tcp", dst)
 		res[p] = []gin.H{
 			{

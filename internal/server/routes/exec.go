@@ -37,7 +37,7 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	_, err := cr.db.LoadContainer(id)
+	_, err := cr.db.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -75,13 +75,13 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	exec, err := cr.db.LoadExec(id)
+	exec, err := cr.db.GetExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
-	tainr, err := cr.db.LoadContainer(exec.ContainerID)
+	tainr, err := cr.db.GetContainer(exec.ContainerID)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -102,7 +102,7 @@ func (cr *Router) ExecStart(c *gin.Context) {
 func (cr *Router) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
 
-	_, err := cr.db.LoadExec(id)
+	_, err := cr.db.GetExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

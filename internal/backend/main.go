@@ -28,6 +28,7 @@ type instance struct {
 	cfg       *rest.Config
 	initImage string
 	namespace string
+	keepPorts bool
 }
 
 // Config is the structure to instantiate a Backend object
@@ -40,6 +41,8 @@ type Config struct {
 	Namespace string
 	// InitImage is the image that is used as init container to prepare vols
 	InitImage string
+	// KeepPorts will open up port-forwards without remapping to a random port as well (80->80)
+	KeepPorts bool
 }
 
 // New will return an Backend instance.
@@ -49,5 +52,6 @@ func New(cfg Config) Backend {
 		cfg:       cfg.RestConfig,
 		initImage: cfg.InitImage,
 		namespace: cfg.Namespace,
+		keepPorts: cfg.KeepPorts,
 	}
 }

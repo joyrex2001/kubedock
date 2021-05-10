@@ -9,40 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func TestGetKubernetesName(t *testing.T) {
-	tests := []struct {
-		in  *Container
-		out string
-	}{
-		{
-			in:  &Container{Name: "StrategicMars"},
-			out: "StrategicMars",
-		},
-		{
-			in:  &Container{Name: "", ID: "2107007e-b7c8-df23-18fb-6a6f79726578"},
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
-		},
-		{
-			in:  &Container{Name: "0123456789012345678901234567890123456789012345678901234567890123456789"},
-			out: "012345678901234567890123456789012345678901234567890123456789012",
-		},
-		{
-			in:  &Container{Name: "StrategicMars-"},
-			out: "StrategicMars",
-		},
-		{
-			in:  &Container{Name: "-", ID: "2107007e-b7c8-df23-18fb-6a6f79726578"},
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
-		},
-	}
-	for i, tst := range tests {
-		res := tst.in.GetKubernetesName()
-		if res != tst.out {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
-		}
-	}
-}
-
 func TestGetEnvVar(t *testing.T) {
 	tests := []struct {
 		in  *Container
@@ -157,5 +123,32 @@ func TestVolumes(t *testing.T) {
 		if tst.in.HasVolumes() != tst.vol {
 			t.Errorf("failed test %d - expected %t, but got %t", i, tst.in.HasVolumes(), tst.vol)
 		}
+	}
+}
+
+func TestConnectNetwork(t *testing.T) {
+	var err error
+	in := &Container{}
+	in.ConnectNetwork("1234")
+	if in.Networks == nil {
+		t.Errorf("networks to be expect populated when container is connected")
+	}
+	if _, ok := in.Networks["1234"]; !ok {
+		t.Errorf("network 1234 expected to be connected")
+	}
+	err = in.DisconnectNetwork("1234")
+	if err != nil {
+		t.Errorf("unexpected error on delete %s", err)
+	}
+	if _, ok := in.Networks["1234"]; ok {
+		t.Errorf("network 1234 expected to be disconnected")
+	}
+	err = in.DisconnectNetwork("1234")
+	if err == nil {
+		t.Errorf("expected error on delete non existing network, but got none")
+	}
+	err = in.DisconnectNetwork("bridge")
+	if err == nil {
+		t.Errorf("expected error on delete bridge, but got none")
 	}
 }

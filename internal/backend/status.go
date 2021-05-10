@@ -10,10 +10,13 @@ import (
 
 // GetContainerStatus will return current status of given exec object in kubernetes.
 func (in *instance) GetContainerStatus(tainr *types.Container) (map[string]string, error) {
-	name := tainr.GetKubernetesName()
+	name := in.getContainerName(tainr)
 	dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return map[string]string{
+			"Status":  "unhealthy",
+			"Running": "",
+		}, err
 	}
 	if dep.Status.ReadyReplicas > 0 {
 		return map[string]string{
