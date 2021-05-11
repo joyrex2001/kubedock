@@ -33,38 +33,43 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	// DEBT: "POST /containers/create" and "POST /containers/:id/start" overlap
 	// which (currently) means :id that start with a c will 404 by the router;
 	// as work around, no container-ids are generated that start with a 'c'...
+	// https://github.com/gin-gonic/gin/issues/2682
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
-
-	// DEBT: "POST /networks/create" and "POST /networks/:id/connect"" overlap
-	// which (currently) means :id that start with a c will 404 by the router;
-	// as work around, no network-ids are generated that start with a 'c'...
-	router.POST("/networks/create", cr.NetworksCreate)
-	router.POST("/networks/:id/connect", cr.NetworksConnect)
-	router.POST("/networks/:id/disconnect", cr.NetworksDisconnect)
 
 	router.GET("/containers/json", cr.ContainerList)
 	router.GET("/containers/:id/json", cr.ContainerInfo)
 	router.DELETE("/containers/:id", cr.ContainerDelete)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
 	router.GET("/containers/:id/logs", cr.ContainerLogs)
-	router.POST("/exec/:id/start", cr.ExecStart)
-	router.GET("/exec/:id/json", cr.ExecInfo)
+	router.POST("/containers/:id/stop", cr.ContainerStop)
+	router.POST("/containers/:id/kill", cr.ContainerKill)
 	router.PUT("/containers/:id/archive", cr.PutArchive)
+
+	// DEBT: "POST /networks/create" and "POST /networks/:id/connect"" overlap
+	// which (currently) means :id that start with a c will 404 by the router;
+	// as work around, no network-ids are generated that start with a 'c'...
+	// https://github.com/gin-gonic/gin/issues/2682
+	router.POST("/networks/create", cr.NetworksCreate)
+	router.POST("/networks/:id/connect", cr.NetworksConnect)
+	router.POST("/networks/:id/disconnect", cr.NetworksDisconnect)
+
 	router.GET("/networks", cr.NetworksList)
 	router.DELETE("/networks/:id", cr.NetworksDelete)
 	router.GET("/networks/:id", cr.NetworksInfo)
+
+	router.POST("/exec/:id/start", cr.ExecStart)
+	router.GET("/exec/:id/json", cr.ExecInfo)
+
 	router.GET("/images/json", cr.ImageList)
 	router.POST("/images/create", cr.ImageCreate)
 	router.GET("/images/:image/*json", cr.ImageJSON)
+
 	router.GET("/_ping", cr.Ping)
 	router.HEAD("/_ping", cr.Ping)
 	router.GET("/info", cr.Info)
 	router.GET("/version", cr.Version)
 	router.GET("/healthz", cr.Healthz)
-
-	router.POST("/containers/:id/stop", httputil.NotImplemented)
-	router.POST("/containers/:id/kill", httputil.NotImplemented)
 
 	// not supported at the moment
 	router.GET("/containers/:id/top", httputil.NotImplemented)

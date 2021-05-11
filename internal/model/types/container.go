@@ -104,6 +104,7 @@ func (co *Container) SignalStop() {
 	for _, stop := range co.StopChannels {
 		stop <- struct{}{}
 	}
+	co.StopChannels = []chan struct{}{}
 }
 
 // ConnectNetwork will attach a network to the container,

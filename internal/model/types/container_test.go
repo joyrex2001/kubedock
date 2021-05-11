@@ -90,6 +90,9 @@ func TestStop(t *testing.T) {
 	if res != 1 {
 		t.Errorf("failed stop channels")
 	}
+	if len(tainr.StopChannels) != 0 {
+		t.Errorf("expected stop channels to be erased")
+	}
 }
 
 func TestVolumes(t *testing.T) {

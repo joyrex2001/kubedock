@@ -232,7 +232,7 @@ func (in *Database) GetNetworks() ([]*types.Network, error) {
 	return rec, nil
 }
 
-// GetNetworksWithIDs will return all networks that are in the
+// GetNetworksByIDs will return all networks that are in the
 // given set of network ids.
 func (in *Database) GetNetworksByIDs(ids map[string]interface{}) ([]*types.Network, error) {
 	rec := []*types.Network{}

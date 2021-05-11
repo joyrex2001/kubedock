@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
@@ -91,7 +92,7 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 
 	if err := cr.kub.ExecContainer(tainr, exec, w); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
+		klog.Errorf("error during exec: %s", err)
 		return
 	}
 }

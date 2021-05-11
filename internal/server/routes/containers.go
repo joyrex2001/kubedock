@@ -71,6 +71,40 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
+// ContainerStop - stop a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop
+// POST "/containers/:id/stop"
+func (cr *Router) ContainerStop(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	tainr.SignalStop()
+	if err := cr.kub.DeleteContainer(tainr); err != nil {
+		klog.Warningf("error while deleting k8s container: %s", err)
+	}
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// ContainerKill - kill a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerKill
+// POST "/containers/:id/kill"
+func (cr *Router) ContainerKill(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	tainr.SignalStop()
+	if err := cr.kub.DeleteContainer(tainr); err != nil {
+		klog.Warningf("error while deleting k8s container: %s", err)
+	}
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
 // ContainerDelete - remove a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
 // DELETE "/containers/:id"
@@ -83,8 +117,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 	}
 	tainr.SignalStop()
 	if err := cr.kub.DeleteContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
+		klog.Warningf("error while deleting k8s container: %s", err)
 	}
 	if err := cr.db.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
@@ -130,13 +163,13 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	if err != nil {
 		errstr += err.Error()
 	}
-	netws_, err := cr.db.GetNetworksByIDs(tainr.Networks)
+	netws, err := cr.db.GetNetworksByIDs(tainr.Networks)
 	if err != nil {
 		errstr += err.Error()
 	}
-	netws := gin.H{}
-	for _, netw := range netws_ {
-		netws[netw.Name] = gin.H{"NetworkID": netw.ID, "IPAddress": "127.0.0.1"}
+	netdtl := gin.H{}
+	for _, netw := range netws {
+		netdtl[netw.Name] = gin.H{"NetworkID": netw.ID, "IPAddress": "127.0.0.1"}
 	}
 	res := gin.H{
 		"Id":    tainr.ID,
@@ -151,7 +184,7 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			tainr.ID,
 		},
 		"NetworkSettings": gin.H{
-			"Networks": netws,
+			"Networks": netdtl,
 			"Ports":    cr.getNetworkSettingsPorts(tainr),
 		},
 		"HostConfig": gin.H{
