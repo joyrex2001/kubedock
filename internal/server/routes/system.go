@@ -9,15 +9,6 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 )
 
-// Healthz - generic k8s health endpoint. Not part of the docker API.
-// GET "/healthz"
-func (cr *Router) Healthz(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":    "OK",
-		"timestamp": time.Now().Unix(),
-	})
-}
-
 // Info - get system information.
 // https://docs.docker.com/engine/api/v1.41/#operation/SystemInfo
 // GET "/info"
