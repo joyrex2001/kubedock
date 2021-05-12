@@ -190,25 +190,26 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		"HostConfig": gin.H{
 			"NetworkMode": "host",
 		},
+		"Created": status.Created.Unix(),
 	}
 	if detail {
 		res["State"] = gin.H{
 			"Health": gin.H{
-				"Status": status["Status"],
+				"Status": status.StatusString(),
 			},
-			"Running":    status["Running"] == "running",
-			"Status":     status["Running"],
+			"Running":    status.Replicas > 0,
+			"Status":     status.StateString(),
 			"Paused":     false,
 			"Restarting": false,
 			"OOMKilled":  false,
 			"Dead":       false,
-			"StartedAt":  "2021-01-01T00:00:00Z",
+			"StartedAt":  status.Created.Format("2006-01-02T15:04:05Z"),
 			"FinishedAt": "0001-01-01T00:00:00Z",
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
 	} else {
-		res["State"] = status["Status"]
+		res["State"] = status.StateString()
 	}
 	return res
 }
