@@ -16,7 +16,7 @@ import (
 func Error(c *gin.Context, status int, err error) {
 	klog.Errorf("error during request[%d]: %s", status, err)
 	c.JSON(status, gin.H{
-		"error": err.Error(),
+		"message": err.Error(),
 	})
 }
 

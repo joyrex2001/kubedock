@@ -11,12 +11,12 @@ import (
 )
 
 // GetLogs will write the logs for given container to given writer.
-func (in *instance) GetLogs(tainr *types.Container, follow bool, w io.Writer) error {
-	count := int64(100)
+func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io.Writer) error {
+	tail := int64(count)
 	options := v1.PodLogOptions{
 		Container: "main",
 		Follow:    follow,
-		TailLines: &count,
+		TailLines: &tail,
 	}
 
 	name, err := in.getFirstPodName(tainr)

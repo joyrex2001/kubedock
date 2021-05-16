@@ -43,7 +43,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 
 	if !follow {
-		if err := cr.kub.GetLogs(tainr, follow, w); err != nil {
+		if err := cr.kub.GetLogs(tainr, follow, 100, w); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -70,7 +70,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	}
 	fmt.Fprint(out, "\r\n")
 
-	if err := cr.kub.GetLogs(tainr, follow, out); err != nil {
+	if err := cr.kub.GetLogs(tainr, follow, 100, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}

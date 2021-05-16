@@ -3,6 +3,7 @@ module github.com/joyrex2001/kubedock
 go 1.16
 
 require (
+	github.com/docker/go-units v0.4.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.6.0 // indirect

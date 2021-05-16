@@ -41,6 +41,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	// https://github.com/gin-gonic/gin/issues/2682
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
+	router.POST("/containers/:id/attach", cr.ContainerAttach)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
 	router.POST("/containers/:id/stop", cr.ContainerStop)
 	router.POST("/containers/:id/kill", cr.ContainerKill)
@@ -81,7 +82,6 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/containers/:id/rename", httputil.NotImplemented)
 	router.POST("/containers/:id/pause", httputil.NotImplemented)
 	router.POST("/containers/:id/unpause", httputil.NotImplemented)
-	router.POST("/containers/:id/attach", httputil.NotImplemented)
 	router.GET("/containers/:id/attach/ws", httputil.NotImplemented)
 	router.POST("/containers/:id/wait", httputil.NotImplemented)
 	router.HEAD("/containers/:id/archive", httputil.NotImplemented)

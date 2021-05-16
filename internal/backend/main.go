@@ -19,7 +19,7 @@ type Backend interface {
 	ExecContainer(*types.Container, *types.Exec, io.Writer) error
 	GetContainerStatus(*types.Container) (*Status, error)
 	IsContainerRunning(*types.Container) (bool, error)
-	GetLogs(*types.Container, bool, io.Writer) error
+	GetLogs(*types.Container, bool, int, io.Writer) error
 }
 
 // instance is the internal representation of the Backend object.

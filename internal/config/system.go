@@ -20,7 +20,7 @@ var (
 	GOARCH = runtime.GOARCH
 
 	// DockerVersion is the docker version as advertised when calling /version
-	DockerVersion = "1.21"
+	DockerVersion = "1.22"
 	// DockerAPIVersion is the api version as advertised when calling /version
-	DockerAPIVersion = "1.21"
+	DockerAPIVersion = "1.22"
 )

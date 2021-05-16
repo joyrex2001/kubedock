@@ -2,8 +2,10 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	units "github.com/docker/go-units"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -18,9 +20,9 @@ type Status struct {
 // StateString returns a string that describes the state.
 func (s *Status) StateString() string {
 	if s.Replicas > 0 {
-		return "running"
+		return fmt.Sprintf("Up %s", units.HumanDuration(time.Now().UTC().Sub(s.Created)))
 	}
-	return "created"
+	return "Created"
 }
 
 // StatusString returns a string that describes the status.

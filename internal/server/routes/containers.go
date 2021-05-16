@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
@@ -20,6 +21,10 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
+	}
+
+	if in.Name == "" {
+		in.Name = c.Query("name")
 	}
 
 	tainr := &types.Container{
@@ -126,6 +131,36 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
+// ContainerAttach - attach to a container to read its output or send input.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach
+// POST "/containers/:id/attach"
+func (cr *Router) ContainerAttach(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	stdin, _ := strconv.ParseBool(c.Query("stdin"))
+	if stdin {
+		c.Writer.WriteHeader(http.StatusNotImplemented)
+	}
+	stdout, _ := strconv.ParseBool(c.Query("stdout"))
+	stderr, _ := strconv.ParseBool(c.Query("stderr"))
+	if !stdout || !stderr {
+		klog.Warningf("Ignoring stdout/stderr filtering")
+	}
+	running, _ := cr.kub.IsContainerRunning(tainr)
+	if !running {
+		if err := cr.kub.StartContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+	}
+	// TODO: implement attach
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
 // ContainerInfo - return low-level information about a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // GET "/containers/:id/json"
@@ -173,12 +208,14 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	}
 	res := gin.H{
 		"Id":    tainr.ID,
+		"Name":  tainr.Name,
 		"Image": tainr.Image,
 		"Config": gin.H{
 			"Image":  tainr.Image,
 			"Labels": tainr.Labels,
 			"Env":    tainr.Env,
 			"Cmd":    tainr.Cmd,
+			"Tty":    false,
 		},
 		"Names": []string{
 			tainr.ID,
