@@ -2,10 +2,8 @@ package backend
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	units "github.com/docker/go-units"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -20,7 +18,7 @@ type Status struct {
 // StateString returns a string that describes the state.
 func (s *Status) StateString() string {
 	if s.Replicas > 0 {
-		return fmt.Sprintf("Up %s", units.HumanDuration(time.Now().UTC().Sub(s.Created)))
+		return "Up"
 	}
 	return "Created"
 }
@@ -35,8 +33,7 @@ func (s *Status) StatusString() string {
 
 // GetContainerStatus will return current status of given exec object in kubernetes.
 func (in *instance) GetContainerStatus(tainr *types.Container) (*Status, error) {
-	name := in.getContainerName(tainr)
-	dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
 	if err != nil {
 		return &Status{}, err
 	}

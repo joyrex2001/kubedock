@@ -12,8 +12,7 @@ import (
 
 // DeleteContainer will delete given container object in kubernetes.
 func (in *instance) DeleteContainer(tainr *types.Container) error {
-	name := in.getContainerName(tainr)
-	return in.cli.AppsV1().Deployments(in.namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	return in.cli.AppsV1().Deployments(in.namespace).Delete(context.TODO(), tainr.ShortID, metav1.DeleteOptions{})
 }
 
 // DeleteContainersOlderThan will delete containers than are orchestrated

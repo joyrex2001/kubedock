@@ -20,7 +20,7 @@ To see a complete list of available options: `kubedock --help`.
 
 ## Compatibility
 
-This project is mainly focussed on getting [testcontainers-java](https://www.testcontainers.org) tests running. Therefor it has limited support of the docker api, only the minimum that is typically used in testcontainers-java backed test.
+This project is mainly focussed on getting [testcontainers-java](https://www.testcontainers.org) tests running. Therefor it has limited support of the docker api, only the minimum that is typically used in testcontainers-java backed tests.
 
 Most of the below use-cases as described by testcontainers are working:
 

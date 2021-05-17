@@ -8,7 +8,7 @@ import (
 	memdb "github.com/hashicorp/go-memdb"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"github.com/joyrex2001/kubedock/internal/util/uuid"
+	"github.com/joyrex2001/kubedock/internal/util/stringid"
 )
 
 // Database is the object contains the in-memory database.
@@ -27,7 +27,9 @@ func New() (*Database, error) {
 		instance = &Database{}
 		db, err = instance.createSchema()
 		instance.db = db
-		instance.loadDefaults()
+		if err == nil {
+			instance.loadDefaults()
+		}
 	})
 	return instance, err
 }
@@ -43,6 +45,11 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Name:    "id",
 						Unique:  true,
 						Indexer: &memdb.StringFieldIndex{Field: "ID"},
+					},
+					"shortid": {
+						Name:    "shortid",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
 					},
 				},
 			},
@@ -78,6 +85,7 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 
 // loadDefaults will insert default records into the database.
 func (in *Database) loadDefaults() {
+	in.SaveNetwork(&types.Network{Name: "null"})
 	in.SaveNetwork(&types.Network{Name: "bridge"})
 }
 
@@ -85,7 +93,11 @@ func (in *Database) loadDefaults() {
 // the instance does not exist.
 func (in *Database) GetContainer(id string) (*types.Container, error) {
 	txn := in.db.Txn(false)
-	raw, err := txn.First("container", "id", id)
+	idx := "id"
+	if stringid.IsShortID(id) {
+		idx = "shortid"
+	}
+	raw, err := txn.First("container", idx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -114,14 +126,12 @@ func (in *Database) GetContainers() ([]*types.Container, error) {
 // current time in Created.
 func (in *Database) SaveContainer(con *types.Container) error {
 	if con.ID == "" {
-		id, err := uuid.New()
-		if err != nil {
-			return err
-		}
+		id := stringid.GenerateRandomID()
 		if id[:1] == "c" {
 			id = "b" + id[1:]
 		}
 		con.ID = id
+		con.ShortID = stringid.TruncateID(id)
 		con.Created = time.Now()
 	}
 	return in.save("container", con)
@@ -165,9 +175,9 @@ func (in *Database) GetExecs() ([]*types.Exec, error) {
 // current time in Created.
 func (in *Database) SaveExec(exc *types.Exec) error {
 	if exc.ID == "" {
-		id, err := uuid.New()
-		if err != nil {
-			return err
+		id := stringid.GenerateRandomID()
+		if id[:1] == "c" {
+			id = "b" + id[1:]
 		}
 		exc.ID = id
 		exc.Created = time.Now()
@@ -255,10 +265,7 @@ func (in *Database) GetNetworksByIDs(ids map[string]interface{}) ([]*types.Netwo
 // current time in Created.
 func (in *Database) SaveNetwork(netw *types.Network) error {
 	if netw.ID == "" {
-		id, err := uuid.New()
-		if err != nil {
-			return err
-		}
+		id := stringid.GenerateRandomID()
 		if id[:1] == "c" {
 			id = "b" + id[1:]
 		}

@@ -8,20 +8,20 @@ import (
 	// enable auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	"github.com/joyrex2001/kubedock/internal/util/uuid"
+	"github.com/joyrex2001/kubedock/internal/util/stringid"
 )
 
 // DefaultLabels are the labels that are added to every kubedock
 // managed resource.
 var DefaultLabels = map[string]string{
 	"kubedock":    "true",
-	"kubedock-id": "",
+	"kubedock.id": "",
 }
 
 // init will set an unique instance id in the default labels to identify
 // this speciffic instance of kubedock.
 func init() {
-	DefaultLabels["kubedock-id"], _ = uuid.New()
+	DefaultLabels["kubedock.id"] = stringid.TruncateID(stringid.GenerateRandomID())
 }
 
 // GetKubernetes will return a kubernetes config object.

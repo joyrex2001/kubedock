@@ -10,19 +10,21 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
-func TestIsContainerRunning(t *testing.T) {
+func TestContainerStatus(t *testing.T) {
 	tests := []struct {
-		in  *types.Container
-		kub *instance
-		out bool
-		suc bool
+		in     *types.Container
+		kub    *instance
+		out    bool
+		suc    bool
+		state  string
+		status string
 	}{
 		{
 			kub: &instance{
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 					Status: appsv1.DeploymentStatus{
@@ -30,16 +32,18 @@ func TestIsContainerRunning(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
-			out: false,
-			suc: true,
+			in:     &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			out:    false,
+			suc:    true,
+			state:  "Created",
+			status: "unhealthy",
 		},
 		{
 			kub: &instance{
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 					Status: appsv1.DeploymentStatus{
@@ -47,9 +51,11 @@ func TestIsContainerRunning(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
-			out: true,
-			suc: true,
+			in:     &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			out:    true,
+			suc:    true,
+			state:  "Up",
+			status: "healthy",
 		},
 	}
 
@@ -63,6 +69,19 @@ func TestIsContainerRunning(t *testing.T) {
 		}
 		if tst.suc && tst.out != res {
 			t.Errorf("failed test %d - expected %t, but got %t", i, tst.out, res)
+		}
+		stat, err := tst.kub.GetContainerStatus(tst.in)
+		if !tst.suc && err == nil {
+			t.Errorf("failed test status %d - expected error", i)
+		}
+		if tst.suc && err != nil {
+			t.Errorf("failed test status %d - unexpected error %s", i, err)
+		}
+		if stat.StateString() != tst.state {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.state, stat.StateString())
+		}
+		if stat.StatusString() != tst.status {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.status, stat.StatusString())
 		}
 	}
 }

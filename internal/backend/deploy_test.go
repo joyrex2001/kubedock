@@ -30,12 +30,12 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 				}),
 			},
-			in:  &types.Container{Name: "f1spirit"},
+			in:  &types.Container{Name: "f1spirit", ShortID: "tb303"},
 			out: true,
 		},
 		{
@@ -43,7 +43,7 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 					Status: appsv1.DeploymentStatus{
@@ -51,7 +51,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out: false,
 		},
 		{
@@ -61,19 +61,19 @@ func TestWaitReadyState(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tr909"},
 					},
 					Status: corev1.PodStatus{
 						Phase: corev1.PodFailed,
 					},
 				}, &appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tr909",
 						Namespace: "default",
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
 			out: true,
 		},
 		{
@@ -83,7 +83,7 @@ func TestWaitReadyState(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tr808"},
 					},
 					Status: corev1.PodStatus{
 						ContainerStatuses: []corev1.ContainerStatus{
@@ -92,12 +92,12 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}, &appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tr808",
 						Namespace: "default",
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
 			out: true,
 		},
 	}
@@ -134,7 +134,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
 			out:  true,
 		},
 		{
@@ -142,9 +142,9 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tb303"},
 					},
 					Status: corev1.PodStatus{
 						InitContainerStatuses: []corev1.ContainerStatus{
@@ -154,7 +154,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out:  false,
 		},
 		{
@@ -162,9 +162,9 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tr606",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tr606"},
 					},
 					Status: corev1.PodStatus{
 						Phase: corev1.PodFailed,
@@ -172,7 +172,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "setup",
-			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", ShortID: "tr606", Name: "f1spirit"},
 			out:  true,
 		},
 		{
@@ -180,9 +180,9 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tr606",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tr606"},
 					},
 					Status: corev1.PodStatus{
 						InitContainerStatuses: []corev1.ContainerStatus{
@@ -192,7 +192,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				}),
 			},
 			name: "main",
-			in:   &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:   &types.Container{ID: "rc752", ShortID: "tr606", Name: "f1spirit"},
 			out:  true,
 		},
 	}
@@ -256,13 +256,31 @@ func TestGetLabels(t *testing.T) {
 		in    *types.Container
 		count int
 	}{
-		{in: &types.Container{}, count: 2},
+		{in: &types.Container{}, count: 3},
 		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 3},
 	}
 
 	for i, tst := range tests {
 		kub := &instance{}
 		count := len(kub.getLabels(tst.in))
+		if count != tst.count {
+			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
+		}
+	}
+}
+
+func TestGetAnnotations(t *testing.T) {
+	tests := []struct {
+		in    *types.Container
+		count int
+	}{
+		{in: &types.Container{}, count: 1},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
+	}
+
+	for i, tst := range tests {
+		kub := &instance{}
+		count := len(kub.getAnnotations(tst.in))
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
 		}

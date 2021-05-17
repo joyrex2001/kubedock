@@ -28,9 +28,10 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	// base deploment
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: in.namespace,
-			Name:      in.getContainerName(tainr),
-			Labels:    in.getLabels(tainr),
+			Namespace:   in.namespace,
+			Name:        tainr.ShortID,
+			Labels:      in.getLabels(tainr),
+			Annotations: in.getAnnotations(tainr),
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
@@ -135,16 +136,26 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 }
 
 // getLabels will return a map of labels to be added to the container. This
-// map contains the labels as specified in the container definition, as well
+// map contains the labels that link to the container definition, as well
 // as additional labels which are used internally by kubedock.
 func (in *instance) getLabels(tainr *types.Container) map[string]string {
 	l := map[string]string{}
-	for k, v := range tainr.Labels {
-		l[k] = in.toKubernetesName(v)
-	}
 	for k, v := range config.DefaultLabels {
 		l[k] = v
 	}
+	l["kubedock.containerid"] = tainr.ShortID
+	return l
+}
+
+// getAnnotations will return a map of annotations to be added to the
+// container. This map contains the labels as specified in the container
+// definition.
+func (in *instance) getAnnotations(tainr *types.Container) map[string]string {
+	l := tainr.Labels
+	if l == nil {
+		l = map[string]string{}
+	}
+	l["kubedock.containername"] = tainr.Name
 	return l
 }
 
@@ -152,23 +163,20 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 // match running pods for this container.
 func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]string {
 	return map[string]string{
-		"app":      in.getContainerName(tainr),
-		"kubedock": tainr.ID,
-		"tier":     "kubedock",
+		"kubedock": tainr.ShortID,
 	}
 }
 
 // getPodsLabelSelector will return a label selector that can be used to
 // uniquely idenitify pods that belong to this deployment.
 func (in *instance) getPodsLabelSelector(tainr *types.Container) string {
-	return "kubedock=" + tainr.ID
+	return "kubedock=" + tainr.ShortID
 }
 
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
-	name := in.getContainerName(tainr)
 	for max := 0; max < wait; max++ {
-		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}

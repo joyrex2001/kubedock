@@ -22,7 +22,7 @@ func TestGetLogs(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out: true,
 		},
 		// {
@@ -64,7 +64,7 @@ func TestGetFirstPodName(t *testing.T) {
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out: "",
 			suc: false,
 		},
@@ -73,12 +73,12 @@ func TestGetFirstPodName(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out: "",
 			suc: false,
 		},
@@ -87,14 +87,14 @@ func TestGetFirstPodName(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock": "tb303"},
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
-			out: "f1spirit",
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			out: "tb303",
 			suc: true,
 		},
 	}

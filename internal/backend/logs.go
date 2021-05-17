@@ -79,7 +79,7 @@ func (in *instance) getFirstPodName(tainr *types.Container) (string, error) {
 	}
 
 	if len(names) == 0 {
-		return "", fmt.Errorf("no running pods for %s", in.getContainerName(tainr))
+		return "", fmt.Errorf("no running pods for %s", tainr.ShortID)
 	}
 
 	return names[0], nil

@@ -217,9 +217,7 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			"Cmd":    tainr.Cmd,
 			"Tty":    false,
 		},
-		"Names": []string{
-			tainr.ID,
-		},
+		"Names": cr.getContainerNames(tainr),
 		"NetworkSettings": gin.H{
 			"Networks": netdtl,
 			"Ports":    cr.getNetworkSettingsPorts(tainr),
@@ -265,4 +263,15 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 		}
 	}
 	return res
+}
+
+// getContainerNames will list of possible names to identify the container.
+func (cr *Router) getContainerNames(tainr *types.Container) []string {
+	names := []string{}
+	if tainr.Name != "" {
+		names = append(names, tainr.Name)
+	}
+	names = append(names, tainr.ID)
+	names = append(names, tainr.ShortID)
+	return names
 }

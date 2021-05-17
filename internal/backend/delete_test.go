@@ -23,7 +23,7 @@ func TestDeleteContainer(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "tb303",
 						Namespace: "default",
 					},
 					Status: appsv1.DeploymentStatus{
@@ -31,7 +31,7 @@ func TestDeleteContainer(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", Name: "f1spirit"},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			out: false,
 		},
 	}

@@ -13,6 +13,7 @@ import (
 // Container describes the details of a container.
 type Container struct {
 	ID           string
+	ShortID      string
 	Name         string
 	Image        string
 	Cmd          []string

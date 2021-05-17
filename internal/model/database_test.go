@@ -8,7 +8,10 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	db, _ := New()
+	db, err := New()
+	if err != nil {
+		t.Errorf("Unexpected error creating database: %s", err)
+	}
 	for i := 0; i < 2; i++ {
 		_db, _ := New()
 		if _db != db && db != nil {
@@ -38,6 +41,13 @@ func TestDatabase(t *testing.T) {
 	} else {
 		if conl.ID != con.ID || conl.Image != con.Image {
 			t.Errorf("Loaded container differs to saved container")
+		}
+	}
+	if conl, err := db.GetContainer(con.ShortID); err != nil {
+		t.Errorf("Unexpected error when loading an existing container shortid")
+	} else {
+		if conl.ID != con.ID || conl.Image != con.Image {
+			t.Errorf("Loaded shortid container differs to saved container")
 		}
 	}
 	if cons, err := db.GetContainers(); err != nil {
@@ -96,8 +106,11 @@ func TestDatabase(t *testing.T) {
 	}
 }
 
-func TestContainerIDWorkaround(t *testing.T) {
-	db, _ := New()
+func TestIDWorkaround(t *testing.T) {
+	db, err := New()
+	if err != nil {
+		t.Errorf("Unexpected error creating database: %s", err)
+	}
 	for i := 0; i < 1000; i++ {
 		con := &types.Container{}
 		if err := db.SaveContainer(con); err != nil {
@@ -107,6 +120,14 @@ func TestContainerIDWorkaround(t *testing.T) {
 			t.Errorf("Container ID that start with a c cause problems in the server router setup...")
 			return
 		}
+		// netw := &types.Network{}
+		// if err := db.SaveNetwork(netw); err != nil {
+		// 	t.Errorf("Unexpected error when creating a new network")
+		// }
+		// if netw.ID[:1] == "c" {
+		// 	t.Errorf("Network ID that start with a c cause problems in the server router setup...")
+		// 	return
+		// }
 	}
 }
 
@@ -132,8 +153,8 @@ func TestNetwork(t *testing.T) {
 	if netws, err := db.GetNetworks(); err != nil {
 		t.Errorf("Unexpected error when loading all existing networks")
 	} else {
-		if len(netws) != 5 {
-			t.Errorf("Expected 5 exec records, but got %d", len(netws))
+		if len(netws) != 6 {
+			t.Errorf("Expected 5 network records, but got %d", len(netws))
 		}
 	}
 

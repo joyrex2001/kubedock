@@ -2,8 +2,6 @@ package backend
 
 import (
 	"testing"
-
-	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 func TestAsKubernetsName(t *testing.T) {
@@ -33,6 +31,10 @@ func TestAsKubernetsName(t *testing.T) {
 			in:  "2107007e-b7c8-df23-18fb-6a6f79726578",
 			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
 		},
+		{
+			in:  "",
+			out: "undef",
+		},
 	}
 
 	for i, tst := range tests {
@@ -40,41 +42,6 @@ func TestAsKubernetsName(t *testing.T) {
 		out := kub.toKubernetesName(tst.in)
 		if out != tst.out {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, out)
-		}
-	}
-}
-
-func TestGetKubernetesName(t *testing.T) {
-	tests := []struct {
-		in  *types.Container
-		out string
-	}{
-		{
-			in:  &types.Container{Name: "StrategicMars"},
-			out: "StrategicMars",
-		},
-		{
-			in:  &types.Container{Name: "", ID: "2107007e-b7c8-df23-18fb-6a6f79726578"},
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
-		},
-		{
-			in:  &types.Container{Name: "0123456789012345678901234567890123456789012345678901234567890123456789"},
-			out: "012345678901234567890123456789012345678901234567890123456789012",
-		},
-		{
-			in:  &types.Container{Name: "StrategicMars-"},
-			out: "StrategicMars",
-		},
-		{
-			in:  &types.Container{Name: "-", ID: "2107007e-b7c8-df23-18fb-6a6f79726578"},
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
-		},
-	}
-	for i, tst := range tests {
-		kub := &instance{}
-		res := kub.getContainerName(tst.in)
-		if res != tst.out {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
 		}
 	}
 }
