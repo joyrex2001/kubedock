@@ -75,18 +75,11 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 		tainr.MapPort(portforward.RandomPort(), pp)
 	}
 
-	ports := map[int]int{}
-	if in.keepPorts {
-		for _, pp := range tainr.GetContainerTCPPorts() {
-			ports[pp] = pp
-		}
-	}
-
 	go func() {
-		if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
+		if err := in.portForward(tainr, tainr.HostPorts); err != nil {
 			klog.Errorf("portforward failed: %s", err)
 		}
-		if err := in.portForward(tainr, ports); err != nil {
+		if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
 			klog.Errorf("portforward failed: %s", err)
 		}
 	}()
@@ -139,10 +132,7 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 // map contains the labels that link to the container definition, as well
 // as additional labels which are used internally by kubedock.
 func (in *instance) getLabels(tainr *types.Container) map[string]string {
-	l := map[string]string{}
-	for k, v := range config.DefaultLabels {
-		l[k] = v
-	}
+	l := config.DefaultLabels
 	l["kubedock.containerid"] = tainr.ShortID
 	return l
 }

@@ -26,7 +26,6 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if in.Name == "" {
 		in.Name = c.Query("name")
 	}
-
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,
@@ -35,6 +34,15 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		ExposedPorts: in.ExposedPorts,
 		Labels:       in.Labels,
 		Binds:        in.HostConfig.Binds,
+	}
+
+	for dst, ports := range in.HostConfig.PortBindings {
+		for _, src := range ports {
+			if err := tainr.AddHostPort(src.HostPort, dst); err != nil {
+				httputil.Error(c, http.StatusInternalServerError, err)
+				return
+			}
+		}
 	}
 
 	netw, err := cr.db.GetNetworkByName("bridge")
@@ -225,7 +233,6 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		"HostConfig": gin.H{
 			"NetworkMode": "host",
 		},
-		"Created": status.Created.Unix(),
 	}
 	if detail {
 		res["State"] = gin.H{
@@ -243,8 +250,10 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
+		res["Created"] = status.Created.Format("2006-01-02T15:04:05Z")
 	} else {
 		res["State"] = status.StateString()
+		res["Created"] = status.Created.Unix()
 	}
 	return res
 }

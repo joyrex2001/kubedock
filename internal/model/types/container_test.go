@@ -71,6 +71,45 @@ func TestGetContainerTCPPorts(t *testing.T) {
 	}
 }
 
+func TestAddHostPort(t *testing.T) {
+	tests := []struct {
+		src string
+		dst string
+		out map[int]int
+		suc bool
+	}{
+		{
+			src: "303",
+			dst: "606/tcp",
+			out: map[int]int{303: 606},
+			suc: true,
+		},
+		{
+			src: "303",
+			dst: "606",
+			suc: false,
+		},
+		{
+			src: "three-o-three",
+			dst: "606/tcp",
+			suc: false,
+		},
+	}
+	for i, tst := range tests {
+		in := &Container{}
+		err := in.AddHostPort(tst.src, tst.dst)
+		if err != nil && tst.suc {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && !tst.suc {
+			t.Errorf("failed test %d - expected error, but succeeded instead", i)
+		}
+		if !reflect.DeepEqual(in.HostPorts, tst.out) {
+			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, in.HostPorts)
+		}
+	}
+}
+
 func TestStop(t *testing.T) {
 	tainr := &Container{}
 	res := 0

@@ -14,7 +14,13 @@ type ContainerCreateRequest struct {
 
 // ContainerHostConfig contains to be mounted files from the host system.
 type ContainerHostConfig struct {
-	Binds []string `json:"Binds"`
+	Binds        []string `json:"Binds"`
+	PortBindings map[string][]PortBinding
+}
+
+// PortBinding represents a binding between to a port
+type PortBinding struct {
+	HostPort string `json:"HostPort"`
 }
 
 // ContainerExecRequest represents the json structure that

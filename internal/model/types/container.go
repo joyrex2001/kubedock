@@ -22,6 +22,7 @@ type Container struct {
 	ExposedPorts map[string]interface{}
 	Networks     map[string]interface{}
 	Labels       map[string]string
+	HostPorts    map[int]int
 	MappedPorts  map[int]int
 	StopChannels []chan struct{}
 	Created      time.Time
@@ -50,28 +51,52 @@ func (co *Container) MapPort(pod, local int) {
 	co.MappedPorts[pod] = local
 }
 
+// AddHostPort will add a predefined port mapping.
+func (co *Container) AddHostPort(src string, dst string) error {
+	sp, err := strconv.Atoi(src)
+	if err != nil {
+		return fmt.Errorf("could not parse exposed port %s: %s", dst, err)
+	}
+	dp, err := co.getTCPPort(dst)
+	if err != nil {
+		return err
+	}
+	if co.HostPorts == nil {
+		co.HostPorts = map[int]int{}
+	}
+	co.HostPorts[sp] = dp
+	return nil
+}
+
 // GetContainerTCPPorts will return a list of all ports that are
 // exposed by this container.
 func (co *Container) GetContainerTCPPorts() []int {
 	ports := []int{}
 	for p := range co.ExposedPorts {
-		f := strings.Split(p, "/")
-		if len(f) != 2 {
-			klog.Errorf("could not parse exposed port %s", p)
-			continue
-		}
-		pp, err := strconv.Atoi(f[0])
+		pp, err := co.getTCPPort(p)
 		if err != nil {
-			klog.Errorf("could not parse exposed port %s: %s", p, err)
-			continue
-		}
-		if f[1] != "tcp" {
-			klog.Errorf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
+			klog.Errorf("could not parse exposed port %s", p)
 			continue
 		}
 		ports = append(ports, pp)
 	}
 	return ports
+}
+
+// getTCPPort will convert a "9000/tcp" string to the port.
+func (co *Container) getTCPPort(p string) (int, error) {
+	f := strings.Split(p, "/")
+	if len(f) != 2 {
+		return 0, fmt.Errorf("could not parse exposed port %s", p)
+	}
+	pp, err := strconv.Atoi(f[0])
+	if err != nil {
+		return 0, fmt.Errorf("could not parse exposed port %s: %s", p, err)
+	}
+	if f[1] != "tcp" {
+		return 0, fmt.Errorf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
+	}
+	return pp, nil
 }
 
 // GetVolumes will return a map of volumes that should be mounted on the
