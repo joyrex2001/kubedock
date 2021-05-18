@@ -32,9 +32,9 @@ func (s *Server) Run() error {
 	socket := viper.GetString("server.socket")
 	if socket == "" {
 		port := viper.GetString("server.listen-addr")
-		if viper.GetBool("server.enable-tls") {
-			cert := viper.GetString("server.cert-file")
-			key := viper.GetString("server.key-file")
+		if viper.GetBool("server.tls-enable") {
+			cert := viper.GetString("server.tls-cert-file")
+			key := viper.GetString("server.tls-key-file")
 			router.RunTLS(port, cert, key)
 		} else {
 			router.Run(port)
