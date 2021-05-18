@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -35,6 +36,16 @@ func HijackConnection(w http.ResponseWriter) (io.ReadCloser, io.Writer, error) {
 	// Flush the options to make sure the client sets the raw mode
 	_, _ = conn.Write([]byte{})
 	return conn, conn, nil
+}
+
+// UpgradeConnection will upgrade the Hijacked connection.
+func UpgradeConnection(r *http.Request, out io.Writer) {
+	if _, ok := r.Header["Upgrade"]; ok {
+		fmt.Fprint(out, "HTTP/1.1 101 UPGRADED\r\nContent-Type: application/vnd.docker.raw-stream\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n")
+	} else {
+		fmt.Fprint(out, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n")
+	}
+	fmt.Fprint(out, "\r\n")
 }
 
 // CloseStreams ensures that a list for http streams are properly closed.

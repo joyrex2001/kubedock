@@ -88,10 +88,19 @@ func (cr *Router) ExecStart(c *gin.Context) {
 		return
 	}
 
+	r := c.Request
 	w := c.Writer
 	w.WriteHeader(http.StatusOK)
 
-	if err := cr.kub.ExecContainer(tainr, exec, w); err != nil {
+	in, out, err := httputil.HijackConnection(w)
+	if err != nil {
+		klog.Errorf("error during hijack connection: %s", err)
+		return
+	}
+	defer httputil.CloseStreams(in, out)
+	httputil.UpgradeConnection(r, out)
+
+	if err := cr.kub.ExecContainer(tainr, exec, out); err != nil {
 		klog.Errorf("error during exec: %s", err)
 		return
 	}
