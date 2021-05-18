@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -14,7 +13,7 @@ import (
 
 // Main is the main entry point for starting this service, based the settings
 // initiated by cmd.
-func Main(cmd *cobra.Command, args []string) {
+func Main() {
 	kub, err := getBackend()
 	if err != nil {
 		klog.Fatalf("error instantiating kubernetes: %s", err)

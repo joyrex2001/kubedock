@@ -19,11 +19,11 @@ var cfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "kubedock",
-	Short: "kubedock is a docker on kubernetes service.",
+	Short: "kubedock is a docker api to orchestrate containers on kubernetes.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		flag.Set("v", viper.GetString("verbosity"))
-		internal.Main(cmd, args)
+		internal.Main()
 	},
 }
 
@@ -33,7 +33,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String("listen-addr", ":8080", "Webserver listen address")
 	rootCmd.PersistentFlags().String("socket", "", "Unix socket to listen to (instead of port)")
-	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on admin webserver")
+	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
 	rootCmd.PersistentFlags().String("tls-key-file", "", "TLS keyfile")
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
 	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
