@@ -114,20 +114,26 @@ func TestIDWorkaround(t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		con := &types.Container{}
 		if err := db.SaveContainer(con); err != nil {
-			t.Errorf("Unexpected error when creating a new container")
+			t.Errorf("Unexpected error when creating a new container: %s", err)
 		}
 		if con.ID[:1] == "c" {
 			t.Errorf("Container ID that start with a c cause problems in the server router setup...")
 			return
 		}
-		// netw := &types.Network{}
-		// if err := db.SaveNetwork(netw); err != nil {
-		// 	t.Errorf("Unexpected error when creating a new network")
-		// }
-		// if netw.ID[:1] == "c" {
-		// 	t.Errorf("Network ID that start with a c cause problems in the server router setup...")
-		// 	return
-		// }
+		if err := db.DeleteContainer(con); err != nil {
+			t.Errorf("Unexpected error when deleting container: %s", err)
+		}
+		netw := &types.Network{Name: "tb303"}
+		if err := db.SaveNetwork(netw); err != nil {
+			t.Errorf("Unexpected error when creating a new network: %s", err)
+		}
+		if netw.ID[:1] == "c" {
+			t.Errorf("Network ID that start with a c cause problems in the server router setup...")
+			return
+		}
+		if err := db.DeleteNetwork(netw); err != nil {
+			t.Errorf("Unexpected error when deleting network: %s", err)
+		}
 	}
 }
 
@@ -144,17 +150,17 @@ func TestNetwork(t *testing.T) {
 	}
 
 	for i, n := range []string{"net1", "net2", "net3"} {
-		netw := &types.Network{Name: n, ID: fmt.Sprintf("%d", i+1)}
+		netw := &types.Network{Name: n, ID: fmt.Sprintf("%d", i+1), ShortID: fmt.Sprintf("%d", i+1)}
 		if err := db.SaveNetwork(netw); err != nil {
-			t.Errorf("Unexpected error when creating network %s", n)
+			t.Errorf("Unexpected error when creating network %s: %s", n, err)
 		}
 	}
 
 	if netws, err := db.GetNetworks(); err != nil {
 		t.Errorf("Unexpected error when loading all existing networks")
 	} else {
-		if len(netws) != 6 {
-			t.Errorf("Expected 5 network records, but got %d", len(netws))
+		if len(netws) != 7 {
+			t.Errorf("Expected 7 network records, but got %d", len(netws))
 		}
 	}
 
@@ -167,14 +173,14 @@ func TestNetwork(t *testing.T) {
 	}
 	net1, err = db.GetNetworkByNameOrID("1")
 	if err != nil {
-		t.Errorf("Unexpected error when loading network net1")
+		t.Errorf("Unexpected error when loading network net1: %s", err)
 	}
 	if err := db.DeleteNetwork(net1); err != nil {
-		t.Errorf("Unexpected error when deleting network net1")
+		t.Errorf("Unexpected error when deleting network net1: %s", err)
 	}
 	net1, err = db.GetNetworkByNameOrID("net1")
 	if err == nil {
-		t.Errorf("Expected error when loading deleted network net1")
+		t.Errorf("Expected error when loading deleted network net1: %s", err)
 	}
 
 	netws, err := db.GetNetworksByIDs(map[string]interface{}{})

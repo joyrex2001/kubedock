@@ -12,20 +12,21 @@ import (
 
 // Container describes the details of a container.
 type Container struct {
-	ID           string
-	ShortID      string
-	Name         string
-	Image        string
-	Cmd          []string
-	Env          []string
-	Binds        []string
-	ExposedPorts map[string]interface{}
-	Networks     map[string]interface{}
-	Labels       map[string]string
-	HostPorts    map[int]int
-	MappedPorts  map[int]int
-	StopChannels []chan struct{}
-	Created      time.Time
+	ID             string
+	ShortID        string
+	Name           string
+	Image          string
+	Cmd            []string
+	Env            []string
+	Binds          []string
+	ExposedPorts   map[string]interface{}
+	Networks       map[string]interface{}
+	NetworkAliases []string
+	Labels         map[string]string
+	HostPorts      map[int]int
+	MappedPorts    map[int]int
+	StopChannels   []chan struct{}
+	Created        time.Time
 }
 
 // GetEnvVar will return the environment variables of the container

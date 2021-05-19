@@ -73,8 +73,8 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 		return
 	}
 
-	if netw.Name == "bridge" {
-		httputil.Error(c, http.StatusForbidden, fmt.Errorf("cannot delete bridge network"))
+	if netw.Name == "bridge" || netw.Name == "none" || netw.Name == "host" {
+		httputil.Error(c, http.StatusForbidden, fmt.Errorf("%s is a pre-defined network and cannot be removed", netw.Name))
 		return
 	}
 

@@ -71,6 +71,11 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Unique:  true,
 						Indexer: &memdb.StringFieldIndex{Field: "ID"},
 					},
+					"shortid": {
+						Name:    "shortid",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
+					},
 					"name": {
 						Name:    "name",
 						Unique:  true,
@@ -86,6 +91,7 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 // loadDefaults will insert default records into the database.
 func (in *Database) loadDefaults() {
 	in.SaveNetwork(&types.Network{Name: "null"})
+	in.SaveNetwork(&types.Network{Name: "host"})
 	in.SaveNetwork(&types.Network{Name: "bridge"})
 }
 
@@ -93,6 +99,7 @@ func (in *Database) loadDefaults() {
 // the instance does not exist.
 func (in *Database) GetContainer(id string) (*types.Container, error) {
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	idx := "id"
 	if stringid.IsShortID(id) {
 		idx = "shortid"
@@ -111,6 +118,7 @@ func (in *Database) GetContainer(id string) (*types.Container, error) {
 func (in *Database) GetContainers() ([]*types.Container, error) {
 	rec := []*types.Container{}
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	it, err := txn.Get("container", "id")
 	if err != nil {
 		return rec, err
@@ -146,6 +154,7 @@ func (in *Database) DeleteContainer(con *types.Container) error {
 // instance does not exist.
 func (in *Database) GetExec(id string) (*types.Exec, error) {
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	raw, err := txn.First("exec", "id", id)
 	if err != nil {
 		return nil, err
@@ -160,6 +169,7 @@ func (in *Database) GetExec(id string) (*types.Exec, error) {
 func (in *Database) GetExecs() ([]*types.Exec, error) {
 	rec := []*types.Exec{}
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	it, err := txn.Get("exec", "id")
 	if err != nil {
 		return rec, err
@@ -194,7 +204,12 @@ func (in *Database) DeleteExec(exc *types.Exec) error {
 // instance does not exist.
 func (in *Database) GetNetwork(id string) (*types.Network, error) {
 	txn := in.db.Txn(false)
-	raw, err := txn.First("network", "id", id)
+	defer txn.Abort()
+	idx := "id"
+	if stringid.IsShortID(id) {
+		idx = "shortid"
+	}
+	raw, err := txn.First("network", idx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -208,6 +223,7 @@ func (in *Database) GetNetwork(id string) (*types.Network, error) {
 // instance does not exist.
 func (in *Database) GetNetworkByName(name string) (*types.Network, error) {
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	raw, err := txn.First("network", "name", name)
 	if err != nil {
 		return nil, err
@@ -232,6 +248,7 @@ func (in *Database) GetNetworkByNameOrID(id string) (*types.Network, error) {
 func (in *Database) GetNetworks() ([]*types.Network, error) {
 	rec := []*types.Network{}
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	it, err := txn.Get("network", "id")
 	if err != nil {
 		return rec, err
@@ -247,6 +264,7 @@ func (in *Database) GetNetworks() ([]*types.Network, error) {
 func (in *Database) GetNetworksByIDs(ids map[string]interface{}) ([]*types.Network, error) {
 	rec := []*types.Network{}
 	txn := in.db.Txn(false)
+	defer txn.Abort()
 	it, err := txn.Get("network", "id")
 	if err != nil {
 		return rec, err
@@ -270,6 +288,7 @@ func (in *Database) SaveNetwork(netw *types.Network) error {
 			id = "b" + id[1:]
 		}
 		netw.ID = id
+		netw.ShortID = stringid.TruncateID(id)
 		netw.Created = time.Now()
 	}
 	return in.save("network", netw)
@@ -285,6 +304,7 @@ func (in *Database) DeleteNetwork(netw *types.Network) error {
 func (in *Database) save(table string, rec interface{}) error {
 	txn := in.db.Txn(true)
 	if err := txn.Insert(table, rec); err != nil {
+		txn.Abort()
 		return err
 	}
 	txn.Commit()
@@ -296,6 +316,7 @@ func (in *Database) save(table string, rec interface{}) error {
 func (in *Database) delete(table string, rec interface{}) error {
 	txn := in.db.Txn(true)
 	if err := txn.Delete(table, rec); err != nil {
+		txn.Abort()
 		return err
 	}
 	txn.Commit()
