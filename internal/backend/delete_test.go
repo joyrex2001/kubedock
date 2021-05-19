@@ -6,6 +6,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
@@ -44,6 +45,52 @@ func TestDeleteContainer(t *testing.T) {
 	}
 }
 
+func TestDeleteServices(t *testing.T) {
+	tests := []struct {
+		id  string
+		kub *instance
+		cnt int
+	}{
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tr909",
+						Namespace: "default",
+					},
+				}),
+			},
+			id:  "tb303",
+			cnt: 1,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tr909",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock.containerid": "tb303"},
+					},
+				}),
+			},
+			id:  "tb303",
+			cnt: 0,
+		},
+	}
+
+	for i, tst := range tests {
+		if err := tst.kub.deleteServices(tst.id); err != nil {
+			t.Errorf("failed test %d - unexpected error  %s", i, err)
+		}
+		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.TODO(), metav1.ListOptions{})
+		cnt := len(svcs.Items)
+		if cnt != tst.cnt {
+			t.Errorf("failed test %d - expected %d remaining services but got %d", i, tst.cnt, cnt)
+		}
+	}
+}
 func TestDeleteContainersOlderThan(t *testing.T) {
 	tests := []struct {
 		cnt int

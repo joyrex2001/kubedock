@@ -269,6 +269,37 @@ func TestGetLabels(t *testing.T) {
 	}
 }
 
+func TestGetServices(t *testing.T) {
+	tests := []struct {
+		in    *types.Container
+		svcs  int
+		ports int
+	}{
+		{in: &types.Container{}, svcs: 0, ports: 0},
+		{in: &types.Container{ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 0, ports: 0},
+		{in: &types.Container{ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 0, ports: 0},
+		{in: &types.Container{ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 0, ports: 0},
+		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 1, ports: 1},
+		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 1, ports: 1},
+		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 1, ports: 2},
+		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 2, ports: 1},
+		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 2, ports: 1},
+		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 2, ports: 2},
+	}
+
+	for i, tst := range tests {
+		kub := &instance{}
+		res := kub.getServices(tst.in)
+		count := len(res)
+		if count != tst.svcs {
+			t.Errorf("failed test %d - expected %d services, but got %d", i, tst.svcs, count)
+		}
+		if count > 0 && tst.ports > 0 && len(res[0].Spec.Ports) != tst.ports {
+			t.Errorf("failed test %d - expected %d ports, but got %d", i, tst.ports, len(res[0].Spec.Ports))
+		}
+	}
+}
+
 func TestGetAnnotations(t *testing.T) {
 	tests := []struct {
 		in    *types.Container

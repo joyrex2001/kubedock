@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog"
 
@@ -84,6 +85,10 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 		}
 	}()
 
+	if err := in.createServices(tainr); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -115,6 +120,59 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		})
 	}
 	return nil
+}
+
+// createServices will create k8s service objects for each provided
+// external name, mapped with provided hostports ports.
+func (in *instance) createServices(tainr *types.Container) error {
+	for _, svc := range in.getServices(tainr) {
+		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// getServices will return corev1 services objects for the given
+// container definition.
+func (in *instance) getServices(tainr *types.Container) []corev1.Service {
+	svcs := []corev1.Service{}
+	ports := map[int]int{}
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		ports[pp] = pp
+	}
+	if tainr.HostPorts != nil {
+		for src, dst := range tainr.HostPorts {
+			ports[src] = dst
+		}
+	}
+	if len(ports) == 0 {
+		// no ports available, can't create a service without ports
+		return svcs
+	}
+	for _, alias := range tainr.NetworkAliases {
+		svc := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace:   in.namespace,
+				Name:        alias,
+				Labels:      in.getLabels(tainr),
+				Annotations: in.getAnnotations(tainr),
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: in.getDeploymentMatchLabels(tainr),
+				Ports:    []corev1.ServicePort{},
+			},
+		}
+		for src, dst := range ports {
+			svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+				Protocol:   corev1.ProtocolTCP,
+				Port:       int32(src),
+				TargetPort: intstr.IntOrString{IntVal: int32(dst)},
+			})
+		}
+		svcs = append(svcs, svc)
+	}
+	return svcs
 }
 
 // getContainerPorts will return the mapped ports of the container
