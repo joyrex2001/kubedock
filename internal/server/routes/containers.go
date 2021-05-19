@@ -45,6 +45,8 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		}
 	}
 
+	cr.addNetworkAliases(tainr, in.NetworkConfig.EndpointConfig)
+
 	netw, err := cr.db.GetNetworkByName("bridge")
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)

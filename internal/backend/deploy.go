@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -68,7 +69,7 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 		}
 	}
 
-	if err := in.waitReadyState(tainr, 30); err != nil {
+	if err := in.waitReadyState(tainr, in.timeOut); err != nil {
 		return err
 	}
 
@@ -85,7 +86,7 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 		}
 	}()
 
-	if err := in.createServices(tainr); err != nil {
+	if err := in.CreateServices(tainr); err != nil {
 		return err
 	}
 
@@ -122,9 +123,9 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 	return nil
 }
 
-// createServices will create k8s service objects for each provided
+// CreateServices will create k8s service objects for each provided
 // external name, mapped with provided hostports ports.
-func (in *instance) createServices(tainr *types.Container) error {
+func (in *instance) CreateServices(tainr *types.Container) error {
 	for _, svc := range in.getServices(tainr) {
 		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
 			return err
@@ -148,9 +149,17 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	}
 	if len(ports) == 0 {
 		// no ports available, can't create a service without ports
+		if len(tainr.NetworkAliases) > 0 {
+			klog.Infof("ignoring network aliases %v, no ports mapped", tainr.NetworkAliases)
+		}
 		return svcs
 	}
+	valid := regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
 	for _, alias := range tainr.NetworkAliases {
+		if ok := valid.MatchString(alias); !ok {
+			klog.Infof("ignoring network alias %s, invalid name", alias)
+			continue
+		}
 		svc := corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:   in.namespace,
@@ -165,6 +174,7 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 		}
 		for src, dst := range ports {
 			svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+				Name:       fmt.Sprintf("tcp-%d-%d", src, dst),
 				Protocol:   corev1.ProtocolTCP,
 				Port:       int32(src),
 				TargetPort: intstr.IntOrString{IntVal: int32(dst)},
@@ -250,8 +260,8 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
 	return fmt.Errorf("timeout starting container")
 }
 
-// waitReadyContainer will wait for a specific container in the deployment
-// to be ready.
+// waitInitContainerRunning will wait for a specific container in the
+// deployment to be ready.
 func (in *instance) waitInitContainerRunning(tainr *types.Container, name string, wait int) error {
 	for max := 0; max < wait; max++ {
 		pods, err := in.getPods(tainr)

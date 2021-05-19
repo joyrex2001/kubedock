@@ -146,3 +146,59 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceContainersOlderThan(t *testing.T) {
+	tests := []struct {
+		cnt int
+		kub *instance
+	}{
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+					},
+				}),
+			},
+			cnt: 1,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "true"},
+					},
+				}),
+			},
+			cnt: 0,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "f1spirit",
+						Namespace:         "default",
+						Labels:            map[string]string{"kubedock": "true"},
+						DeletionTimestamp: &metav1.Time{},
+					},
+				}),
+			},
+			cnt: 1,
+		},
+	}
+
+	for i, tst := range tests {
+		tst.kub.DeleteServicesOlderThan(100 * time.Millisecond)
+		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.TODO(), metav1.ListOptions{})
+		cnt := len(svcs.Items)
+		if cnt != tst.cnt {
+			t.Errorf("failed test %d - expected %d remaining services but got %d", i, tst.cnt, cnt)
+		}
+	}
+}

@@ -3,24 +3,14 @@ package routes
 // ContainerCreateRequest represents the json structure that
 // is used for the /container/create post endpoint.
 type ContainerCreateRequest struct {
-	Name         string                 `json:"name"`
-	Image        string                 `json:"image"`
-	ExposedPorts map[string]interface{} `json:"ExposedPorts"`
-	Labels       map[string]string      `json:"Labels"`
-	Cmd          []string               `json:"Cmd"`
-	Env          []string               `json:"Env"`
-	HostConfig   ContainerHostConfig    `json:"HostConfig"`
-}
-
-// ContainerHostConfig contains to be mounted files from the host system.
-type ContainerHostConfig struct {
-	Binds        []string `json:"Binds"`
-	PortBindings map[string][]PortBinding
-}
-
-// PortBinding represents a binding between to a port
-type PortBinding struct {
-	HostPort string `json:"HostPort"`
+	Name          string                 `json:"name"`
+	Image         string                 `json:"image"`
+	ExposedPorts  map[string]interface{} `json:"ExposedPorts"`
+	Labels        map[string]string      `json:"Labels"`
+	Cmd           []string               `json:"Cmd"`
+	Env           []string               `json:"Env"`
+	HostConfig    HostConfig             `json:"HostConfig"`
+	NetworkConfig NetworkConfig          `json:"NetworkConfig"`
 }
 
 // ContainerExecRequest represents the json structure that
@@ -50,11 +40,33 @@ type NetworkCreateRequest struct {
 // NetworkConnectRequest represents the json structure that
 // is used for the /networks/:id/connect post endpoint.
 type NetworkConnectRequest struct {
-	Container string `json:"container"`
+	Container      string         `json:"container"`
+	EndpointConfig EndpointConfig `json:"EndpointConfig"`
 }
 
 // NetworkDisconnectRequest represents the json structure that
 // is used for the /networks/:id/disconnect post endpoint.
 type NetworkDisconnectRequest struct {
 	Container string `json:"container"`
+}
+
+// HostConfig contains to be mounted files from the host system.
+type HostConfig struct {
+	Binds        []string `json:"Binds"`
+	PortBindings map[string][]PortBinding
+}
+
+// PortBinding represents a binding between to a port
+type PortBinding struct {
+	HostPort string `json:"HostPort"`
+}
+
+// NetworkConfig contains network configuration
+type NetworkConfig struct {
+	EndpointConfig EndpointConfig `json:"EndpointConfig"`
+}
+
+// EndpointConfig contains information about network endpoints
+type EndpointConfig struct {
+	Aliases []string `json:"Aliases"`
 }

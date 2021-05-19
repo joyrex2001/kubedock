@@ -285,6 +285,8 @@ func TestGetServices(t *testing.T) {
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 2, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 2, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 2, ports: 2},
+		{in: &types.Container{NetworkAliases: []string{"tb303_"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 0, ports: 0},
+		{in: &types.Container{NetworkAliases: []string{"303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 0, ports: 0},
 	}
 
 	for i, tst := range tests {

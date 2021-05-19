@@ -122,6 +122,11 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+	nr.addNetworkAliases(tainr, in.EndpointConfig)
+	if err := nr.kub.CreateServices(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 

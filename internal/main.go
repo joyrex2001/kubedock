@@ -49,6 +49,7 @@ func getBackend() (backend.Backend, error) {
 		RestConfig: cfg,
 		Namespace:  viper.GetString("kubernetes.namespace"),
 		InitImage:  viper.GetString("kubernetes.initimage"),
+		TimeOut:    viper.GetDuration("kubernetes.timeout"),
 	})
 	return kub, nil
 }

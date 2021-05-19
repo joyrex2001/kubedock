@@ -46,6 +46,31 @@ func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
 	return nil
 }
 
+// DeleteServicesOlderThan will delete services than are orchestrated
+// by kubedock and are older than the given keepmax duration.
+func (in *instance) DeleteServicesOlderThan(keepmax time.Duration) error {
+	svcs, err := in.cli.CoreV1().Services(in.namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "kubedock=true",
+	})
+	if err != nil {
+		return err
+	}
+	for _, svc := range svcs.Items {
+		if svc.ObjectMeta.DeletionTimestamp != nil {
+			klog.V(3).Infof("skipping service %v, already in deleting state", svc)
+			continue
+		}
+		old := metav1.NewTime(time.Now().Add(-keepmax))
+		if svc.ObjectMeta.CreationTimestamp.Before(&old) {
+			klog.V(3).Infof("deleting service: %s", svc.Name)
+			if err := in.cli.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // deleteServices will delete k8s service resources which have the
 // label kubedock with the given id as value.
 func (in *instance) deleteServices(id string) error {

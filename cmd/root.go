@@ -38,6 +38,7 @@ func init() {
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
 	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
+	rootCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
 	rootCmd.PersistentFlags().Duration("keepmax", 5*time.Minute, "Reap all resources older than this time")
 	rootCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
 
@@ -48,6 +49,7 @@ func init() {
 	viper.BindPFlag("server.tls-key-file", rootCmd.PersistentFlags().Lookup("tls-key-file"))
 	viper.BindPFlag("kubernetes.namespace", rootCmd.PersistentFlags().Lookup("namespace"))
 	viper.BindPFlag("kubernetes.initimage", rootCmd.PersistentFlags().Lookup("initimage"))
+	viper.BindPFlag("kubernetes.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
 	viper.BindPFlag("reaper.keepmax", rootCmd.PersistentFlags().Lookup("keepmax"))
 	viper.BindPFlag("verbosity", rootCmd.PersistentFlags().Lookup("verbosity"))
 
@@ -58,6 +60,7 @@ func init() {
 	viper.BindEnv("server.tls-key-file", "SERVER_TLS_KEY_FILE")
 	viper.BindEnv("kubernetes.namespace", "NAMESPACE")
 	viper.BindEnv("kubernetes.initimage", "INIT_IMAGE")
+	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("reaper.keepmax", "REAPER_KEEPMAX")
 
 	// kubeconfig

@@ -13,8 +13,10 @@ import (
 // Backend is the interface to orchestrate and manage kubernetes objects.
 type Backend interface {
 	StartContainer(*types.Container) error
+	CreateServices(*types.Container) error
 	DeleteContainer(*types.Container) error
 	DeleteContainersOlderThan(time.Duration) error
+	DeleteServicesOlderThan(time.Duration) error
 	CopyToContainer(*types.Container, []byte, string) error
 	ExecContainer(*types.Container, *types.Exec, io.Writer) error
 	GetContainerStatus(*types.Container) (*Status, error)
@@ -28,6 +30,7 @@ type instance struct {
 	cfg       *rest.Config
 	initImage string
 	namespace string
+	timeOut   int
 }
 
 // Config is the structure to instantiate a Backend object
@@ -40,6 +43,8 @@ type Config struct {
 	Namespace string
 	// InitImage is the image that is used as init container to prepare vols
 	InitImage string
+	// TimeOut is the max amount of time to wait until a container started
+	TimeOut time.Duration
 }
 
 // New will return an Backend instance.
@@ -49,5 +54,6 @@ func New(cfg Config) Backend {
 		cfg:       cfg.RestConfig,
 		initImage: cfg.InitImage,
 		namespace: cfg.Namespace,
+		timeOut:   int(cfg.TimeOut.Seconds()),
 	}
 }
