@@ -93,7 +93,18 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	return nil
 }
 
-// PortForward will create port-forwards for all mapped ports.
+// CreateServices will create k8s service objects for each provided
+// external name, mapped with provided hostports ports.
+func (in *instance) CreateServices(tainr *types.Container) error {
+	for _, svc := range in.getServices(tainr) {
+		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// portForward will create port-forwards for all mapped ports.
 func (in *instance) portForward(tainr *types.Container, ports map[int]int) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
@@ -119,17 +130,6 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 			StopCh:     stop,
 			ReadyCh:    make(chan struct{}, 1),
 		})
-	}
-	return nil
-}
-
-// CreateServices will create k8s service objects for each provided
-// external name, mapped with provided hostports ports.
-func (in *instance) CreateServices(tainr *types.Container) error {
-	for _, svc := range in.getServices(tainr) {
-		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
-			return err
-		}
 	}
 	return nil
 }

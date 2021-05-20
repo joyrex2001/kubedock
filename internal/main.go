@@ -16,11 +16,11 @@ import (
 func Main() {
 	kub, err := getBackend()
 	if err != nil {
-		klog.Fatalf("error instantiating kubernetes: %s", err)
+		klog.Fatalf("error instantiating backend: %s", err)
 	}
 
 	rpr, err := reaper.New(reaper.Config{
-		KeepMax: viper.GetDuration("reaper.keepmax"),
+		KeepMax: viper.GetDuration("reaper.reapmax"),
 		Backend: kub,
 	})
 	if err != nil {

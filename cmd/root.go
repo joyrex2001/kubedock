@@ -36,10 +36,10 @@ func init() {
 	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
 	rootCmd.PersistentFlags().String("tls-key-file", "", "TLS keyfile")
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
-	rootCmd.PersistentFlags().String("namespace", "default", "Namespace in which containers should be orchestrated")
+	rootCmd.PersistentFlags().StringP("namespace", "n", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
 	rootCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
-	rootCmd.PersistentFlags().Duration("keepmax", 5*time.Minute, "Reap all resources older than this time")
+	rootCmd.PersistentFlags().DurationP("reapmax", "r", 5*time.Minute, "Reap all resources older than this time")
 	rootCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
 
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
@@ -50,7 +50,7 @@ func init() {
 	viper.BindPFlag("kubernetes.namespace", rootCmd.PersistentFlags().Lookup("namespace"))
 	viper.BindPFlag("kubernetes.initimage", rootCmd.PersistentFlags().Lookup("initimage"))
 	viper.BindPFlag("kubernetes.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
-	viper.BindPFlag("reaper.keepmax", rootCmd.PersistentFlags().Lookup("keepmax"))
+	viper.BindPFlag("reaper.reapmax", rootCmd.PersistentFlags().Lookup("reapmax"))
 	viper.BindPFlag("verbosity", rootCmd.PersistentFlags().Lookup("verbosity"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
@@ -61,7 +61,7 @@ func init() {
 	viper.BindEnv("kubernetes.namespace", "NAMESPACE")
 	viper.BindEnv("kubernetes.initimage", "INIT_IMAGE")
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
-	viper.BindEnv("reaper.keepmax", "REAPER_KEEPMAX")
+	viper.BindEnv("reaper.reapmax", "REAPER_REAPMAX")
 
 	// kubeconfig
 	if home := homeDir(); home != "" {

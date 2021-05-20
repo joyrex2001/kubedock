@@ -10,7 +10,7 @@ type ContainerCreateRequest struct {
 	Cmd           []string               `json:"Cmd"`
 	Env           []string               `json:"Env"`
 	HostConfig    HostConfig             `json:"HostConfig"`
-	NetworkConfig NetworkConfig          `json:"NetworkConfig"`
+	NetworkConfig NetworkingConfig       `json:"NetworkingConfig"`
 }
 
 // ContainerExecRequest represents the json structure that
@@ -59,6 +59,11 @@ type HostConfig struct {
 // PortBinding represents a binding between to a port
 type PortBinding struct {
 	HostPort string `json:"HostPort"`
+}
+
+// NetworkingConfig contains network configuration
+type NetworkingConfig struct {
+	EndpointsConfig map[string]EndpointConfig `json:"EndpointsConfig"`
 }
 
 // NetworkConfig contains network configuration

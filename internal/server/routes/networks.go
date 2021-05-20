@@ -23,7 +23,7 @@ func (nr *Router) NetworksList(c *gin.Context) {
 	}
 	res := []gin.H{}
 	for _, netw := range netws {
-		res = append(res, gin.H{"Name": netw.Name, "ID": netw.ID})
+		res = append(res, gin.H{"Name": netw.Name, "ID": netw.ID, "Driver": "host", "Scope": "local"})
 	}
 	c.JSON(http.StatusOK, res)
 }
@@ -38,7 +38,7 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Name": netw.Name, "ID": netw.ID})
+	c.JSON(http.StatusOK, gin.H{"Name": netw.Name, "ID": netw.ID, "Driver": "host", "Scope": "local"})
 }
 
 // NetworksCreate - create a network.

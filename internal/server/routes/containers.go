@@ -45,7 +45,9 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		}
 	}
 
-	cr.addNetworkAliases(tainr, in.NetworkConfig.EndpointConfig)
+	for _, endp := range in.NetworkConfig.EndpointsConfig {
+		cr.addNetworkAliases(tainr, endp)
+	}
 
 	netw, err := cr.db.GetNetworkByName("bridge")
 	if err != nil {
