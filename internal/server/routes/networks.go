@@ -73,7 +73,7 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 		return
 	}
 
-	if netw.Name == "bridge" || netw.Name == "none" || netw.Name == "host" {
+	if netw.Name == "bridge" || netw.Name == "null" || netw.Name == "host" {
 		httputil.Error(c, http.StatusForbidden, fmt.Errorf("%s is a pre-defined network and cannot be removed", netw.Name))
 		return
 	}
@@ -122,11 +122,11 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	nr.addNetworkAliases(tainr, in.EndpointConfig)
-	if err := nr.kub.CreateServices(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
+	running, _ := nr.kub.IsContainerRunning(tainr)
+	if running {
+		klog.Warningf("adding networkaliases to a running container, will not create new services...")
 	}
+	nr.addNetworkAliases(tainr, in.EndpointConfig)
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
