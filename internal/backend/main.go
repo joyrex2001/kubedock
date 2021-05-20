@@ -14,6 +14,8 @@ import (
 type Backend interface {
 	StartContainer(*types.Container) error
 	CreateServices(*types.Container) error
+	DeleteAll() error
+	DeleteWithKubedockID(string) error
 	DeleteContainer(*types.Container) error
 	DeleteContainersOlderThan(time.Duration) error
 	DeleteServicesOlderThan(time.Duration) error

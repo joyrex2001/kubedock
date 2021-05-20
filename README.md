@@ -2,7 +2,7 @@
 
 Kubedock is an experimental implementation of the docker api that will orchestrate containers into a kubernetes cluster, rather than running containers locally. The main driver for this project is to be able running [testcontainers-java](https://www.testcontainers.org) enabled unit-tests in k8s, without the requirement of running docker-in-docker within resource heavy containers.
 
-The current implementation is limited, but able to run containers that just expose ports, copy resources towards the container, or mount volumes. Containers that 'just' expose ports, require logging and copy resources to running containers will probably work. Volume mounting is implemented by copying the local volume towards the container, changes made by the container to this volume are not synced back. All data is considered emphemeral.
+The current implementation is limited, but able to run containers that just expose ports, copy resources towards the container, or mount volumes. Containers that 'just' expose ports, require logging and copy resources to running containers will probably work. Volume mounting is implemented by copying the local volume towards the container, changes made by the container to this volume are not synced back. All data is considered emphemeral. If a container has network aliases configured, it will create k8s services with the alias as name. However, if aliases are present, a port mapping should be configured as well (as a service requires a specific port mapping).
 
 ## Quick start
 
@@ -40,7 +40,13 @@ The below use-cases are mostly not working:
 
 ## Resource reaping
 
-Kubedock will dynamically create deployments and services in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment and related services. However, if e.g. a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 5 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 10 minutes if the deployment or service has the label `kubedock=true`.
+### Automatic reaping
+
+Kubedock will dynamically create deployments and services in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment and related services. However, if e.g. a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 15 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 30 minutes if the deployment or service has the label `kubedock=true`.
+
+### Forced cleaning
+
+The reaping of resources can also be enforced at startup, and at exit. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the `kubedock=true` before starting the API server. If the `--prune-exit` argument is set, kubedock will delete all the resources it created in the running instance before exiting (identified with the `kubedock.id` label).
 
 # See also
 

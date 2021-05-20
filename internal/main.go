@@ -1,6 +1,10 @@
 package internal
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -28,6 +32,16 @@ func Main() {
 	}
 	rpr.Start()
 
+	if viper.GetBool("prune-start") {
+		if err := kub.DeleteAll(); err != nil {
+			klog.Fatalf("error pruning resources: %s", err)
+		}
+	}
+
+	if viper.GetBool("prune-exit") {
+		pruneAtExit(kub)
+	}
+
 	svr := server.New(kub)
 	if err := svr.Run(); err != nil {
 		klog.Fatalf("error instantiating server: %s", err)
@@ -52,4 +66,21 @@ func getBackend() (backend.Backend, error) {
 		TimeOut:    viper.GetDuration("kubernetes.timeout"),
 	})
 	return kub, nil
+}
+
+// pruneAtExit will clean up resources when kubedock exits
+func pruneAtExit(kub backend.Backend) {
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigc
+		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
+			klog.Fatalf("error pruning resources: %s", err)
+		}
+		os.Exit(0)
+	}()
 }

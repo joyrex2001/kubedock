@@ -1,5 +1,5 @@
 run:
-	go run main.go -v 2
+	go run main.go -pP -v 2
 
 build:
 	CGO_ENABLED=0 go build -ldflags \

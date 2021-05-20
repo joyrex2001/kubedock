@@ -39,8 +39,10 @@ func init() {
 	rootCmd.PersistentFlags().StringP("namespace", "n", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
 	rootCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
-	rootCmd.PersistentFlags().DurationP("reapmax", "r", 5*time.Minute, "Reap all resources older than this time")
+	rootCmd.PersistentFlags().DurationP("reapmax", "r", 15*time.Minute, "Reap all resources older than this time")
 	rootCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
+	rootCmd.PersistentFlags().BoolP("prune-start", "P", false, "Prune all existing kubedock resources before starting")
+	rootCmd.PersistentFlags().BoolP("prune-exit", "p", false, "Prune all created resources on exit")
 
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", rootCmd.PersistentFlags().Lookup("socket"))
@@ -52,6 +54,8 @@ func init() {
 	viper.BindPFlag("kubernetes.timeout", rootCmd.PersistentFlags().Lookup("timeout"))
 	viper.BindPFlag("reaper.reapmax", rootCmd.PersistentFlags().Lookup("reapmax"))
 	viper.BindPFlag("verbosity", rootCmd.PersistentFlags().Lookup("verbosity"))
+	viper.BindPFlag("prune-start", rootCmd.PersistentFlags().Lookup("prune-start"))
+	viper.BindPFlag("prune-exit", rootCmd.PersistentFlags().Lookup("prune-exit"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.socket", "SERVER_SOCKET")
