@@ -135,9 +135,6 @@ func (in *Database) GetContainers() ([]*types.Container, error) {
 func (in *Database) SaveContainer(con *types.Container) error {
 	if con.ID == "" {
 		id := stringid.GenerateRandomID()
-		if id[:1] == "c" {
-			id = "b" + id[1:]
-		}
 		con.ID = id
 		con.ShortID = stringid.TruncateID(id)
 		con.Created = time.Now()
@@ -186,9 +183,6 @@ func (in *Database) GetExecs() ([]*types.Exec, error) {
 func (in *Database) SaveExec(exc *types.Exec) error {
 	if exc.ID == "" {
 		id := stringid.GenerateRandomID()
-		if id[:1] == "c" {
-			id = "b" + id[1:]
-		}
 		exc.ID = id
 		exc.Created = time.Now()
 	}
@@ -284,9 +278,6 @@ func (in *Database) GetNetworksByIDs(ids map[string]interface{}) ([]*types.Netwo
 func (in *Database) SaveNetwork(netw *types.Network) error {
 	if netw.ID == "" {
 		id := stringid.GenerateRandomID()
-		if id[:1] == "c" {
-			id = "b" + id[1:]
-		}
 		netw.ID = id
 		netw.ShortID = stringid.TruncateID(id)
 		netw.Created = time.Now()

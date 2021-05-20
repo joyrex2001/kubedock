@@ -106,7 +106,7 @@ func TestDatabase(t *testing.T) {
 	}
 }
 
-func TestIDWorkaround(t *testing.T) {
+func TestDeadlock(t *testing.T) {
 	db, err := New()
 	if err != nil {
 		t.Errorf("Unexpected error creating database: %s", err)
@@ -116,20 +116,12 @@ func TestIDWorkaround(t *testing.T) {
 		if err := db.SaveContainer(con); err != nil {
 			t.Errorf("Unexpected error when creating a new container: %s", err)
 		}
-		if con.ID[:1] == "c" {
-			t.Errorf("Container ID that start with a c cause problems in the server router setup...")
-			return
-		}
 		if err := db.DeleteContainer(con); err != nil {
 			t.Errorf("Unexpected error when deleting container: %s", err)
 		}
 		netw := &types.Network{Name: "tb303"}
 		if err := db.SaveNetwork(netw); err != nil {
 			t.Errorf("Unexpected error when creating a new network: %s", err)
-		}
-		if netw.ID[:1] == "c" {
-			t.Errorf("Network ID that start with a c cause problems in the server router setup...")
-			return
 		}
 		if err := db.DeleteNetwork(netw); err != nil {
 			t.Errorf("Unexpected error when deleting network: %s", err)

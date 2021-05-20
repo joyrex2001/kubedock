@@ -35,17 +35,12 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/_ping", cr.Ping)
 	router.HEAD("/_ping", cr.Ping)
 
-	// DEBT: the below routes overlap with the create route; due to a bug in
-	// gin-gonic this means :id that start with a c will 404 by the router;
-	// as work around, no container-ids are generated that start with a 'c'...
-	// https://github.com/gin-gonic/gin/issues/2682
 	router.POST("/containers/create", cr.ContainerCreate)
 	router.POST("/containers/:id/start", cr.ContainerStart)
 	router.POST("/containers/:id/attach", cr.ContainerAttach)
 	router.POST("/containers/:id/exec", cr.ContainerExec)
 	router.POST("/containers/:id/stop", cr.ContainerStop)
 	router.POST("/containers/:id/kill", cr.ContainerKill)
-
 	router.DELETE("/containers/:id", cr.ContainerDelete)
 	router.GET("/containers/json", cr.ContainerList)
 	router.GET("/containers/:id/json", cr.ContainerInfo)
@@ -55,14 +50,9 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/exec/:id/start", cr.ExecStart)
 	router.GET("/exec/:id/json", cr.ExecInfo)
 
-	// DEBT: the below routes overlap with the create route; due to a bug in
-	// gin-gonic this means :id that start with a c will 404 by the router;
-	// as work around, no container-ids are generated that start with a 'c'...
-	// https://github.com/gin-gonic/gin/issues/2682
 	router.POST("/networks/create", cr.NetworksCreate)
 	router.POST("/networks/:id/connect", cr.NetworksConnect)
 	router.POST("/networks/:id/disconnect", cr.NetworksDisconnect)
-
 	router.GET("/networks", cr.NetworksList)
 	router.GET("/networks/:id", cr.NetworksInfo)
 	router.DELETE("/networks/:id", cr.NetworksDelete)
