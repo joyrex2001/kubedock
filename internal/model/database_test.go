@@ -190,3 +190,50 @@ func TestNetwork(t *testing.T) {
 		t.Errorf("Expected 2 networks for empty ids mapping, but got %#v", netws)
 	}
 }
+
+func TestImage(t *testing.T) {
+	db, _ := New()
+
+	if _, err := db.GetImageByNameOrID("roland/tb303:latest"); err == nil {
+		t.Errorf("Expected an error when loading an non existing image")
+	}
+
+	img := &types.Image{Name: "roland/tr606:8.0.8"}
+	if err := db.SaveImage(img); err != nil {
+		t.Errorf("Unexpected error when creating image %s", err)
+	}
+
+	for i, n := range []string{"roland/tr606:9.0.9", "roland/tr808:9.0.9", "roland/tr606:3.0.3"} {
+		img := &types.Image{Name: n, ID: fmt.Sprintf("%d", i+1), ShortID: fmt.Sprintf("%d", i+1)}
+		if err := db.SaveImage(img); err != nil {
+			t.Errorf("Unexpected error when creating image %s: %s", n, err)
+		}
+	}
+
+	if imgs, err := db.GetImages(); err != nil {
+		t.Errorf("Unexpected error when loading all existing images")
+	} else {
+		if len(imgs) != 4 {
+			t.Errorf("Expected 4 network images, but got %d", len(imgs))
+		}
+	}
+
+	img1, err := db.GetImageByNameOrID("roland/tr606:9.0.9")
+	if err != nil {
+		t.Errorf("Unexpected error when loading network img1")
+	}
+	if img1.ID != "1" {
+		t.Errorf("Invalid id for image img1")
+	}
+	img1, err = db.GetImageByNameOrID("1")
+	if err != nil {
+		t.Errorf("Unexpected error when loading image img1: %s", err)
+	}
+	if err := db.DeleteImage(img1); err != nil {
+		t.Errorf("Unexpected error when deleting image img1: %s", err)
+	}
+	img1, err = db.GetImageByNameOrID("roland/tr606:9.0.9")
+	if err == nil {
+		t.Errorf("Expected error when loading deleted image img1: %s", err)
+	}
+}

@@ -83,6 +83,26 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 					},
 				},
 			},
+			"image": {
+				Name: "image",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ID"},
+					},
+					"shortid": {
+						Name:    "shortid",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
+					},
+					"name": {
+						Name:    "name",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Name"},
+					},
+				},
+			},
 		},
 	}
 	return memdb.NewMemDB(schema)
@@ -288,6 +308,83 @@ func (in *Database) SaveNetwork(netw *types.Network) error {
 // DeleteNetwork will delete provided network.
 func (in *Database) DeleteNetwork(netw *types.Network) error {
 	return in.delete("network", netw)
+}
+
+// GetImage will return an image with given id, or an error if the
+// instance does not exist.
+func (in *Database) GetImage(id string) (*types.Image, error) {
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	idx := "id"
+	if stringid.IsShortID(id) {
+		idx = "shortid"
+	}
+	raw, err := txn.First("image", idx, id)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("image %s not found", id)
+	}
+	return raw.(*types.Image), nil
+}
+
+// GetImageByName will return an image with given name, or an error if the
+// instance does not exist.
+func (in *Database) GetImageByName(name string) (*types.Image, error) {
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	raw, err := txn.First("image", "name", name)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("image %s not found", name)
+	}
+	return raw.(*types.Image), nil
+}
+
+// GetImageByNameOrID will return an image with id/name, or an error if the
+// instance does not exist.
+func (in *Database) GetImageByNameOrID(id string) (*types.Image, error) {
+	netw, err := in.GetImage(id)
+	if err == nil {
+		return netw, nil
+	}
+	return in.GetImageByName(id)
+}
+
+// GetImages will return all stored execs.
+func (in *Database) GetImages() ([]*types.Image, error) {
+	rec := []*types.Image{}
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	it, err := txn.Get("image", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		rec = append(rec, obj.(*types.Image))
+	}
+	return rec, nil
+}
+
+// SaveImage will either update the given image, or create a new
+// record. If ID is not provided, it will generate an ID and adds the
+// current time in Created.
+func (in *Database) SaveImage(img *types.Image) error {
+	if img.ID == "" {
+		id := stringid.GenerateRandomID()
+		img.ID = id
+		img.ShortID = stringid.TruncateID(id)
+		img.Created = time.Now()
+	}
+	return in.save("image", img)
+}
+
+// DeleteImage will delete provided image.
+func (in *Database) DeleteImage(img *types.Image) error {
+	return in.delete("image", img)
 }
 
 // save is a generic save method to store or update a record in the
