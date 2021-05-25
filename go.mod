@@ -3,13 +3,14 @@ module github.com/joyrex2001/kubedock
 go 1.16
 
 require (
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/containers/image/v5 v5.12.0
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/go-memdb v1.3.2
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	github.com/ugorji/go v1.2.5 // indirect

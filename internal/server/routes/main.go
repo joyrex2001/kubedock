@@ -78,4 +78,5 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/containers/:id/archive", httputil.NotImplemented)
 	router.POST("/containers/prune", httputil.NotImplemented)
 	router.GET("/networks/reaper_default", httputil.NotImplemented)
+	router.POST("/build", httputil.NotImplemented)
 }
