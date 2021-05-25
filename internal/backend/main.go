@@ -24,6 +24,7 @@ type Backend interface {
 	GetContainerStatus(*types.Container) (*Status, error)
 	IsContainerRunning(*types.Container) (bool, error)
 	GetLogs(*types.Container, bool, int, io.Writer) error
+	GetImageExposedPorts(string) (map[string]struct{}, error)
 }
 
 // instance is the internal representation of the Backend object.

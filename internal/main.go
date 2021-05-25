@@ -72,7 +72,6 @@ func getBackend() (backend.Backend, error) {
 func pruneAtExit(kub backend.Backend) {
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
-		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)

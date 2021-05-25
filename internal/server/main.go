@@ -55,6 +55,6 @@ func (s *Server) getGinEngine() *gin.Engine {
 	router.Use(httputil.RequestLoggerMiddleware())
 	router.Use(httputil.ResponseLoggerMiddleware())
 	router.Use(gin.Recovery())
-	routes.New(router, s.kub)
+	routes.New(router, s.kub, viper.GetBool("registry.inspector"))
 	return router
 }

@@ -9,7 +9,7 @@ type Image struct {
 	ID           string
 	ShortID      string
 	Name         string
-	ExposedPorts map[string]interface{}
+	ExposedPorts map[string]struct{}
 	Cmd          []string
 	Created      time.Time
 }

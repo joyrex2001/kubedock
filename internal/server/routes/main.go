@@ -10,19 +10,21 @@ import (
 
 // Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
-	db  *model.Database
-	kub backend.Backend
+	db        *model.Database
+	kub       backend.Backend
+	inspector bool
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, kub backend.Backend) (*Router, error) {
+func New(router *gin.Engine, kub backend.Backend, insp bool) (*Router, error) {
 	db, err := model.New()
 	if err != nil {
 		return nil, err
 	}
 	cr := &Router{
-		db:  db,
-		kub: kub,
+		db:        db,
+		kub:       kub,
+		inspector: insp,
 	}
 	cr.initRoutes(router)
 	return cr, nil
