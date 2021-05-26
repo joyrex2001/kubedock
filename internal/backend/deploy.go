@@ -139,6 +139,9 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	svcs := []corev1.Service{}
 	ports := map[int]int{}
+	for _, pp := range tainr.GetImageTCPPorts() {
+		ports[pp] = pp
+	}
 	for _, pp := range tainr.GetContainerTCPPorts() {
 		ports[pp] = pp
 	}

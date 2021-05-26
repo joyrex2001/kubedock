@@ -46,7 +46,7 @@ func TestMapPort(t *testing.T) {
 	}
 }
 
-func TestGetContainerTCPPorts(t *testing.T) {
+func TestGetTCPPorts(t *testing.T) {
 	tests := []struct {
 		in  *Container
 		out []int
@@ -58,15 +58,30 @@ func TestGetContainerTCPPorts(t *testing.T) {
 				"606/udp":   0,
 				"tr808/tcp": 0,
 				"909/tcp":   0,
+			}, ImagePorts: map[string]interface{}{
+				"sh101":     0,
+				"303/tcp":   0,
+				"606/udp":   0,
+				"tr808/tcp": 0,
+				"909/tcp":   0,
 			}},
 			out: []int{303, 909},
+		},
+		{
+			in:  &Container{},
+			out: []int{},
 		},
 	}
 	for i, tst := range tests {
 		res := tst.in.GetContainerTCPPorts()
 		sort.Ints(res)
 		if !reflect.DeepEqual(res, tst.out) {
-			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
+			t.Errorf("failed test container %d - expected %v, but got %v", i, tst.out, res)
+		}
+		res = tst.in.GetImageTCPPorts()
+		sort.Ints(res)
+		if !reflect.DeepEqual(res, tst.out) {
+			t.Errorf("failed test image %d - expected %v, but got %v", i, tst.out, res)
 		}
 	}
 }

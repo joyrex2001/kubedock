@@ -38,7 +38,7 @@ func init() {
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
 	rootCmd.PersistentFlags().StringP("namespace", "n", "default", "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
-	rootCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container config from a registry")
+	rootCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container port config from a registry")
 	rootCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
 	rootCmd.PersistentFlags().DurationP("reapmax", "r", 15*time.Minute, "Reap all resources older than this time")
 	rootCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")

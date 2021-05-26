@@ -20,6 +20,7 @@ type Container struct {
 	Env            []string
 	Binds          []string
 	ExposedPorts   map[string]interface{}
+	ImagePorts     map[string]interface{}
 	Networks       map[string]interface{}
 	NetworkAliases []string
 	Labels         map[string]string
@@ -72,16 +73,30 @@ func (co *Container) AddHostPort(src string, dst string) error {
 // GetContainerTCPPorts will return a list of all ports that are
 // exposed by this container.
 func (co *Container) GetContainerTCPPorts() []int {
-	ports := []int{}
-	for p := range co.ExposedPorts {
+	return co.getTCPPorts(co.ExposedPorts)
+}
+
+// GetImageTCPPorts will return a list of all ports that are
+// exposed by the image.
+func (co *Container) GetImageTCPPorts() []int {
+	return co.getTCPPorts(co.ImagePorts)
+}
+
+// getTCPPorts will return a list of all tcp ports in given map.
+func (co *Container) getTCPPorts(ports map[string]interface{}) []int {
+	res := []int{}
+	if ports == nil {
+		return res
+	}
+	for p := range ports {
 		pp, err := co.getTCPPort(p)
 		if err != nil {
 			klog.Errorf("could not parse exposed port %s", p)
 			continue
 		}
-		ports = append(ports, pp)
+		res = append(res, pp)
 	}
-	return ports
+	return res
 }
 
 // getTCPPort will convert a "9000/tcp" string to the port.

@@ -66,6 +66,10 @@ func (cr *Router) ImageJSON(c *gin.Context) {
 // POST "/images/create"
 func (cr *Router) ImageCreate(c *gin.Context) {
 	from := c.Query("fromImage")
+	tag := c.Query("tag")
+	if tag != "" {
+		from = from + ":" + tag
+	}
 	img := &types.Image{Name: from}
 	if cr.inspector {
 		pts, err := cr.kub.GetImageExposedPorts(from)

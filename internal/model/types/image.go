@@ -10,6 +10,5 @@ type Image struct {
 	ShortID      string
 	Name         string
 	ExposedPorts map[string]struct{}
-	Cmd          []string
 	Created      time.Time
 }

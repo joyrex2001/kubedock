@@ -26,14 +26,24 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if in.Name == "" {
 		in.Name = c.Query("name")
 	}
+
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,
 		Cmd:          in.Cmd,
 		Env:          in.Env,
 		ExposedPorts: in.ExposedPorts,
+		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
 		Binds:        in.HostConfig.Binds,
+	}
+
+	if img, err := cr.db.GetImageByNameOrID(in.Image); err != nil {
+		klog.Warningf("unable to fetch image details: %s", err)
+	} else {
+		for pp := range img.ExposedPorts {
+			tainr.ImagePorts[pp] = pp
+		}
 	}
 
 	for dst, ports := range in.HostConfig.PortBindings {
