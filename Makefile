@@ -24,15 +24,15 @@ fmt:
 	go fmt ./...
 
 test:
-	go vet ./...
-	go test ./... -cover
+	CGO_ENABLED=0 go vet ./...
+	CGO_ENABLED=0 go test ./... -cover
 
 lint:
 	golint ./internal/...
 	# errcheck ./internal/... ./cmd/...
 
 cover:
-	go test ./... -cover -coverprofile=coverage.out
+	CGO_ENABLED=0 go test ./... -cover -coverprofile=coverage.out
 	go tool cover -html=coverage.out
 	
 deps:
