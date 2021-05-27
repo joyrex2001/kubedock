@@ -18,10 +18,14 @@ var DefaultLabels = map[string]string{
 	"kubedock.id": "",
 }
 
+// InstanceID contains an unique ID to identify this running instance.
+var InstanceID = ""
+
 // init will set an unique instance id in the default labels to identify
 // this speciffic instance of kubedock.
 func init() {
-	DefaultLabels["kubedock.id"] = stringid.TruncateID(stringid.GenerateRandomID())
+	InstanceID = stringid.TruncateID(stringid.GenerateRandomID())
+	DefaultLabels["kubedock.id"] = InstanceID
 }
 
 // GetKubernetes will return a kubernetes config object.
