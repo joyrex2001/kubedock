@@ -117,16 +117,18 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
 	tainr.ConnectNetwork(netw.ID)
+	n := len(tainr.NetworkAliases)
+	nr.addNetworkAliases(tainr, in.EndpointConfig)
+
+	running, _ := nr.kub.IsContainerRunning(tainr)
+	if running && n != len(tainr.NetworkAliases) {
+		klog.Warningf("adding networkaliases to a running container, will not create new services...")
+	}
 	if err := nr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
-	}
-	running, _ := nr.kub.IsContainerRunning(tainr)
-	n := len(tainr.NetworkAliases)
-	nr.addNetworkAliases(tainr, in.EndpointConfig)
-	if running && n != len(tainr.NetworkAliases) {
-		klog.Warningf("adding networkaliases to a running container, will not create new services...")
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
