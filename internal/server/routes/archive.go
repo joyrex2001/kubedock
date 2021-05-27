@@ -47,6 +47,12 @@ func (cr *Router) PutArchive(c *gin.Context) {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
+		tainr.Stopped = false
+		tainr.Killed = false
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
 	archive, err := ioutil.ReadAll(c.Request.Body)

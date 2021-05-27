@@ -16,17 +16,19 @@ type Container struct {
 	ShortID        string
 	Name           string
 	Image          string
+	Labels         map[string]string
 	Cmd            []string
 	Env            []string
 	Binds          []string
 	ExposedPorts   map[string]interface{}
 	ImagePorts     map[string]interface{}
-	Networks       map[string]interface{}
-	NetworkAliases []string
-	Labels         map[string]string
 	HostPorts      map[int]int
 	MappedPorts    map[int]int
+	Networks       map[string]interface{}
+	NetworkAliases []string
 	StopChannels   []chan struct{}
+	Stopped        bool
+	Killed         bool
 	Created        time.Time
 }
 

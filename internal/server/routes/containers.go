@@ -92,6 +92,12 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
+		tainr.Stopped = false
+		tainr.Killed = false
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
 	} else {
 		klog.Warningf("container %s already running", id)
 	}
@@ -109,8 +115,16 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 		return
 	}
 	tainr.SignalStop()
-	if err := cr.kub.DeleteContainer(tainr); err != nil {
-		klog.Warningf("error while deleting k8s container: %s", err)
+	if !tainr.Stopped && !tainr.Killed {
+		if err := cr.kub.DeleteContainer(tainr); err != nil {
+			klog.Warningf("error while deleting k8s container: %s", err)
+		}
+	} else {
+		tainr.Stopped = true
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -126,8 +140,16 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		return
 	}
 	tainr.SignalStop()
-	if err := cr.kub.DeleteContainer(tainr); err != nil {
-		klog.Warningf("error while deleting k8s container: %s", err)
+	if !tainr.Stopped && !tainr.Killed {
+		if err := cr.kub.DeleteContainer(tainr); err != nil {
+			klog.Warningf("error while deleting k8s container: %s", err)
+		}
+	} else {
+		tainr.Killed = true
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -143,8 +165,10 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		return
 	}
 	tainr.SignalStop()
-	if err := cr.kub.DeleteContainer(tainr); err != nil {
-		klog.Warningf("error while deleting k8s container: %s", err)
+	if !tainr.Stopped && !tainr.Killed {
+		if err := cr.kub.DeleteContainer(tainr); err != nil {
+			klog.Warningf("error while deleting k8s container: %s", err)
+		}
 	}
 	if err := cr.db.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
@@ -259,15 +283,15 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			"Restarting": false,
 			"OOMKilled":  false,
 			"Dead":       false,
-			"StartedAt":  status.Created.Format("2006-01-02T15:04:05Z"),
+			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
 			"FinishedAt": "0001-01-01T00:00:00Z",
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
-		res["Created"] = status.Created.Format("2006-01-02T15:04:05Z")
+		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
 		res["State"] = status.StateString()
-		res["Created"] = status.Created.Unix()
+		res["Created"] = tainr.Created.Unix()
 	}
 	return res
 }
