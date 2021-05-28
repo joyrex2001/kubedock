@@ -119,12 +119,11 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
-	} else {
-		tainr.Stopped = true
-		if err := cr.db.SaveContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
+	}
+	tainr.Stopped = true
+	if err := cr.db.SaveContainer(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -144,12 +143,11 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
-	} else {
-		tainr.Killed = true
-		if err := cr.db.SaveContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
+	}
+	tainr.Killed = true
+	if err := cr.db.SaveContainer(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -254,7 +252,7 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	}
 	res := gin.H{
 		"Id":    tainr.ID,
-		"Name":  tainr.Name,
+		"Name":  "/" + tainr.Name,
 		"Image": tainr.Image,
 		"Config": gin.H{
 			"Image":  tainr.Image,
@@ -316,9 +314,9 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 func (cr *Router) getContainerNames(tainr *types.Container) []string {
 	names := []string{}
 	if tainr.Name != "" {
-		names = append(names, tainr.Name)
+		names = append(names, "/"+tainr.Name)
 	}
-	names = append(names, tainr.ID)
-	names = append(names, tainr.ShortID)
+	names = append(names, "/"+tainr.ID)
+	names = append(names, "/"+tainr.ShortID)
 	return names
 }
