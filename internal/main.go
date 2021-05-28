@@ -38,17 +38,17 @@ func Main() {
 		klog.Fatalf("error instantiating backend: %s", err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	exitHandler(kub, cancel)
-
 	// check if this instance requires locking of the namespace, if not
 	// just start the show...
 	if !viper.GetBool("lock.enabled") {
+		exitHandler(kub, func() { os.Exit(0) })
 		run(kub)
 		return
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	exitHandler(kub, cancel)
 
 	// exclusive mode, use the k8s leader election as a locking mechanism
 	lock := &resourcelock.ConfigMapLock{
