@@ -23,7 +23,15 @@ func (nr *Router) NetworksList(c *gin.Context) {
 	}
 	res := []gin.H{}
 	for _, netw := range netws {
-		res = append(res, gin.H{"Name": netw.Name, "ID": netw.ID, "Driver": "host", "Scope": "local"})
+		tainrs := nr.getContainersInNetwork(netw)
+		res = append(res, gin.H{
+			"Name":       netw.Name,
+			"ID":         netw.ID,
+			"Driver":     "host",
+			"Scope":      "local",
+			"Attachable": true,
+			"Containers": tainrs,
+		})
 	}
 	c.JSON(http.StatusOK, res)
 }
@@ -38,7 +46,15 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"Name": netw.Name, "ID": netw.ID, "Driver": "host", "Scope": "local"})
+	tainrs := nr.getContainersInNetwork(netw)
+	c.JSON(http.StatusOK, gin.H{
+		"Name":       netw.Name,
+		"ID":         netw.ID,
+		"Driver":     "host",
+		"Scope":      "local",
+		"Attachable": true,
+		"Containers": tainrs,
+	})
 }
 
 // NetworksCreate - create a network.
@@ -78,16 +94,9 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 		return
 	}
 
-	tainrs, err := nr.db.GetContainers()
-	if err == nil {
-		for _, tainr := range tainrs {
-			if _, ok := tainr.Networks[netw.ID]; ok {
-				httputil.Error(c, http.StatusForbidden, fmt.Errorf("cannot delete network, containers attachd"))
-				return
-			}
-		}
-	} else {
-		klog.Errorf("error retrieving containers: %s", err)
+	if len(nr.getContainersInNetwork(netw)) != 0 {
+		httputil.Error(c, http.StatusForbidden, fmt.Errorf("cannot delete network, containers attachd"))
+		return
 	}
 
 	if err := nr.db.DeleteNetwork(netw); err != nil {
@@ -162,4 +171,23 @@ func (nr *Router) NetworksDisconnect(c *gin.Context) {
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// getContainersInNetwork will return an array of containers in an array
+// of gin.H structs, containing the details of the container.
+func (nr *Router) getContainersInNetwork(netw *types.Network) map[string]gin.H {
+	res := map[string]gin.H{}
+	tainrs, err := nr.db.GetContainers()
+	if err == nil {
+		for _, tainr := range tainrs {
+			if _, ok := tainr.Networks[netw.ID]; ok {
+				res[tainr.ID] = gin.H{
+					"Name": tainr.Name,
+				}
+			}
+		}
+	} else {
+		klog.Errorf("error retrieving containers: %s", err)
+	}
+	return res
 }
