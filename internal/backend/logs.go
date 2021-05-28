@@ -42,7 +42,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io
 		default:
 		}
 		// read log input
-		buf := make([]byte, 2000)
+		buf := make([]byte, 255)
 		n, err := stream.Read(buf)
 		if n == 0 {
 			if !follow {
@@ -57,6 +57,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io
 			return err
 		}
 		// write log to output
+		w.Write([]byte{1, 0, 0, 0, 0, 0, 0, byte(n)}) // header: stdout only
 		if n, err = w.Write(buf[:n]); n == 0 || err != nil {
 			break
 		}
