@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
@@ -225,6 +226,24 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	if err := cr.kub.GetLogs(tainr, true, 100, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
+	}
+}
+
+// ContainerWait - Block until a container stops, then returns the exit code.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait
+// POST "/containers/:id/wait"
+func (cr *Router) ContainerWait(c *gin.Context) {
+	id := c.Param("id")
+	for {
+		tmr := time.NewTimer(time.Second)
+		select {
+		case <-tmr.C:
+			tainr, err := cr.db.GetContainer(id)
+			if err != nil || tainr.Stopped || tainr.Killed {
+				c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
+				return
+			}
+		}
 	}
 }
 

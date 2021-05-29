@@ -47,6 +47,44 @@ func TestContainerStatus(t *testing.T) {
 						Namespace: "default",
 					},
 					Status: appsv1.DeploymentStatus{
+						ReadyReplicas: 0,
+					},
+				}),
+			},
+			in:     &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit", Killed: true},
+			out:    false,
+			suc:    true,
+			state:  "Dead",
+			status: "unhealthy",
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tb303",
+						Namespace: "default",
+					},
+					Status: appsv1.DeploymentStatus{
+						ReadyReplicas: 0,
+					},
+				}),
+			},
+			in:     &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit", Stopped: true},
+			out:    false,
+			suc:    true,
+			state:  "Dead",
+			status: "unhealthy",
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tb303",
+						Namespace: "default",
+					},
+					Status: appsv1.DeploymentStatus{
 						ReadyReplicas: 1,
 					},
 				}),
