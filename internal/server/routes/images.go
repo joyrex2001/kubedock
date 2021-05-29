@@ -52,7 +52,7 @@ func (cr *Router) ImageJSON(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"Id":      img.ID,
+		"Id":      img.Name,
 		"Created": img.Created.Format("2006-01-02T15:04:05Z"),
 		"Size":    0,
 		"ContainerConfig": gin.H{

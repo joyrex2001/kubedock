@@ -138,6 +138,7 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+	// signal := strings.ToLower(c.Param("signal"))
 	tainr.SignalStop()
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
@@ -194,6 +195,7 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	if !stdout || !stderr {
 		klog.Warningf("Ignoring stdout/stderr filtering")
 	}
+
 	running, _ := cr.kub.IsContainerRunning(tainr)
 	if !running {
 		if err := cr.kub.StartContainer(tainr); err != nil {
@@ -201,8 +203,29 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 			return
 		}
 	}
-	// TODO: implement attach
-	c.Writer.WriteHeader(http.StatusNoContent)
+
+	stream, _ := strconv.ParseBool(c.Query("stream"))
+	if !stream {
+		c.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	r := c.Request
+	w := c.Writer
+	w.WriteHeader(http.StatusOK)
+
+	in, out, err := httputil.HijackConnection(w)
+	if err != nil {
+		klog.Errorf("error during hijack connection: %s", err)
+		return
+	}
+	defer httputil.CloseStreams(in, out)
+	httputil.UpgradeConnection(r, out)
+
+	if err := cr.kub.GetLogs(tainr, true, 100, out); err != nil {
+		klog.Errorf("error retrieving logs: %s", err)
+		return
+	}
 }
 
 // ContainerInfo - return low-level information about a container.
@@ -254,13 +277,6 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		"Id":    tainr.ID,
 		"Name":  "/" + tainr.Name,
 		"Image": tainr.Image,
-		"Config": gin.H{
-			"Image":  tainr.Image,
-			"Labels": tainr.Labels,
-			"Env":    tainr.Env,
-			"Cmd":    tainr.Cmd,
-			"Tty":    false,
-		},
 		"Names": cr.getContainerNames(tainr),
 		"NetworkSettings": gin.H{
 			"Networks": netdtl,
@@ -268,6 +284,10 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		},
 		"HostConfig": gin.H{
 			"NetworkMode": "host",
+			"LogConfig": gin.H{
+				"Type":   "json-file",
+				"Config": gin.H{},
+			},
 		},
 	}
 	if detail {
@@ -280,14 +300,22 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			"Paused":     false,
 			"Restarting": false,
 			"OOMKilled":  false,
-			"Dead":       false,
+			"Dead":       status.Replicas == 0,
 			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
 			"FinishedAt": "0001-01-01T00:00:00Z",
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
+		res["Config"] = gin.H{
+			"Image":  tainr.Image,
+			"Labels": tainr.Labels,
+			"Env":    tainr.Env,
+			"Cmd":    tainr.Cmd,
+			"Tty":    false,
+		}
 		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
+		res["Labels"] = tainr.Labels
 		res["State"] = status.StateString()
 		res["Created"] = tainr.Created.Unix()
 	}
@@ -318,5 +346,10 @@ func (cr *Router) getContainerNames(tainr *types.Container) []string {
 	}
 	names = append(names, "/"+tainr.ID)
 	names = append(names, "/"+tainr.ShortID)
+	for _, alias := range tainr.NetworkAliases {
+		if alias != tainr.Name {
+			names = append(names, "/"+alias)
+		}
+	}
 	return names
 }
