@@ -14,7 +14,7 @@ export DOCKER_HOST=tcp://127.0.0.1:8080
 mvn test
 ```
 
-The default configuration for kubedock is to orchestrate in the default kubernetes namespace, this can be configured with the `NAMESPACE` environment variable (or via the -n argument). The service requires permissions to create Deployments in the namespace.
+The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Services and Configmaps in the namespace.
 
 To see a complete list of available options: `kubedock --help`.
 

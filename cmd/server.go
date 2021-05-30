@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal"
@@ -39,7 +40,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
 	rootCmd.PersistentFlags().String("tls-key-file", "", "TLS keyfile")
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
-	rootCmd.PersistentFlags().StringP("namespace", "n", "default", "Namespace in which containers should be orchestrated")
+	rootCmd.PersistentFlags().StringP("namespace", "n", getContextNamespace(), "Namespace in which containers should be orchestrated")
 	rootCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
 	rootCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container port config from a registry")
 	rootCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
@@ -65,7 +66,6 @@ func init() {
 	viper.BindPFlag("prune-start", rootCmd.PersistentFlags().Lookup("prune-start"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
-	viper.BindEnv("server.socket", "SERVER_SOCKET")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
 	viper.BindEnv("server.tls-cert-file", "SERVER_TLS_CERT_FILE")
 	viper.BindEnv("server.tls-key-file", "SERVER_TLS_KEY_FILE")
@@ -83,9 +83,24 @@ func init() {
 	viper.BindPFlag("kubernetes.kubeconfig", rootCmd.PersistentFlags().Lookup("kubeconfig"))
 }
 
+// homeDir returns the current home directory of the user.
 func homeDir() string {
 	if h := os.Getenv("HOME"); h != "" {
 		return h
 	}
 	return os.Getenv("USERPROFILE") // windows
+}
+
+// getContextNamespace will return the namespace that is set in the current
+// kubeconfig context, and returns 'default' if none is set.
+func getContextNamespace() string {
+	res := "default"
+	cfg, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
+	if err == nil {
+		res = cfg.Contexts[cfg.CurrentContext].Namespace
+		if res == "" {
+			res = "default"
+		}
+	}
+	return res
 }

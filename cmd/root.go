@@ -17,7 +17,19 @@ var rootCmd = &cobra.Command{
   Each container is considered to be short-lived and emphemeral, with the
   intention they are solely used for running CI tests that require docker
   containers inside a container. This enables running the tests without the
-  requirement of running docker-in-docker within resource heavy containers.`,
+  requirement of running docker-in-docker within resource heavy containers.
+
+Examples:
+  # run kubedock with defaults
+  kubedock server
+
+  # run kubedock in the current namespace, clean old resource, lock the
+  # namespace and use image inspect for retrieving ports of the image.
+  kubedock server -P -i --lock
+
+  # run kubedock in a namespace called kubedock and expose the api as a socket.
+  kubedock server --socket /var/run/docker.sock -n kubedock
+`,
 }
 
 func Execute() {
