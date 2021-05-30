@@ -95,12 +95,17 @@ func homeDir() string {
 // kubeconfig context, and returns 'default' if none is set.
 func getContextNamespace() string {
 	res := "default"
-	cfg, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
-	if err == nil {
-		res = cfg.Contexts[cfg.CurrentContext].Namespace
-		if res == "" {
-			res = "default"
-		}
+	rul := clientcmd.NewDefaultClientConfigLoadingRules()
+	if rul == nil {
+		return res
+	}
+	cfg, err := rul.Load()
+	if err != nil {
+		return res
+	}
+	ctx := cfg.Contexts[cfg.CurrentContext]
+	if ctx != nil && ctx.Namespace != "" {
+		res = ctx.Namespace
 	}
 	return res
 }
