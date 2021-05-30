@@ -10,7 +10,7 @@ build:
 		 -o kubedock
 
 gox:
-	gox -os="linux darwin windows" -arch="amd64" \
+	CGO_ENABLED=0 gox -os="linux darwin windows" -arch="amd64" \
 		-output="dist/kubedock_`git describe --tags`_{{.OS}}_{{.Arch}}" -ldflags \
 		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
 		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
