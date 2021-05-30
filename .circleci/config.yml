@@ -25,7 +25,7 @@ jobs:
             make deps
             make gox
             cd dist/ && for r in *; do { t=`echo $r|sed 's/.exe$//'`; e="kubedock"; [[ $r == *.exe ]] && e="kubedock.exe"; mv $r $e; tar czf $t.tar.gz $e; rm $e; } done
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "kubedock-"${VERSION} ./dist/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -n "kubedock-"${VERSION} ${VERSION} ./dist/
 
 workflows:
   version: 2
