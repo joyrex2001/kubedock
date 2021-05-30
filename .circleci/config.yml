@@ -1,11 +1,42 @@
 version: 2
+
 jobs:
-  build:
+  test:
     docker:
       - image: circleci/golang:1.16
-
     working_directory: /go/src/github.com/joyrex2001/kubedock
     steps:
       - checkout
-      - run: CGO_ENABLED=0 go vet ./...
-      - run: CGO_ENABLED=0 go test -v ./...
+      - run:
+          name: run unit tests
+          command: |
+            make test
+
+  release:
+    docker:
+      - image: circleci/golang:1.16
+    working_directory: /go/src/github.com/joyrex2001/kubedock
+    steps:
+      - checkout
+      - run:
+          name: cross compile
+          command: |
+            VERSION=$(git describe --tags)
+            make deps
+            make gox
+            cd dist/ && for r in *; do { t=`echo $r|sed 's/.exe$//'`; e="kubedock"; [[ $r == *.exe ]] && e="kubedock.exe"; mv $r $e; tar czf $t.tar.gz $e; rm $e; } done
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -n "kubedock-"${VERSION} -draft ./dist/
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - test
+      - release:
+          requires:
+            - test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/

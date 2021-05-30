@@ -24,6 +24,7 @@ clean:
 	rm -f kubedock
 	rm -rf dist
 	go mod tidy
+	rm -f coverage.out
 
 cloc:
 	cloc --exclude-dir=vendor,node_modules,dist,_notes .
@@ -48,5 +49,6 @@ deps:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/kisielk/errcheck
 	go get -u github.com/mitchellh/gox
+	go get -u github.com/tcnksm/ghr
 
 .PHONY: run build gox docker clean cloc fmt test lint cover deps
