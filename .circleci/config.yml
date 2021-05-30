@@ -21,11 +21,10 @@ jobs:
       - run:
           name: cross compile
           command: |
-            VERSION=$(git describe --tags)
             make deps
             make gox
             cd dist/ && for r in *; do { t=`echo $r|sed 's/.exe$//'`; e="kubedock"; [[ $r == *.exe ]] && e="kubedock.exe"; mv $r $e; tar czf $t.tar.gz $e; rm $e; } done
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "kubedock-"${VERSION} -delete ${VERSION} ./dist/
+            ghr -debug -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "kubedock-"$(git describe --tags) -delete $(git describe --tags) ./dist/
 
 workflows:
   version: 2
