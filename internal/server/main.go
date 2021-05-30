@@ -32,6 +32,7 @@ func (s *Server) Run() error {
 	socket := viper.GetString("server.socket")
 	if socket == "" {
 		port := viper.GetString("server.listen-addr")
+		klog.Infof("started listening on %s", port)
 		if viper.GetBool("server.tls-enable") {
 			cert := viper.GetString("server.tls-cert-file")
 			key := viper.GetString("server.tls-key-file")
@@ -40,6 +41,7 @@ func (s *Server) Run() error {
 			router.Run(port)
 		}
 	} else {
+		klog.Infof("started listening on %s", socket)
 		router.RunUnix(socket)
 	}
 

@@ -150,12 +150,9 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		// if prune-exit is enabled, clean up resources when kubedock exits
-		if viper.GetBool("prune-exit") {
-			klog.V(3).Infof("deleting instance resources...")
-			if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
-				klog.Fatalf("error pruning resources: %s", err)
-			}
+		klog.Info("exit signal recieved, removing deployments and services...")
+		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
+			klog.Fatalf("error pruning resources: %s", err)
 		}
 		cancel()
 	}()

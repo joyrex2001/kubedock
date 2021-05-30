@@ -23,4 +23,4 @@ COPY --from=kubedock /app /app
 WORKDIR /app
 
 ENTRYPOINT ["/app/kubedock"]
-CMD []
+CMD [ "server" ]

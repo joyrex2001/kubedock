@@ -38,15 +38,17 @@ The below use-cases are mostly not working:
 * [ryuk resource reaper](https://www.testcontainers.org/features/configuration/)
 * [advanced options](https://www.testcontainers.org/features/advanced_options/)
 
-## Resource reaping
+## Resource cleanup
+
+Kubedock will dynamically create deployments and services in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment and related services. Kubedock will also delete all the resources (Services and Deployments) it created in the running instance before exiting (identified with the `kubedock.id` label).
 
 ### Automatic reaping
 
-Kubedock will dynamically create deployments and services in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment and related services. However, if e.g. a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 15 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 30 minutes if the deployment or service has the label `kubedock=true`.
+If e.g. a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 15 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 30 minutes if the deployment or service has the label `kubedock=true`.
 
 ### Forced cleaning
 
-The reaping of resources can also be enforced at startup, and at exit. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the `kubedock=true` before starting the API server. If the `--prune-exit` argument is set, kubedock will delete all the resources it created in the running instance before exiting (identified with the `kubedock.id` label).
+The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the `kubedock=true` before starting the API server. These resource includes resources created by other instances. 
 
 # See also
 

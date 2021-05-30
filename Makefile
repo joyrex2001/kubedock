@@ -1,5 +1,5 @@
 run:
-	go run main.go -pP -v 2
+	go run main.go server -P -v 2
 
 build:
 	CGO_ENABLED=0 go build -ldflags \
@@ -9,11 +9,20 @@ build:
 		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`" \
 		 -o kubedock
 
+gox:
+	gox -os="linux darwin windows" -arch="amd64" \
+		-output="dist/kubedock_`git describe --tags`_{{.OS}}_{{.Arch}}" -ldflags \
+		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
+		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
+		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
+		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`"
+
 docker:
 	docker build . -t joyrex2001/kubedock:latest
 
 clean:
 	rm -f kubedock
+	rm -rf dist
 	go mod tidy
 
 cloc:
@@ -38,5 +47,6 @@ cover:
 deps:
 	go get -u golang.org/x/lint/golint
 	go get -u github.com/kisielk/errcheck
+	go get -u github.com/mitchellh/gox
 
-.PHONY: run build docker clean cloc fmt test lint cover deps
+.PHONY: run build gox docker clean cloc fmt test lint cover deps
