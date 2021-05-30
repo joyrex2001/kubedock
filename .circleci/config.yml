@@ -32,6 +32,12 @@ workflows:
   main:
     jobs:
       - test
+  release:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/      
       - release:
           requires:
             - test
