@@ -35,7 +35,7 @@ func init() {
 	// for now; let's just add everything to rootCmd, as there is only
 	// one 'real' cmd (this 'server') it is probably more intuitive to
 	// the user to see all available args immediately.
-	rootCmd.PersistentFlags().String("listen-addr", ":8080", "Webserver listen address")
+	rootCmd.PersistentFlags().String("listen-addr", ":8999", "Webserver listen address")
 	rootCmd.PersistentFlags().String("socket", "", "Unix socket to listen to (instead of port)")
 	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
 	rootCmd.PersistentFlags().String("tls-key-file", "", "TLS keyfile")
