@@ -215,3 +215,41 @@ func TestConnectNetwork(t *testing.T) {
 		t.Errorf("expected error on delete bridge, but got none")
 	}
 }
+
+func TestMatch(t *testing.T) {
+	tests := []struct {
+		labels map[string]string
+		typ    string
+		key    string
+		val    string
+		match  bool
+	}{
+		{
+			labels: map[string]string{},
+			typ:    "label",
+			key:    "some",
+			val:    "thing",
+			match:  false,
+		},
+		{
+			labels: map[string]string{"some": "thing"},
+			typ:    "label",
+			key:    "some",
+			val:    "thing",
+			match:  true,
+		},
+		{
+			labels: map[string]string{"some": "what"},
+			typ:    "label",
+			key:    "some",
+			val:    "thing",
+			match:  false,
+		},
+	}
+	for i, tst := range tests {
+		in := &Container{Labels: tst.labels}
+		if in.Match(tst.typ, tst.key, tst.val) != tst.match {
+			t.Errorf("failed test %d - match %v", i, tst.match)
+		}
+	}
+}

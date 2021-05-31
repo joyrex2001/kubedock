@@ -11,6 +11,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
@@ -264,6 +265,10 @@ func (cr *Router) ContainerInfo(c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerList
 // GET "/containers/json"
 func (cr *Router) ContainerList(c *gin.Context) {
+	filtr, err := filter.New(c.Query("filters"))
+	if err != nil {
+		klog.V(5).Infof("unsupported filter: %s", err)
+	}
 	tainrs, err := cr.db.GetContainers()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -271,7 +276,9 @@ func (cr *Router) ContainerList(c *gin.Context) {
 	}
 	res := []gin.H{}
 	for _, tainr := range tainrs {
-		res = append(res, cr.getContainerInfo(tainr, false))
+		if filtr.Match(tainr) {
+			res = append(res, cr.getContainerInfo(tainr, false))
+		}
 	}
 	c.JSON(http.StatusOK, res)
 }

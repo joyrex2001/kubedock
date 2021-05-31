@@ -161,7 +161,7 @@ func (co *Container) SignalStop() {
 	co.StopChannels = []chan struct{}{}
 }
 
-// ConnectNetwork will attach a network to the container,
+// ConnectNetwork will attach a network to the container.
 func (co *Container) ConnectNetwork(id string) {
 	if co.Networks == nil {
 		co.Networks = map[string]interface{}{}
@@ -169,7 +169,7 @@ func (co *Container) ConnectNetwork(id string) {
 	co.Networks[id] = nil
 }
 
-// DisconnectNetwork will detach a network from the container,
+// DisconnectNetwork will detach a network from the container.
 func (co *Container) DisconnectNetwork(id string) error {
 	if id == "bridge" {
 		return fmt.Errorf("can't delete bridge network")
@@ -179,4 +179,16 @@ func (co *Container) DisconnectNetwork(id string) error {
 	}
 	delete(co.Networks, id)
 	return nil
+}
+
+// Match will match given type with given key value pair.
+func (co *Container) Match(typ string, key string, val string) bool {
+	if typ != "label" {
+		return true
+	}
+	v, ok := co.Labels[key]
+	if !ok {
+		return false
+	}
+	return v == val
 }
