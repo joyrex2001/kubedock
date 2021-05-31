@@ -57,18 +57,28 @@ func (co *Container) MapPort(pod, local int) {
 
 // AddHostPort will add a predefined port mapping.
 func (co *Container) AddHostPort(src string, dst string) error {
-	sp, err := strconv.Atoi(src)
-	if err != nil {
-		return fmt.Errorf("could not parse exposed port %s: %s", dst, err)
-	}
-	dp, err := co.getTCPPort(dst)
+	var err error
+	var sp, dp int
+
+	dp, err = co.getTCPPort(dst)
 	if err != nil {
 		return err
 	}
+
+	if src != "" {
+		sp, err = strconv.Atoi(src)
+		if err != nil {
+			return fmt.Errorf("could not parse exposed port %s: %s", dst, err)
+		}
+	} else {
+		sp = dp
+	}
+
 	if co.HostPorts == nil {
 		co.HostPorts = map[int]int{}
 	}
 	co.HostPorts[sp] = dp
+
 	return nil
 }
 
