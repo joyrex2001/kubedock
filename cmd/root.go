@@ -28,7 +28,7 @@ Examples:
   kubedock server -P -i --lock
 
   # run kubedock in a namespace called kubedock and expose the api as a socket.
-  kubedock server --socket /var/run/docker.sock -n kubedock
+  kubedock server --unix-socket /var/run/docker.sock -n kubedock
 `,
 }
 

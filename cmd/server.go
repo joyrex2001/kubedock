@@ -36,7 +36,7 @@ func init() {
 	// one 'real' cmd (this 'server') it is probably more intuitive to
 	// the user to see all available args immediately.
 	rootCmd.PersistentFlags().String("listen-addr", ":8999", "Webserver listen address")
-	rootCmd.PersistentFlags().String("socket", "", "Unix socket to listen to (instead of port)")
+	rootCmd.PersistentFlags().String("unix-socket", "", "Unix socket to listen to (instead of port)")
 	rootCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
 	rootCmd.PersistentFlags().String("tls-key-file", "", "TLS keyfile")
 	rootCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
@@ -51,7 +51,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("prune-start", "P", false, "Prune all existing kubedock resources before starting")
 
 	viper.BindPFlag("server.listen-addr", rootCmd.PersistentFlags().Lookup("listen-addr"))
-	viper.BindPFlag("server.socket", rootCmd.PersistentFlags().Lookup("socket"))
+	viper.BindPFlag("server.socket", rootCmd.PersistentFlags().Lookup("unix-socket"))
 	viper.BindPFlag("server.tls-enable", rootCmd.PersistentFlags().Lookup("tls-enable"))
 	viper.BindPFlag("server.tls-cert-file", rootCmd.PersistentFlags().Lookup("tls-cert-file"))
 	viper.BindPFlag("server.tls-key-file", rootCmd.PersistentFlags().Lookup("tls-key-file"))
