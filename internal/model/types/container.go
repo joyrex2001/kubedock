@@ -71,7 +71,7 @@ func (co *Container) AddHostPort(src string, dst string) error {
 			return fmt.Errorf("could not parse exposed port %s: %s", dst, err)
 		}
 	} else {
-		sp = dp
+		sp = 0
 	}
 
 	if co.HostPorts == nil {

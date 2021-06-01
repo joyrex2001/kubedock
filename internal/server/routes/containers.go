@@ -351,15 +351,37 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 // getNetworkSettingsPorts will return the mapped ports of the container
 // as k8s ports structure to be used in network settings.
 func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
-	res := gin.H{}
-	for src, dst := range tainr.MappedPorts {
-		p := fmt.Sprintf("%d/tcp", dst)
-		res[p] = []gin.H{
-			{
-				"HostIp":   "localhost",
-				"HostPort": fmt.Sprintf("%d", src),
-			},
+	ports := map[string][]string{}
+	add := func(prts map[int]int) {
+		for src, dst := range prts {
+			if src == 0 {
+				continue
+			}
+			p := fmt.Sprintf("%d/tcp", dst)
+			if _, ok := ports[p]; !ok {
+				ports[p] = []string{}
+			}
+			ports[p] = append(ports[p], fmt.Sprintf("%d", src))
 		}
+	}
+	add(tainr.HostPorts)
+	add(tainr.MappedPorts)
+
+	res := gin.H{}
+	for dst, prts := range ports {
+		pp := []map[string]string{}
+		done := map[string]int{}
+		for _, p := range prts {
+			if _, ok := done[p]; ok {
+				continue
+			}
+			pp = append(pp, map[string]string{
+				"HostIp":   "localhost",
+				"HostPort": p,
+			})
+			done[p] = 1
+		}
+		res[dst] = pp
 	}
 	return res
 }

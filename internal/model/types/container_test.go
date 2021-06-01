@@ -102,7 +102,7 @@ func TestAddHostPort(t *testing.T) {
 		{
 			src: "",
 			dst: "606/tcp",
-			out: map[int]int{606: 606},
+			out: map[int]int{0: 606},
 			suc: true,
 		},
 		{

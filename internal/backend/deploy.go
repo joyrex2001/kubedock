@@ -114,6 +114,9 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		return fmt.Errorf("no matching pod found")
 	}
 	for dst, src := range ports {
+		if src == 0 {
+			continue
+		}
 		stream := genericclioptions.IOStreams{
 			In:     os.Stdin,
 			Out:    os.Stdout,
@@ -147,6 +150,9 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	}
 	if tainr.HostPorts != nil {
 		for src, dst := range tainr.HostPorts {
+			if src == 0 {
+				src = dst
+			}
 			ports[src] = dst
 		}
 	}
