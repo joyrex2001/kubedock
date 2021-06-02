@@ -354,7 +354,7 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 	ports := map[string][]string{}
 	add := func(prts map[int]int) {
 		for src, dst := range prts {
-			if src == 0 {
+			if src < 0 {
 				continue
 			}
 			p := fmt.Sprintf("%d/tcp", dst)

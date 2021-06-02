@@ -36,6 +36,12 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 		},
 		{
 			tainr: &types.Container{
+				MappedPorts: map[int]int{-303: 303},
+			},
+			out: gin.H{},
+		},
+		{
+			tainr: &types.Container{
 				MappedPorts: map[int]int{303: 101},
 				HostPorts:   map[int]int{202: 101},
 			},
