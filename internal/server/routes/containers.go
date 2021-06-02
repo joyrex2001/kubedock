@@ -342,48 +342,81 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
 		res["Labels"] = tainr.Labels
-		res["State"] = status.StateString()
+		res["State"] = status.StatusString()
+		res["Status"] = status.StateString()
 		res["Created"] = tainr.Created.Unix()
+		res["Ports"] = cr.getContainerPorts(tainr)
 	}
 	return res
 }
 
-// getNetworkSettingsPorts will return the mapped ports of the container
-// as k8s ports structure to be used in network settings.
+// getNetworkSettingsPorts will return the available ports of the container
+// as a gin.H json structure to be used in container details.
 func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
-	ports := map[string][]string{}
+	ports := cr.getAvailablePorts(tainr)
+	res := gin.H{}
+	for dst, prts := range ports {
+		pp := []map[string]string{}
+		done := map[int]int{}
+		for _, src := range prts {
+			if _, ok := done[src]; ok {
+				continue
+			}
+			pp = append(pp, map[string]string{
+				"HostIp":   "localhost",
+				"HostPort": fmt.Sprintf("%d", src),
+			})
+			done[src] = 1
+		}
+		res[fmt.Sprintf("%d/tcp", dst)] = pp
+	}
+	return res
+}
+
+// getContainerPorts will return the available ports of the container as
+// a gin.H json structure to be used in container list.
+func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interface{} {
+	ports := cr.getAvailablePorts(tainr)
+	res := []map[string]interface{}{}
+	for dst, prts := range ports {
+		done := map[int]int{}
+		for _, src := range prts {
+			if _, ok := done[src]; ok {
+				continue
+			}
+			pp := map[string]interface{}{
+				"IP":          "localhost",
+				"PrivatePort": dst,
+				"Type":        "tcp",
+			}
+			if src > 0 {
+				pp["PublicPort"] = src
+			}
+			res = append(res, pp)
+			done[src] = 1
+		}
+	}
+	return res
+}
+
+// getAvailablePorts will return all ports that are currently available on
+// the running container.
+func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
+	ports := map[int][]int{}
 	add := func(prts map[int]int) {
 		for src, dst := range prts {
 			if src < 0 {
 				continue
 			}
-			p := fmt.Sprintf("%d/tcp", dst)
-			if _, ok := ports[p]; !ok {
-				ports[p] = []string{}
+			if _, ok := ports[dst]; !ok {
+				ports[dst] = []int{}
 			}
-			ports[p] = append(ports[p], fmt.Sprintf("%d", src))
+			ports[dst] = append(ports[dst], src)
 		}
 	}
 	add(tainr.HostPorts)
 	add(tainr.MappedPorts)
-
-	res := gin.H{}
-	for dst, prts := range ports {
-		pp := []map[string]string{}
-		done := map[string]int{}
-		for _, p := range prts {
-			if _, ok := done[p]; ok {
-				continue
-			}
-			pp = append(pp, map[string]string{
-				"HostIp":   "localhost",
-				"HostPort": p,
-			})
-			done[p] = 1
-		}
-		res[dst] = pp
-	}
-	return res
+	return ports
 }
 
 // getContainerNames will list of possible names to identify the container.

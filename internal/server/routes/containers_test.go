@@ -59,3 +59,58 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 		}
 	}
 }
+
+func TestGetContainerPorts(t *testing.T) {
+	tests := []struct {
+		tainr *types.Container
+		endp  EndpointConfig
+		out   []map[string]interface{}
+	}{
+		{
+			tainr: &types.Container{
+				MappedPorts: map[int]int{303: 101},
+			},
+			out: []map[string]interface{}{
+				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+			},
+		},
+		{
+			tainr: &types.Container{
+				HostPorts: map[int]int{303: 101},
+			},
+			out: []map[string]interface{}{
+				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+			}},
+		{
+			tainr: &types.Container{
+				MappedPorts: map[int]int{303: 101},
+				HostPorts:   map[int]int{303: 101},
+			},
+			out: []map[string]interface{}{
+				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+			}},
+		{
+			tainr: &types.Container{
+				MappedPorts: map[int]int{-303: 303},
+			},
+			out: []map[string]interface{}{},
+		},
+		{
+			tainr: &types.Container{
+				MappedPorts: map[int]int{303: 101},
+				HostPorts:   map[int]int{202: 101},
+			},
+			out: []map[string]interface{}{
+				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 202, "Type": "tcp"},
+				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+			},
+		},
+	}
+	for i, tst := range tests {
+		routr := &Router{}
+		res := routr.getContainerPorts(tst.tainr)
+		if !reflect.DeepEqual(res, tst.out) {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
+		}
+	}
+}
