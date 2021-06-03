@@ -32,7 +32,7 @@ func (s *Server) Run() error {
 	socket := viper.GetString("server.socket")
 	if socket == "" {
 		port := viper.GetString("server.listen-addr")
-		klog.Infof("started listening on %s", port)
+		klog.Infof("api server started listening on %s", port)
 		if viper.GetBool("server.tls-enable") {
 			cert := viper.GetString("server.tls-cert-file")
 			key := viper.GetString("server.tls-key-file")
@@ -41,7 +41,7 @@ func (s *Server) Run() error {
 			router.Run(port)
 		}
 	} else {
-		klog.Infof("started listening on %s", socket)
+		klog.Infof("api server started listening on %s", socket)
 		router.RunUnix(socket)
 	}
 
@@ -57,6 +57,10 @@ func (s *Server) getGinEngine() *gin.Engine {
 	router.Use(httputil.RequestLoggerMiddleware())
 	router.Use(httputil.ResponseLoggerMiddleware())
 	router.Use(gin.Recovery())
-	routes.New(router, s.kub, viper.GetBool("registry.inspector"))
+	insp := viper.GetBool("registry.inspector")
+	if insp {
+		klog.Infof("image inspector enabled")
+	}
+	routes.New(router, s.kub, insp)
 	return router
 }

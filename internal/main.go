@@ -75,7 +75,7 @@ func Main() {
 				run(kub)
 			},
 			OnStoppedLeading: func() {
-				klog.V(3).Infof("lost lock on namespace %s...", viper.GetString("kubernetes.namespace"))
+				klog.V(3).Infof("lost lock on namespace %s", viper.GetString("kubernetes.namespace"))
 			},
 			OnNewLeader: func(identity string) {
 				klog.V(3).Infof("new leader elected: %s", identity)
@@ -86,29 +86,37 @@ func Main() {
 
 // getBackend will instantiate a the kubedock kubernetes object.
 func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, error) {
+	ns := viper.GetString("kubernetes.namespace")
+	initimg := viper.GetString("kubernetes.initimage")
+	timeout := viper.GetDuration("kubernetes.timeout")
+
+	klog.Infof("kubernetes config: namespace=%s, initimage=%s, ready timeout=%s", ns, initimg, timeout)
 	kub := backend.New(backend.Config{
 		Client:     cli,
 		RestConfig: cfg,
-		Namespace:  viper.GetString("kubernetes.namespace"),
-		InitImage:  viper.GetString("kubernetes.initimage"),
-		TimeOut:    viper.GetDuration("kubernetes.timeout"),
+		Namespace:  ns,
+		InitImage:  initimg,
+		TimeOut:    timeout,
 	})
 	return kub, nil
 }
 
 // run will start all components, based the settings initiated by cmd.
 func run(kub backend.Backend) {
+	reapmax := viper.GetDuration("reaper.reapmax")
 	rpr, err := reaper.New(reaper.Config{
-		KeepMax: viper.GetDuration("reaper.reapmax"),
+		KeepMax: reapmax,
 		Backend: kub,
 	})
 	if err != nil {
 		klog.Fatalf("error instantiating reaper: %s", err)
 	}
+
+	klog.Infof("reaper started with max container age %s", reapmax)
 	rpr.Start()
 
 	if viper.GetBool("prune-start") {
-		klog.V(3).Info("deleting all kubedock resources...")
+		klog.Info("pruning all existing kubedock resources from namespace")
 		if err := kub.DeleteAll(); err != nil {
 			klog.Fatalf("error pruning resources: %s", err)
 		}
@@ -132,7 +140,7 @@ func lockTimeoutHandler() chan struct{} {
 			case <-ready:
 				return
 			case <-tmr.C:
-				klog.Errorf("timeout acquiring lock...")
+				klog.Errorf("timeout acquiring lock")
 				// no cleanup required, as nothing was done yet...
 				os.Exit(1)
 			}
@@ -150,7 +158,7 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		klog.Info("exit signal recieved, removing deployments and services...")
+		klog.Info("exit signal recieved, removing deployments and services")
 		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
 			klog.Fatalf("error pruning resources: %s", err)
 		}
