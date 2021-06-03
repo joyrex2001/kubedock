@@ -58,4 +58,5 @@ The reaping of resources can also be enforced at startup. When kubedock is start
 
 # See also
 
+* https://github.com/joyrex2001/kubedock
 * https://hub.docker.com/r/joyrex2001/kubedock
