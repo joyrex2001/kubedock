@@ -2,6 +2,7 @@ package backend
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -309,13 +310,16 @@ func TestGetServices(t *testing.T) {
 		ExposedPorts:   map[string]interface{}{"100/tcp": 1},
 		HostPorts:      map[int]int{200: 200, -300: 300},
 	})
+	sort.Slice(res[0].Spec.Ports, func(i, j int) bool {
+		return res[0].Spec.Ports[i].Name < res[0].Spec.Ports[j].Name
+	})
 	exp := []corev1.ServicePort{
 		{Name: "tcp-100-100", Protocol: "TCP", Port: 100, TargetPort: intstr.IntOrString{Type: 0, IntVal: 100, StrVal: ""}, NodePort: 0},
 		{Name: "tcp-200-200", Protocol: "TCP", Port: 200, TargetPort: intstr.IntOrString{Type: 0, IntVal: 200, StrVal: ""}, NodePort: 0},
 		{Name: "tcp-300-300", Protocol: "TCP", Port: 300, TargetPort: intstr.IntOrString{Type: 0, IntVal: 300, StrVal: ""}, NodePort: 0},
 	}
 	if !reflect.DeepEqual(res[0].Spec.Ports, exp) {
-		t.Errorf("failed detail ports test - expected %#v, but got %#v", res, exp)
+		t.Errorf("failed detail ports test - expected %#v, but got %#v", res[0].Spec.Ports, exp)
 	}
 }
 
