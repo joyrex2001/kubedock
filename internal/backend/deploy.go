@@ -150,7 +150,7 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	}
 	if tainr.HostPorts != nil {
 		for src, dst := range tainr.HostPorts {
-			if src == 0 {
+			if src <= 0 {
 				src = dst
 			}
 			ports[src] = dst

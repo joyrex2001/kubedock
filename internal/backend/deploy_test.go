@@ -1,11 +1,13 @@
 package backend
 
 import (
+	"reflect"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -282,13 +284,13 @@ func TestGetServices(t *testing.T) {
 		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 1, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 1, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 1, ports: 2},
+		{in: &types.Container{NetworkAliases: []string{"tb303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{-300: 300}}, svcs: 1, ports: 2},
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 2, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{100: 200}}, svcs: 2, ports: 1},
 		{in: &types.Container{NetworkAliases: []string{"tb303", "tr909"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}, HostPorts: map[int]int{200: 200}}, svcs: 2, ports: 2},
 		{in: &types.Container{NetworkAliases: []string{"tb303_"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 0, ports: 0},
 		{in: &types.Container{NetworkAliases: []string{"303"}, ExposedPorts: map[string]interface{}{"100/tcp": 1}}, svcs: 0, ports: 0},
 	}
-
 	for i, tst := range tests {
 		kub := &instance{}
 		res := kub.getServices(tst.in)
@@ -299,6 +301,21 @@ func TestGetServices(t *testing.T) {
 		if count > 0 && tst.ports > 0 && len(res[0].Spec.Ports) != tst.ports {
 			t.Errorf("failed test %d - expected %d ports, but got %d", i, tst.ports, len(res[0].Spec.Ports))
 		}
+	}
+
+	kub := &instance{}
+	res := kub.getServices(&types.Container{
+		NetworkAliases: []string{"tb303"},
+		ExposedPorts:   map[string]interface{}{"100/tcp": 1},
+		HostPorts:      map[int]int{200: 200, -300: 300},
+	})
+	exp := []corev1.ServicePort{
+		{Name: "tcp-100-100", Protocol: "TCP", Port: 100, TargetPort: intstr.IntOrString{Type: 0, IntVal: 100, StrVal: ""}, NodePort: 0},
+		{Name: "tcp-200-200", Protocol: "TCP", Port: 200, TargetPort: intstr.IntOrString{Type: 0, IntVal: 200, StrVal: ""}, NodePort: 0},
+		{Name: "tcp-300-300", Protocol: "TCP", Port: 300, TargetPort: intstr.IntOrString{Type: 0, IntVal: 300, StrVal: ""}, NodePort: 0},
+	}
+	if !reflect.DeepEqual(res[0].Spec.Ports, exp) {
+		t.Errorf("failed detail ports test - expected %#v, but got %#v", res, exp)
 	}
 }
 
