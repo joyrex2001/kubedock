@@ -123,7 +123,6 @@ func (cr *Router) ExecInfo(c *gin.Context) {
 		return
 	}
 
-	// TODO: bogus exit code, k8s doesn't seem to support this
 	c.JSON(http.StatusOK, gin.H{
 		"ID":       id,
 		"Running":  false,
