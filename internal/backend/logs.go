@@ -8,6 +8,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/util/ioproxy"
 )
 
 // GetLogs will write the logs for given container to given writer.
@@ -34,6 +35,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io
 	stop := make(chan struct{}, 1)
 	tainr.AddStopChannel(stop)
 
+	out := ioproxy.New(w, ioproxy.Stdout)
 	for {
 		// close when container is done
 		select {
@@ -57,8 +59,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io
 			return err
 		}
 		// write log to output
-		w.Write([]byte{1, 0, 0, 0, 0, 0, 0, byte(n)}) // header: stdout only
-		if n, err = w.Write(buf[:n]); n == 0 || err != nil {
+		if n, err = out.Write(buf[:n]); n == 0 || err != nil {
 			break
 		}
 	}

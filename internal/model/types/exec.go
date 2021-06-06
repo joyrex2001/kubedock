@@ -11,5 +11,6 @@ type Exec struct {
 	Cmd         []string
 	Stdout      bool
 	Stderr      bool
+	ExitCode    int
 	Created     time.Time
 }

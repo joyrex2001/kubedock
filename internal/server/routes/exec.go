@@ -100,8 +100,14 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
-	if err := cr.kub.ExecContainer(tainr, exec, out); err != nil {
+	code, err := cr.kub.ExecContainer(tainr, exec, out)
+	if err != nil {
 		klog.Errorf("error during exec: %s", err)
+		return
+	}
+	exec.ExitCode = code
+	if err := cr.db.SaveExec(exec); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 }
@@ -111,8 +117,7 @@ func (cr *Router) ExecStart(c *gin.Context) {
 // GET "/exec/:id/json"
 func (cr *Router) ExecInfo(c *gin.Context) {
 	id := c.Param("id")
-
-	_, err := cr.db.GetExec(id)
+	exec, err := cr.db.GetExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -122,6 +127,6 @@ func (cr *Router) ExecInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"ID":       id,
 		"Running":  false,
-		"ExitCode": 0,
+		"ExitCode": exec.ExitCode,
 	})
 }

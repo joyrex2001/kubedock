@@ -20,7 +20,7 @@ type Backend interface {
 	DeleteContainersOlderThan(time.Duration) error
 	DeleteServicesOlderThan(time.Duration) error
 	CopyToContainer(*types.Container, []byte, string) error
-	ExecContainer(*types.Container, *types.Exec, io.Writer) error
+	ExecContainer(*types.Container, *types.Exec, io.Writer) (int, error)
 	GetContainerStatus(*types.Container) (*Status, error)
 	IsContainerRunning(*types.Container) (bool, error)
 	GetLogs(*types.Container, bool, int, io.Writer) error
