@@ -103,6 +103,30 @@ func TestWaitReadyState(t *testing.T) {
 			in:  &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
 			out: true,
 		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "tr909"},
+					},
+					Status: corev1.PodStatus{
+						ContainerStatuses: []corev1.ContainerStatus{
+							{LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
+						},
+					},
+				}, &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tr909",
+						Namespace: "default",
+					},
+				}),
+			},
+			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			out: false,
+		},
 	}
 
 	for i, tst := range tests {
@@ -314,9 +338,9 @@ func TestGetServices(t *testing.T) {
 		return res[0].Spec.Ports[i].Name < res[0].Spec.Ports[j].Name
 	})
 	exp := []corev1.ServicePort{
-		{Name: "tcp-100-100", Protocol: "TCP", Port: 100, TargetPort: intstr.IntOrString{Type: 0, IntVal: 100, StrVal: ""}, NodePort: 0},
-		{Name: "tcp-200-200", Protocol: "TCP", Port: 200, TargetPort: intstr.IntOrString{Type: 0, IntVal: 200, StrVal: ""}, NodePort: 0},
-		{Name: "tcp-300-300", Protocol: "TCP", Port: 300, TargetPort: intstr.IntOrString{Type: 0, IntVal: 300, StrVal: ""}, NodePort: 0},
+		{Name: "tcp-100-100", Protocol: "TCP", Port: 100, TargetPort: intstr.IntOrString{IntVal: 100}},
+		{Name: "tcp-200-200", Protocol: "TCP", Port: 200, TargetPort: intstr.IntOrString{IntVal: 200}},
+		{Name: "tcp-300-300", Protocol: "TCP", Port: 300, TargetPort: intstr.IntOrString{IntVal: 300}},
 	}
 	if !reflect.DeepEqual(res[0].Spec.Ports, exp) {
 		t.Errorf("failed detail ports test - expected %#v, but got %#v", res[0].Spec.Ports, exp)

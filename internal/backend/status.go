@@ -62,3 +62,21 @@ func (in *instance) IsContainerRunning(tainr *types.Container) (bool, error) {
 	}
 	return s.Replicas > 0, nil
 }
+
+// IsContainerCompleted will return true if the container has a pod with last
+// state completed.
+func (in *instance) IsContainerCompleted(tainr *types.Container) bool {
+	pods, err := in.getPods(tainr)
+	if err != nil {
+		return false
+	}
+	for _, pod := range pods {
+		for _, status := range pod.Status.ContainerStatuses {
+			term := status.LastTerminationState.Terminated
+			if term != nil && term.Reason == "Completed" {
+				return true
+			}
+		}
+	}
+	return false
+}

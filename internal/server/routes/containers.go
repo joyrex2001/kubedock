@@ -89,7 +89,7 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 		return
 	}
 	running, _ := cr.kub.IsContainerRunning(tainr)
-	if !running {
+	if !running && !cr.kub.IsContainerCompleted(tainr) {
 		if err := cr.kub.StartContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
@@ -199,7 +199,7 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	}
 
 	running, _ := cr.kub.IsContainerRunning(tainr)
-	if !running {
+	if !running && !cr.kub.IsContainerCompleted(tainr) {
 		if err := cr.kub.StartContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return

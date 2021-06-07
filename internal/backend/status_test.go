@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
@@ -120,6 +121,73 @@ func TestContainerStatus(t *testing.T) {
 		}
 		if stat.StatusString() != tst.status {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.status, stat.StatusString())
+		}
+	}
+}
+
+func TestIsCompleted(t *testing.T) {
+	tests := []struct {
+		in  *types.Container
+		kub *instance
+		out bool
+	}{
+		{
+			kub: &instance{
+				namespace: "default",
+				cli:       fake.NewSimpleClientset(),
+			},
+			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			out: false,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "tr909"},
+					},
+				}, &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tr909",
+						Namespace: "default",
+					},
+				}),
+			},
+			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			out: false,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "tr909"},
+					},
+					Status: corev1.PodStatus{
+						ContainerStatuses: []corev1.ContainerStatus{
+							{LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
+						},
+					},
+				}, &appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tr909",
+						Namespace: "default",
+					},
+				}),
+			},
+			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			out: true,
+		},
+	}
+
+	for i, tst := range tests {
+		res := tst.kub.IsContainerCompleted(tst.in)
+		if res != tst.out {
+			t.Errorf("failed test %d - expected %t, but got %t", i, tst.out, res)
 		}
 	}
 }

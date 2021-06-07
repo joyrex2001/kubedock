@@ -234,12 +234,6 @@ func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]
 	}
 }
 
-// getPodsLabelSelector will return a label selector that can be used to
-// uniquely idenitify pods that belong to this deployment.
-func (in *instance) getPodsLabelSelector(tainr *types.Container) string {
-	return "kubedock=" + tainr.ShortID
-}
-
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
 	for max := 0; max < wait; max++ {
@@ -259,6 +253,10 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
 				return fmt.Errorf("failed to start container")
 			}
 			for _, status := range pod.Status.ContainerStatuses {
+				term := status.LastTerminationState.Terminated
+				if term != nil && term.Reason == "Completed" {
+					return nil
+				}
 				if status.RestartCount > 0 {
 					return fmt.Errorf("failed to start container")
 				}
@@ -370,15 +368,4 @@ func (in *instance) signalDone(tainr *types.Container) error {
 		Cmd:        []string{"touch", "/tmp/done"},
 		Stderr:     os.Stderr,
 	})
-}
-
-// getPods will return a list of pods that are spun up for this deployment.
-func (in *instance) getPods(tainr *types.Container) ([]corev1.Pod, error) {
-	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: in.getPodsLabelSelector(tainr),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return pods.Items, nil
 }

@@ -32,7 +32,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 		return
 	}
 
-	if !running {
+	if !running && !cr.kub.IsContainerCompleted(tainr) {
 		httputil.Error(c, http.StatusNotFound, fmt.Errorf("container %s not running", id))
 		return
 	}
