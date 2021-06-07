@@ -25,7 +25,7 @@ type logProxy struct {
 	prefix StdType
 }
 
-// NewLogProxy will return a new logproxy instance.
+// New will return a new logproxy instance.
 func New(w io.Writer, prefix StdType) io.Writer {
 	return &logProxy{out: w, prefix: prefix}
 }

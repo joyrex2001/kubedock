@@ -11,6 +11,7 @@ func TestParseExecResponse(t *testing.T) {
 		cod int
 		suc bool
 	}{
+		{nil, 0, true},
 		{fmt.Errorf("some generic error"), 0, false},
 		{fmt.Errorf("command terminated with exit code 2"), 2, true},
 	}

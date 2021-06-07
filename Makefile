@@ -1,21 +1,17 @@
+LDFLAGS="-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
+		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
+		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
+		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`"
+
 run:
 	go run main.go server -P -v 2
 
 build:
-	CGO_ENABLED=0 go build -ldflags \
-		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
-		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`" \
-		 -o kubedock
+	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o kubedock
 
 gox:
 	CGO_ENABLED=0 gox -os="linux darwin windows" -arch="amd64" \
-		-output="dist/kubedock_`git describe --tags`_{{.OS}}_{{.Arch}}" -ldflags \
-		"-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
-		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`"
+		-output="dist/kubedock_`git describe --tags`_{{.OS}}_{{.Arch}}" -ldflags $(LDFLAGS)
 
 docker:
 	docker build . -t joyrex2001/kubedock:latest
