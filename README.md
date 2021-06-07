@@ -8,7 +8,7 @@ Running this locally with a testcontainers enabled unit-test requires to run kub
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
-export DOCKER_HOST=tcp://127.0.0.1:8999
+export DOCKER_HOST=tcp://127.0.0.1:2375
 mvn test
 ```
 
@@ -18,7 +18,7 @@ To see a complete list of available options and additional examples: `kubedock -
 
 # Implementation
 
-When kubedock is started with `kubedock server` it will start an API server on port :8999, which can be used as a drop-in replacement for the default docker api server. Additionally, kubedock can also start listening to an unix-socket (`docker.sock`).
+When kubedock is started with `kubedock server` it will start an API server on port :2375, which can be used as a drop-in replacement for the default docker api server. Additionally, kubedock can also start listening to an unix-socket (`docker.sock`).
 
 ## Containers
 
