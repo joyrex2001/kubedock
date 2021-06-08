@@ -19,20 +19,20 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 			tainr: &types.Container{
 				MappedPorts: map[int]int{303: 101},
 			},
-			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "localhost", "HostPort": "303"}}},
+			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "127.0.0.1", "HostPort": "303"}}},
 		},
 		{
 			tainr: &types.Container{
 				HostPorts: map[int]int{303: 101},
 			},
-			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "localhost", "HostPort": "303"}}},
+			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "127.0.0.1", "HostPort": "303"}}},
 		},
 		{
 			tainr: &types.Container{
 				MappedPorts: map[int]int{303: 101},
 				HostPorts:   map[int]int{303: 101},
 			},
-			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "localhost", "HostPort": "303"}}},
+			out: gin.H{"101/tcp": []map[string]string{{"HostIp": "127.0.0.1", "HostPort": "303"}}},
 		},
 		{
 			tainr: &types.Container{
@@ -46,8 +46,8 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 				HostPorts:   map[int]int{202: 101},
 			},
 			out: gin.H{"101/tcp": []map[string]string{
-				{"HostIp": "localhost", "HostPort": "202"},
-				{"HostIp": "localhost", "HostPort": "303"},
+				{"HostIp": "127.0.0.1", "HostPort": "202"},
+				{"HostIp": "127.0.0.1", "HostPort": "303"},
 			}},
 		},
 	}
@@ -71,7 +71,7 @@ func TestGetContainerPorts(t *testing.T) {
 				MappedPorts: map[int]int{303: 101},
 			},
 			out: []map[string]interface{}{
-				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+				{"IP": "127.0.0.1", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func TestGetContainerPorts(t *testing.T) {
 				HostPorts: map[int]int{303: 101},
 			},
 			out: []map[string]interface{}{
-				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+				{"IP": "127.0.0.1", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
 			}},
 		{
 			tainr: &types.Container{
@@ -87,7 +87,7 @@ func TestGetContainerPorts(t *testing.T) {
 				HostPorts:   map[int]int{303: 101},
 			},
 			out: []map[string]interface{}{
-				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+				{"IP": "127.0.0.1", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
 			}},
 		{
 			tainr: &types.Container{
@@ -101,8 +101,8 @@ func TestGetContainerPorts(t *testing.T) {
 				HostPorts:   map[int]int{202: 101},
 			},
 			out: []map[string]interface{}{
-				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 202, "Type": "tcp"},
-				{"IP": "localhost", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
+				{"IP": "127.0.0.1", "PrivatePort": 101, "PublicPort": 202, "Type": "tcp"},
+				{"IP": "127.0.0.1", "PrivatePort": 101, "PublicPort": 303, "Type": "tcp"},
 			},
 		},
 	}

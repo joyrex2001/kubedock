@@ -363,7 +363,7 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 				continue
 			}
 			pp = append(pp, map[string]string{
-				"HostIp":   "localhost",
+				"HostIp":   "127.0.0.1",
 				"HostPort": fmt.Sprintf("%d", src),
 			})
 			done[src] = 1
@@ -385,7 +385,7 @@ func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interfa
 				continue
 			}
 			pp := map[string]interface{}{
-				"IP":          "localhost",
+				"IP":          "127.0.0.1",
 				"PrivatePort": dst,
 				"Type":        "tcp",
 			}
