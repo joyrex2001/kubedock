@@ -27,6 +27,7 @@ type Container struct {
 	Networks       map[string]interface{}
 	NetworkAliases []string
 	StopChannels   []chan struct{}
+	AttachChannels []chan struct{}
 	Stopped        bool
 	Killed         bool
 	Created        time.Time
@@ -157,8 +158,27 @@ func (co *Container) AddStopChannel(stop chan struct{}) {
 func (co *Container) SignalStop() {
 	for _, stop := range co.StopChannels {
 		stop <- struct{}{}
+		close(stop)
 	}
 	co.StopChannels = []chan struct{}{}
+}
+
+// AddAttachChannel will add channels that should be notified when
+// SignalDetach is called.
+func (co *Container) AddAttachChannel(stop chan struct{}) {
+	if co.AttachChannels == nil {
+		co.AttachChannels = []chan struct{}{}
+	}
+	co.AttachChannels = append(co.AttachChannels, stop)
+}
+
+// SignalDetach will signal all stop channels.
+func (co *Container) SignalDetach() {
+	for _, stop := range co.AttachChannels {
+		stop <- struct{}{}
+		close(stop)
+	}
+	co.AttachChannels = []chan struct{}{}
 }
 
 // ConnectNetwork will attach a network to the container.

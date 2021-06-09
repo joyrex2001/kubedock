@@ -155,6 +155,30 @@ func TestStop(t *testing.T) {
 	}
 }
 
+func TestDetach(t *testing.T) {
+	tainr := &Container{}
+	res := 0
+	stop := make(chan struct{}, 1)
+	done := make(chan struct{}, 1)
+	tainr.AddAttachChannel(stop)
+	go func(res *int, in chan struct{}) {
+		<-in
+		*res = 1
+		done <- struct{}{}
+	}(&res, stop)
+	tainr.SignalDetach()
+	select {
+	case <-done:
+	case <-time.After(1 * time.Second):
+	}
+	if res != 1 {
+		t.Errorf("failed attach channels")
+	}
+	if len(tainr.AttachChannels) != 0 {
+		t.Errorf("expected attach channels to be erased")
+	}
+}
+
 func TestVolumes(t *testing.T) {
 	tests := []struct {
 		in  *Container

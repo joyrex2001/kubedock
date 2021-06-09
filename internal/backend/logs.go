@@ -12,7 +12,7 @@ import (
 )
 
 // GetLogs will write the logs for given container to given writer.
-func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io.Writer) error {
+func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop chan struct{}, w io.Writer) error {
 	tail := int64(count)
 	options := v1.PodLogOptions{
 		Container: "main",
@@ -32,18 +32,18 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, w io
 	}
 	defer stream.Close()
 
-	stop := make(chan struct{}, 1)
-	tainr.AddStopChannel(stop)
-
 	out := ioproxy.New(w, ioproxy.Stdout)
 	for {
 		// close when container is done
 		select {
 		case <-stop:
+			// TODO: this doesn't work when the stream is still
+			// reading, which is a blocking call. This will make
+			// sigint not work properly in attach mode.
 			return nil
 		default:
 		}
-		// read log input
+		// read log input (blocking read)
 		buf := make([]byte, 255)
 		n, err := stream.Read(buf)
 		if n == 0 {

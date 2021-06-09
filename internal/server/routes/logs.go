@@ -42,10 +42,12 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 
 	if !follow {
-		if err := cr.kub.GetLogs(tainr, follow, 100, w); err != nil {
+		stop := make(chan struct{}, 1)
+		if err := cr.kub.GetLogs(tainr, follow, 100, stop, w); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
+		close(stop)
 		return
 	}
 
@@ -57,7 +59,10 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
-	if err := cr.kub.GetLogs(tainr, follow, 100, out); err != nil {
+	stop := make(chan struct{}, 1)
+	tainr.AddStopChannel(stop)
+
+	if err := cr.kub.GetLogs(tainr, follow, 100, stop, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}

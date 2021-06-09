@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -116,6 +117,7 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+	tainr.SignalDetach()
 	tainr.SignalStop()
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
@@ -140,14 +142,35 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	// signal := strings.ToLower(c.Param("signal"))
+
+	signal := strings.ToLower(c.Query("signal"))
+	if strings.Contains(signal, "int") {
+		tainr.SignalDetach()
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+		c.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if !strings.Contains(signal, "kil") && !strings.Contains(signal, "term") && !strings.Contains(signal, "quit") {
+		klog.Infof("ignoring signal %s", signal)
+		c.Writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	tainr.SignalDetach()
 	tainr.SignalStop()
+
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
 	}
+
 	tainr.Killed = true
+
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -165,6 +188,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+	tainr.SignalDetach()
 	tainr.SignalStop()
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
@@ -224,7 +248,10 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
-	if err := cr.kub.GetLogs(tainr, true, 100, out); err != nil {
+	stop := make(chan struct{}, 1)
+	tainr.AddAttachChannel(stop)
+
+	if err := cr.kub.GetLogs(tainr, true, 100, stop, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}

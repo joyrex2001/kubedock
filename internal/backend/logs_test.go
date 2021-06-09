@@ -43,7 +43,8 @@ func TestGetLogs(t *testing.T) {
 
 	for i, tst := range tests {
 		r, w := io.Pipe()
-		res := tst.kub.GetLogs(tst.in, false, 100, w)
+		stop := make(chan struct{}, 1)
+		res := tst.kub.GetLogs(tst.in, false, 100, stop, w)
 		if (res != nil && !tst.out) || (res == nil && tst.out) {
 			t.Errorf("failed test %d - unexpected return value %s", i, res)
 		}

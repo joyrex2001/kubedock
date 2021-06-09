@@ -24,7 +24,7 @@ type Backend interface {
 	GetContainerStatus(*types.Container) (*Status, error)
 	IsContainerRunning(*types.Container) (bool, error)
 	IsContainerCompleted(*types.Container) bool
-	GetLogs(*types.Container, bool, int, io.Writer) error
+	GetLogs(*types.Container, bool, int, chan struct{}, io.Writer) error
 	GetImageExposedPorts(string) (map[string]struct{}, error)
 }
 
