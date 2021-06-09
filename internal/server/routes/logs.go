@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,7 +27,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	}
 
 	if !tainr.Running || !tainr.Completed {
-		httputil.Error(c, http.StatusNotFound, err)
+		httputil.Error(c, http.StatusNotFound, fmt.Errorf("container %s is not running", tainr.ShortID))
 		return
 	}
 
