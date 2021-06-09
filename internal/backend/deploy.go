@@ -22,9 +22,21 @@ import (
 	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
+// DeployState describes the state of a deployment.
+type DeployState int
+
+const (
+	// DeployFailed represents a failed deployment
+	DeployFailed DeployState = iota
+	// DeployRunning represents a running deployment
+	DeployRunning
+	// DeployCompleted represents a completed deployment
+	DeployCompleted
+)
+
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
-func (in *instance) StartContainer(tainr *types.Container) error {
+func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
 	match := in.getDeploymentMatchLabels(tainr)
 
 	// base deploment
@@ -60,17 +72,18 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	}
 
 	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
-		return err
+		return DeployFailed, err
 	}
 
 	if tainr.HasVolumes() {
 		if err := in.copyVolumeFolders(tainr); err != nil {
-			return err
+			return DeployFailed, err
 		}
 	}
 
-	if err := in.waitReadyState(tainr, in.timeOut); err != nil {
-		return err
+	state, err := in.waitReadyState(tainr, in.timeOut)
+	if err != nil {
+		return state, err
 	}
 
 	for _, pp := range tainr.GetContainerTCPPorts() {
@@ -87,10 +100,10 @@ func (in *instance) StartContainer(tainr *types.Container) error {
 	}()
 
 	if err := in.CreateServices(tainr); err != nil {
-		return err
+		return state, err
 	}
 
-	return nil
+	return state, nil
 }
 
 // CreateServices will create k8s service objects for each provided
@@ -235,36 +248,36 @@ func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]
 }
 
 // waitReadyState will wait for the deploymemt to be ready.
-func (in *instance) waitReadyState(tainr *types.Container, wait int) error {
+func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployState, error) {
 	for max := 0; max < wait; max++ {
 		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
 		if err != nil {
-			return err
+			return DeployFailed, err
 		}
 		if dep.Status.ReadyReplicas > 0 {
-			return nil
+			return DeployRunning, nil
 		}
 		pods, err := in.getPods(tainr)
 		if err != nil {
-			return err
+			return DeployFailed, err
 		}
 		for _, pod := range pods {
 			if pod.Status.Phase == corev1.PodFailed {
-				return fmt.Errorf("failed to start container")
+				return DeployFailed, fmt.Errorf("failed to start container")
 			}
 			for _, status := range pod.Status.ContainerStatuses {
 				term := status.LastTerminationState.Terminated
 				if term != nil && term.Reason == "Completed" {
-					return nil
+					return DeployCompleted, nil
 				}
 				if status.RestartCount > 0 {
-					return fmt.Errorf("failed to start container")
+					return DeployFailed, fmt.Errorf("failed to start container")
 				}
 			}
 		}
 		time.Sleep(time.Second)
 	}
-	return fmt.Errorf("timeout starting container")
+	return DeployFailed, fmt.Errorf("timeout starting container")
 }
 
 // waitInitContainerRunning will wait for a specific container in the

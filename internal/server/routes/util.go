@@ -3,6 +3,7 @@ package routes
 import (
 	"strings"
 
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
@@ -21,4 +22,19 @@ func (cr *Router) addNetworkAliases(tainr *types.Container, endp EndpointConfig)
 		}
 	}
 	tainr.NetworkAliases = aliases
+}
+
+// startContainer will start given container and saves the appropriate state
+// in the database.
+func (cr *Router) startContainer(tainr *types.Container) error {
+	state, err := cr.kub.StartContainer(tainr)
+	if err != nil {
+		return err
+	}
+	tainr.Stopped = false
+	tainr.Killed = false
+	tainr.Failed = (state == backend.DeployFailed)
+	tainr.Completed = (state == backend.DeployCompleted)
+	tainr.Running = (state == backend.DeployRunning)
+	return cr.db.SaveContainer(tainr)
 }

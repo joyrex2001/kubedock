@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,14 +25,8 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 		return
 	}
 
-	running, err := cr.kub.IsContainerRunning(tainr)
-	if err != nil {
+	if !tainr.Running || !tainr.Completed {
 		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	if !running && !cr.kub.IsContainerCompleted(tainr) {
-		httputil.Error(c, http.StatusNotFound, fmt.Errorf("container %s not running", id))
 		return
 	}
 

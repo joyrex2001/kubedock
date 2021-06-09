@@ -89,15 +89,8 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	running, _ := cr.kub.IsContainerRunning(tainr)
-	if !running && !cr.kub.IsContainerCompleted(tainr) {
-		if err := cr.kub.StartContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-		tainr.Stopped = false
-		tainr.Killed = false
-		if err := cr.db.SaveContainer(tainr); err != nil {
+	if !tainr.Running && !tainr.Completed {
+		if err := cr.startContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -117,14 +110,20 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
 	tainr.SignalDetach()
 	tainr.SignalStop()
+
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
 	}
+
+	tainr.Running = false
+	tainr.Completed = false
 	tainr.Stopped = true
+
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -170,6 +169,8 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 	}
 
 	tainr.Killed = true
+	tainr.Running = false
+	tainr.Completed = false
 
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -188,17 +189,21 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
 	tainr.SignalDetach()
 	tainr.SignalStop()
+
 	if !tainr.Stopped && !tainr.Killed {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
 	}
+
 	if err := cr.db.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -212,6 +217,7 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
+
 	stdin, _ := strconv.ParseBool(c.Query("stdin"))
 	if stdin {
 		c.Writer.WriteHeader(http.StatusNotImplemented)
@@ -222,9 +228,8 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 		klog.Warningf("Ignoring stdout/stderr filtering")
 	}
 
-	running, _ := cr.kub.IsContainerRunning(tainr)
-	if !running && !cr.kub.IsContainerCompleted(tainr) {
-		if err := cr.kub.StartContainer(tainr); err != nil {
+	if !tainr.Running && !tainr.Completed {
+		if err := cr.startContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -296,11 +301,13 @@ func (cr *Router) ContainerList(c *gin.Context) {
 	if err != nil {
 		klog.V(5).Infof("unsupported filter: %s", err)
 	}
+
 	tainrs, err := cr.db.GetContainers()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
 	res := []gin.H{}
 	for _, tainr := range tainrs {
 		if filtr.Match(tainr) {
@@ -314,10 +321,6 @@ func (cr *Router) ContainerList(c *gin.Context) {
 // given container.
 func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	errstr := ""
-	status, err := cr.kub.GetContainerStatus(tainr)
-	if err != nil {
-		errstr += err.Error()
-	}
 	netws, err := cr.db.GetNetworksByIDs(tainr.Networks)
 	if err != nil {
 		errstr += err.Error()
@@ -346,14 +349,14 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	if detail {
 		res["State"] = gin.H{
 			"Health": gin.H{
-				"Status": status.StatusString(),
+				"Status": tainr.StatusString(),
 			},
-			"Running":    status.Replicas > 0,
-			"Status":     status.StateString(),
+			"Running":    tainr.Running,
+			"Status":     tainr.StateString(),
 			"Paused":     false,
 			"Restarting": false,
 			"OOMKilled":  false,
-			"Dead":       status.Replicas == 0,
+			"Dead":       tainr.Failed,
 			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
 			"FinishedAt": "0001-01-01T00:00:00Z",
 			"ExitCode":   0,
@@ -369,8 +372,8 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
 		res["Labels"] = tainr.Labels
-		res["State"] = status.StatusString()
-		res["Status"] = status.StateString()
+		res["State"] = tainr.StatusString()
+		res["Status"] = tainr.StateString()
 		res["Created"] = tainr.Created.Unix()
 		res["Ports"] = cr.getContainerPorts(tainr)
 	}

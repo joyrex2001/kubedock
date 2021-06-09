@@ -131,8 +131,7 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 	n := len(tainr.NetworkAliases)
 	nr.addNetworkAliases(tainr, in.EndpointConfig)
 
-	running, _ := nr.kub.IsContainerRunning(tainr)
-	if running && n != len(tainr.NetworkAliases) {
+	if tainr.Running && n != len(tainr.NetworkAliases) {
 		klog.Warningf("adding networkaliases to a running container, will not create new services...")
 	}
 	if err := nr.db.SaveContainer(tainr); err != nil {

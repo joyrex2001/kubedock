@@ -28,6 +28,9 @@ type Container struct {
 	NetworkAliases []string
 	StopChannels   []chan struct{}
 	AttachChannels []chan struct{}
+	Running        bool
+	Completed      bool
+	Failed         bool
 	Stopped        bool
 	Killed         bool
 	Created        time.Time
@@ -211,4 +214,29 @@ func (co *Container) Match(typ string, key string, val string) bool {
 		return false
 	}
 	return v == val
+}
+
+// StateString returns a string that describes the state.
+func (co *Container) StateString() string {
+	if co.Running {
+		return "Up"
+	}
+	if co.Stopped || co.Killed {
+		return "Dead"
+	}
+	if co.Failed {
+		return "Dead"
+	}
+	if co.Completed {
+		return "Exited"
+	}
+	return "Created"
+}
+
+// StatusString returns a string that describes the status.
+func (co *Container) StatusString() string {
+	if co.Running {
+		return "healthy"
+	}
+	return "unhealthy"
 }

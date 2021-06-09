@@ -16,17 +16,19 @@ import (
 
 func TestWaitReadyState(t *testing.T) {
 	tests := []struct {
-		in  *types.Container
-		kub *instance
-		out bool
+		in    *types.Container
+		kub   *instance
+		state DeployState
+		out   bool
 	}{
 		{
 			kub: &instance{
 				namespace: "default",
 				cli:       fake.NewSimpleClientset(),
 			},
-			in:  &types.Container{Name: "f1spirit"},
-			out: true,
+			in:    &types.Container{Name: "f1spirit"},
+			state: DeployFailed,
+			out:   true,
 		},
 		{
 			kub: &instance{
@@ -38,8 +40,9 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{Name: "f1spirit", ShortID: "tb303"},
-			out: true,
+			in:    &types.Container{Name: "f1spirit", ShortID: "tb303"},
+			state: DeployFailed,
+			out:   true,
 		},
 		{
 			kub: &instance{
@@ -54,8 +57,9 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
-			out: false,
+			in:    &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			state: DeployRunning,
+			out:   false,
 		},
 		{
 			kub: &instance{
@@ -76,8 +80,9 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
-			out: true,
+			in:    &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			state: DeployFailed,
+			out:   true,
 		},
 		{
 			kub: &instance{
@@ -100,8 +105,9 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
-			out: true,
+			in:    &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
+			state: DeployFailed,
+			out:   true,
 		},
 		{
 			kub: &instance{
@@ -124,15 +130,19 @@ func TestWaitReadyState(t *testing.T) {
 					},
 				}),
 			},
-			in:  &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
-			out: false,
+			in:    &types.Container{ID: "rc752", ShortID: "tr909", Name: "f1spirit"},
+			state: DeployCompleted,
+			out:   false,
 		},
 	}
 
 	for i, tst := range tests {
-		res := tst.kub.waitReadyState(tst.in, 1)
-		if (res != nil && !tst.out) || (res == nil && tst.out) {
-			t.Errorf("failed test %d - unexpected return value %s", i, res)
+		state, err := tst.kub.waitReadyState(tst.in, 1)
+		if (err != nil && !tst.out) || (err == nil && tst.out) {
+			t.Errorf("failed test %d - unexpected return value %s", i, err)
+		}
+		if state != tst.state {
+			t.Errorf("failed test %d - expected state %d, but got %d", i, tst.state, state)
 		}
 	}
 }

@@ -41,15 +41,8 @@ func (cr *Router) PutArchive(c *gin.Context) {
 	}
 
 	// hmm... how to do this without a running container...
-	running, _ := cr.kub.IsContainerRunning(tainr)
-	if !running {
-		if err := cr.kub.StartContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-		tainr.Stopped = false
-		tainr.Killed = false
-		if err := cr.db.SaveContainer(tainr); err != nil {
+	if !tainr.Running && !tainr.Completed {
+		if err := cr.startContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
