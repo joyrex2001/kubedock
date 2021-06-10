@@ -26,7 +26,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 		return
 	}
 
-	if !tainr.Running || !tainr.Completed {
+	if !tainr.Running && !tainr.Completed {
 		httputil.Error(c, http.StatusNotFound, fmt.Errorf("container %s is not running", tainr.ShortID))
 		return
 	}
