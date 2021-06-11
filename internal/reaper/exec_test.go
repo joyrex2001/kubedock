@@ -8,9 +8,8 @@ import (
 )
 
 func TestCleanExecs(t *testing.T) {
-	rp, _ := New(Config{
-		KeepMax: 20 * time.Millisecond,
-	})
+	rp, _ := New(Config{})
+	ExecReapMax = 20 * time.Millisecond
 	rp.db.SaveExec(&types.Exec{})
 	if err := rp.CleanExecs(); err != nil {
 		t.Errorf("unexpected error while cleaning execs: %s", err)
