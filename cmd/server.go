@@ -41,7 +41,7 @@ func init() {
 	serverCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
 	serverCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container port config from a registry")
 	serverCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
-	serverCmd.PersistentFlags().DurationP("reapmax", "r", 15*time.Minute, "Reap all resources older than this time")
+	serverCmd.PersistentFlags().DurationP("reapmax", "r", 60*time.Minute, "Reap all resources older than this time")
 	serverCmd.PersistentFlags().Bool("lock", false, "Lock namespace for this instance")
 	serverCmd.PersistentFlags().Duration("lock-timeout", 15*time.Minute, "Max time trying to acquire namespace lock")
 	serverCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")

@@ -267,15 +267,12 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 // POST "/containers/:id/wait"
 func (cr *Router) ContainerWait(c *gin.Context) {
 	id := c.Param("id")
-	for {
-		tmr := time.NewTimer(time.Second)
-		select {
-		case <-tmr.C:
-			tainr, err := cr.db.GetContainer(id)
-			if err != nil || tainr.Stopped || tainr.Killed {
-				c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
-				return
-			}
+	ticker := time.NewTicker(time.Second)
+	for range ticker.C {
+		tainr, err := cr.db.GetContainer(id)
+		if err != nil || tainr.Stopped || tainr.Killed {
+			c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
+			return
 		}
 	}
 }

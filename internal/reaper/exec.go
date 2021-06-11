@@ -6,15 +6,14 @@ import (
 	"k8s.io/klog"
 )
 
-// CleanExecs will clean all lingering execs that are older than the
-// configured keepMax duration.
+// CleanExecs will clean all lingering execs that are older than 5 minutes.
 func (in *Reaper) CleanExecs() error {
 	excs, err := in.db.GetExecs()
 	if err != nil {
 		return err
 	}
 	for _, exc := range excs {
-		if exc.Created.Before(time.Now().Add(-in.keepMax)) {
+		if exc.Created.Before(time.Now().Add(-5 * time.Minute)) {
 			klog.V(3).Infof("deleting exec: %s", exc.ID)
 			if err := in.db.DeleteExec(exc); err != nil {
 				return err
