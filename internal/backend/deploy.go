@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/config"
@@ -130,11 +129,6 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		if src < 0 {
 			continue
 		}
-		stream := genericclioptions.IOStreams{
-			In:     os.Stdin,
-			Out:    os.Stdout,
-			ErrOut: os.Stderr,
-		}
 		stop := make(chan struct{}, 1)
 		tainr.AddStopChannel(stop)
 		go portforward.ToPod(portforward.Request{
@@ -142,7 +136,6 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 			Pod:        pods[0],
 			LocalPort:  dst,
 			PodPort:    src,
-			Streams:    stream,
 			StopCh:     stop,
 			ReadyCh:    make(chan struct{}, 1),
 		})

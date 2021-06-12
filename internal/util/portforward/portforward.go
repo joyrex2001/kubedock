@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+	"k8s.io/klog"
 )
 
 // Request is the structure used as argument for ToPod
@@ -25,8 +25,6 @@ type Request struct {
 	LocalPort int
 	// PodPort is the target port for the pod
 	PodPort int
-	// Steams configures where to write or read input from
-	Streams genericclioptions.IOStreams
 	// StopCh is the channel used to manage the port forward lifecycle
 	StopCh <-chan struct{}
 	// ReadyCh communicates when the tunnel is ready to receive traffic
@@ -35,18 +33,28 @@ type Request struct {
 
 // ToPod will portforward to given pod.
 func ToPod(req Request) error {
-	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", req.Pod.Namespace, req.Pod.Name)
-	hostIP := strings.TrimPrefix(req.RestConfig.Host, "https://")
-
 	transport, upgrader, err := spdy.RoundTripperFor(req.RestConfig)
 	if err != nil {
 		return err
 	}
 
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, &url.URL{Scheme: "https", Path: path, Host: hostIP})
-	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", req.LocalPort, req.PodPort)}, req.StopCh, req.ReadyCh, req.Streams.Out, req.Streams.ErrOut)
+	logr := NewLogger()
+	klog.Infof("start port-forward %d->%d", req.LocalPort, req.PodPort)
+
+	url := getURLScheme(req)
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
+	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", req.LocalPort, req.PodPort)}, req.StopCh, req.ReadyCh, logr, logr)
 	if err != nil {
 		return err
 	}
 	return fw.ForwardPorts()
+}
+
+// getURLScheme will take given request and create a valid url scheme for use
+// by the portforward api.
+func getURLScheme(req Request) *url.URL {
+	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", req.Pod.Namespace, req.Pod.Name)
+	hostIP := req.RestConfig.Host
+	hostIP = strings.TrimPrefix(hostIP, "https://")
+	return &url.URL{Scheme: "https", Path: path, Host: hostIP}
 }
