@@ -30,6 +30,13 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		in.Name = c.Query("name")
 	}
 
+	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.cfg.RequestCPU != "" {
+		in.Labels[types.LabelRequestCPU] = cr.cfg.RequestCPU
+	}
+	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.cfg.RequestMemory != "" {
+		in.Labels[types.LabelRequestMemory] = cr.cfg.RequestMemory
+	}
+
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,

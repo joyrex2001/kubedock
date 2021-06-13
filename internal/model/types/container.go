@@ -40,7 +40,7 @@ type Container struct {
 const (
 	// LabelRequestCPU is the label to be use to specify cpu request/limits
 	LabelRequestCPU = "com.joyrex2001.kubedock.request-cpu"
-	// LabelRequestMEM is the label to be use to specify memory request/limits
+	// LabelRequestMemory is the label to be use to specify memory request/limits
 	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
 )
 

@@ -57,10 +57,26 @@ func (s *Server) getGinEngine() *gin.Engine {
 	router.Use(httputil.RequestLoggerMiddleware())
 	router.Use(httputil.ResponseLoggerMiddleware())
 	router.Use(gin.Recovery())
+
 	insp := viper.GetBool("registry.inspector")
 	if insp {
 		klog.Infof("image inspector enabled")
 	}
-	routes.New(router, s.kub, insp)
+
+	reqcpu := viper.GetString("kubernetes.request-cpu")
+	if reqcpu != "" {
+		klog.Infof("default cpu request: %s", reqcpu)
+	}
+	reqmem := viper.GetString("kubernetes.request-memory")
+	if reqmem != "" {
+		klog.Infof("default memory request: %s", reqmem)
+	}
+
+	routes.New(router, s.kub, routes.Config{
+		Inspector:     insp,
+		RequestCPU:    reqcpu,
+		RequestMemory: reqmem,
+	})
+
 	return router
 }

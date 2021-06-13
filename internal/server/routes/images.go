@@ -38,7 +38,7 @@ func (cr *Router) ImageJSON(c *gin.Context) {
 	img, err := cr.db.GetImageByNameOrID(id)
 	if err != nil {
 		img = &types.Image{Name: id}
-		if cr.inspector {
+		if cr.cfg.Inspector {
 			pts, err := cr.kub.GetImageExposedPorts(id)
 			if err != nil {
 				httputil.Error(c, http.StatusInternalServerError, err)
@@ -71,7 +71,7 @@ func (cr *Router) ImageCreate(c *gin.Context) {
 		from = from + ":" + tag
 	}
 	img := &types.Image{Name: from}
-	if cr.inspector {
+	if cr.cfg.Inspector {
 		pts, err := cr.kub.GetImageExposedPorts(from)
 		if err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)

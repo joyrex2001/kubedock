@@ -8,23 +8,33 @@ import (
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
+// Config is the structure to instantiate a Router object
+type Config struct {
+	// Inspector specifies if the image inspect feature is enabled
+	Inspector bool
+	// RequestCPU contains an optional default k8s cpu request
+	RequestCPU string
+	// RequestMemory contains an optional default k8s memory request
+	RequestMemory string
+}
+
 // Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
-	db        *model.Database
-	kub       backend.Backend
-	inspector bool
+	db  *model.Database
+	kub backend.Backend
+	cfg Config
 }
 
 // New will instantiate a containerRouter object.
-func New(router *gin.Engine, kub backend.Backend, insp bool) (*Router, error) {
+func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 	db, err := model.New()
 	if err != nil {
 		return nil, err
 	}
 	cr := &Router{
-		db:        db,
-		kub:       kub,
-		inspector: insp,
+		db:  db,
+		kub: kub,
+		cfg: cfg,
 	}
 	cr.initRoutes(router)
 	return cr, nil
