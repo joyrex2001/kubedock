@@ -74,7 +74,7 @@ func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, err
 		}
 
 		var r, l string
-		rl := strings.Split(rls, ",")
+		rl := strings.Split(strings.ReplaceAll(rls, " ", ""), ",")
 		if len(rl) == 0 || len(rl) > 2 {
 			return req, fmt.Errorf("invalid resource requirement: %s", rls)
 		}
