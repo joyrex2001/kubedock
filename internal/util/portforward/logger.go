@@ -8,7 +8,6 @@ import (
 
 type logger struct {
 	io.Writer
-	out io.Writer
 }
 
 // NewLogger will return a new logger instance.

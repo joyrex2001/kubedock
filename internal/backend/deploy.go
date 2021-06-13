@@ -38,6 +38,11 @@ const (
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
 	match := in.getDeploymentMatchLabels(tainr)
 
+	reqlimits, err := tainr.GetResourceRequirements()
+	if err != nil {
+		return DeployFailed, err
+	}
+
 	// base deploment
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -56,11 +61,12 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: tainr.Image,
-						Name:  "main",
-						Args:  tainr.Cmd,
-						Env:   tainr.GetEnvVar(),
-						Ports: in.getContainerPorts(tainr),
+						Image:     tainr.Image,
+						Name:      "main",
+						Args:      tainr.Cmd,
+						Env:       tainr.GetEnvVar(),
+						Ports:     in.getContainerPorts(tainr),
+						Resources: reqlimits,
 					}},
 				},
 			},

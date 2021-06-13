@@ -7,6 +7,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog"
 )
 
@@ -36,6 +37,13 @@ type Container struct {
 	Created        time.Time
 }
 
+const (
+	// LabelRequestCPU is the label to be use to specify cpu request/limits
+	LabelRequestCPU = "com.joyrex2001.kubedock.request-cpu"
+	// LabelRequestMEM is the label to be use to specify memory request/limits
+	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
+)
+
 // GetEnvVar will return the environment variables of the container
 // as k8s EnvVars.
 func (co *Container) GetEnvVar() []corev1.EnvVar {
@@ -49,6 +57,50 @@ func (co *Container) GetEnvVar() []corev1.EnvVar {
 		env = append(env, corev1.EnvVar{Name: f[0], Value: f[1]})
 	}
 	return env
+}
+
+// GetResourceRequirements will return a k8s request/limits configuration
+// based on the LabelRequestCPU and LabelRequestMemory labels set on the
+// container.
+func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, error) {
+	req := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{},
+		Limits:   corev1.ResourceList{},
+	}
+	for typ, labl := range map[string]string{"cpu": LabelRequestCPU, "memory": LabelRequestMemory} {
+		rls, ok := co.Labels[labl]
+		if !ok {
+			continue
+		}
+
+		var r, l string
+		rl := strings.Split(rls, ",")
+		if len(rl) == 0 || len(rl) > 2 {
+			return req, fmt.Errorf("invalid resource requirement: %s", rls)
+		}
+		r = rl[0]
+		if len(rl) == 2 {
+			l = rl[1]
+		}
+		if r == "" && l != "" {
+			r = l
+		}
+
+		rq, err := resource.ParseQuantity(r)
+		if err != nil {
+			return req, err
+		}
+		req.Requests[corev1.ResourceName(typ)] = rq
+
+		if l != "" {
+			lt, err := resource.ParseQuantity(l)
+			if err != nil {
+				return req, err
+			}
+			req.Limits[corev1.ResourceName(typ)] = lt
+		}
+	}
+	return req, nil
 }
 
 // MapPort will map a pod port to a local port.

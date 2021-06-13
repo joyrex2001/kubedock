@@ -34,6 +34,117 @@ func TestGetEnvVar(t *testing.T) {
 	}
 }
 
+func TestGetResourceRequirements(t *testing.T) {
+	tests := []struct {
+		in     *Container
+		reqlim map[string]string
+		err    bool
+	}{
+		{ // 0
+			in:     &Container{Labels: map[string]string{}},
+			reqlim: map[string]string{},
+			err:    false,
+		},
+		{ // 1
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-cpu": "500m",
+			}},
+			reqlim: map[string]string{"reqcpu": "500m"},
+			err:    false,
+		},
+		{ // 2
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-cpu": "500m,2000m",
+			}},
+			reqlim: map[string]string{"reqcpu": "500m", "limcpu": "2"},
+			err:    false,
+		},
+		{ // 3
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-cpu": ",2000m",
+			}},
+			reqlim: map[string]string{"reqcpu": "2", "limcpu": "2"},
+			err:    false,
+		},
+		{ // 4
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-cpu": "joyrex",
+			}},
+			reqlim: map[string]string{},
+			err:    true,
+		},
+		{ // 5
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "500Mi",
+			}},
+			reqlim: map[string]string{"reqmem": "500Mi"},
+			err:    false,
+		},
+		{ // 6
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "500Mi,2000Mi",
+			}},
+			reqlim: map[string]string{"reqmem": "500Mi", "limmem": "2000Mi"},
+			err:    false,
+		},
+		{ // 7
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": ",2000Mi",
+			}},
+			reqlim: map[string]string{"reqmem": "2000Mi", "limmem": "2000Mi"},
+			err:    false,
+		},
+		{ // 8
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "joyrex",
+			}},
+			reqlim: map[string]string{},
+			err:    true,
+		},
+		{ // 9
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "500Mi,2000Mi,2500Mi",
+			}},
+			reqlim: map[string]string{},
+			err:    true,
+		},
+		{ // 10
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "500Mi,joyrex",
+			}},
+			reqlim: map[string]string{},
+			err:    true,
+		},
+	}
+	for i, tst := range tests {
+		res, err := tst.in.GetResourceRequirements()
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded without error", i)
+		}
+
+		reqlim := map[string]string{}
+		if v, ok := res.Requests["cpu"]; ok {
+			reqlim["reqcpu"] = v.String()
+		}
+		if v, ok := res.Requests["memory"]; ok {
+			reqlim["reqmem"] = v.String()
+		}
+		if v, ok := res.Limits["cpu"]; ok {
+			reqlim["limcpu"] = v.String()
+		}
+		if v, ok := res.Limits["memory"]; ok {
+			reqlim["limmem"] = v.String()
+		}
+
+		if err == nil && !reflect.DeepEqual(reqlim, tst.reqlim) {
+			t.Errorf("failed test %d - expected %v, but got %#v", i, tst.reqlim, reqlim)
+		}
+	}
+}
+
 func TestMapPort(t *testing.T) {
 	in := &Container{}
 	if in.MappedPorts != nil {
@@ -268,6 +379,13 @@ func TestMatch(t *testing.T) {
 			key:    "some",
 			val:    "thing",
 			match:  false,
+		},
+		{
+			labels: map[string]string{"some": "what"},
+			typ:    "magic",
+			key:    "some",
+			val:    "thing",
+			match:  true,
 		},
 	}
 	for i, tst := range tests {
