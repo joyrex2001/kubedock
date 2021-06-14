@@ -132,7 +132,7 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		return fmt.Errorf("no matching pod found")
 	}
 	for dst, src := range ports {
-		if src < 0 {
+		if dst < 0 {
 			continue
 		}
 		stop := make(chan struct{}, 1)
