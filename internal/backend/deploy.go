@@ -91,35 +91,28 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return state, err
 	}
 
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		tainr.MapPort(portforward.RandomPort(), pp)
-	}
-
-	go func() {
-		if err := in.portForward(tainr, tainr.HostPorts); err != nil {
-			klog.Errorf("portforward failed: %s", err)
-		}
-		if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
-			klog.Errorf("portforward failed: %s", err)
-		}
-	}()
-
-	if err := in.CreateServices(tainr); err != nil {
+	if err := in.createServices(tainr); err != nil {
 		return state, err
 	}
 
 	return state, nil
 }
 
-// CreateServices will create k8s service objects for each provided
-// external name, mapped with provided hostports ports.
-func (in *instance) CreateServices(tainr *types.Container) error {
-	for _, svc := range in.getServices(tainr) {
-		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
-			return err
-		}
+// CreatePortForwards sets up port-forwards for all available ports that
+// are configured in the container.
+func (in *instance) CreatePortForwards(tainr *types.Container) {
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		tainr.MapPort(portforward.RandomPort(), pp)
 	}
-	return nil
+
+	if err := in.portForward(tainr, tainr.HostPorts); err != nil {
+		klog.Errorf("port-forward failed: %s", err)
+	}
+	if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
+		klog.Errorf("port-forward failed: %s", err)
+	}
+
+	return
 }
 
 // portForward will create port-forwards for all mapped ports.
@@ -149,25 +142,32 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 	return nil
 }
 
+// GetServiceClusterIP will return the clusterip of the created service for
+// given container.
+func (in *instance) GetServiceClusterIP(tainr *types.Container) (string, error) {
+	svc, err := in.cli.CoreV1().Services(in.namespace).Get(context.TODO(), "kd-"+tainr.ShortID, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return svc.Spec.ClusterIP, nil
+}
+
+// createServices will create k8s service objects for each provided
+// external name, mapped with provided hostports ports.
+func (in *instance) createServices(tainr *types.Container) error {
+	for _, svc := range in.getServices(tainr) {
+		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // getServices will return corev1 services objects for the given
 // container definition.
 func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	svcs := []corev1.Service{}
-	ports := map[int]int{}
-	for _, pp := range tainr.GetImageTCPPorts() {
-		ports[pp] = pp
-	}
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		ports[pp] = pp
-	}
-	if tainr.HostPorts != nil {
-		for src, dst := range tainr.HostPorts {
-			if src <= 0 {
-				src = dst
-			}
-			ports[src] = dst
-		}
-	}
+	ports := tainr.GetServicePorts()
 	if len(ports) == 0 {
 		// no ports available, can't create a service without ports
 		if len(tainr.NetworkAliases) > 0 {
@@ -176,7 +176,7 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 		return svcs
 	}
 	valid := regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
-	for _, alias := range tainr.NetworkAliases {
+	for _, alias := range append(tainr.NetworkAliases, "kd-"+tainr.ShortID) {
 		if ok := valid.MatchString(alias); !ok {
 			klog.Infof("ignoring network alias %s, invalid name", alias)
 			continue

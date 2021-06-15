@@ -63,6 +63,11 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Infof("image inspector enabled")
 	}
 
+	pfwrd := viper.GetBool("port-forward")
+	if pfwrd {
+		klog.Infof("port-forwarding services to 127.0.0.1")
+	}
+
 	reqcpu := viper.GetString("kubernetes.request-cpu")
 	if reqcpu != "" {
 		klog.Infof("default cpu request: %s", reqcpu)
@@ -76,6 +81,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		Inspector:     insp,
 		RequestCPU:    reqcpu,
 		RequestMemory: reqmem,
+		PortForward:   pfwrd,
 	})
 
 	return router

@@ -31,10 +31,25 @@ func (cr *Router) startContainer(tainr *types.Container) error {
 	if err != nil {
 		return err
 	}
+
+	tainr.HostIP = "127.0.0.1"
+	if cr.cfg.PortForward {
+		cr.kub.CreatePortForwards(tainr)
+	} else {
+		if len(tainr.GetServicePorts()) > 0 {
+			ip, err := cr.kub.GetServiceClusterIP(tainr)
+			if err != nil {
+				return err
+			}
+			tainr.HostIP = ip
+		}
+	}
+
 	tainr.Stopped = false
 	tainr.Killed = false
 	tainr.Failed = (state == backend.DeployFailed)
 	tainr.Completed = (state == backend.DeployCompleted)
 	tainr.Running = (state == backend.DeployRunning)
+
 	return cr.db.SaveContainer(tainr)
 }

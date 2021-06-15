@@ -389,6 +389,9 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 	ports := cr.getAvailablePorts(tainr)
 	res := gin.H{}
+	if tainr.HostIP == "" {
+		return res
+	}
 	for dst, prts := range ports {
 		pp := []map[string]string{}
 		done := map[int]int{}
@@ -397,7 +400,7 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 				continue
 			}
 			pp = append(pp, map[string]string{
-				"HostIp":   "127.0.0.1",
+				"HostIp":   tainr.HostIP,
 				"HostPort": fmt.Sprintf("%d", src),
 			})
 			done[src] = 1
@@ -412,6 +415,9 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interface{} {
 	ports := cr.getAvailablePorts(tainr)
 	res := []map[string]interface{}{}
+	if tainr.HostIP == "" {
+		return res
+	}
 	for dst, prts := range ports {
 		done := map[int]int{}
 		for _, src := range prts {
@@ -419,7 +425,7 @@ func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interfa
 				continue
 			}
 			pp := map[string]interface{}{
-				"IP":          "127.0.0.1",
+				"IP":          tainr.HostIP,
 				"PrivatePort": dst,
 				"Type":        "tcp",
 			}
@@ -448,8 +454,12 @@ func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
 			ports[dst] = append(ports[dst], src)
 		}
 	}
-	add(tainr.HostPorts)
-	add(tainr.MappedPorts)
+	if cr.cfg.PortForward {
+		add(tainr.HostPorts)
+		add(tainr.MappedPorts)
+	} else {
+		add(tainr.GetServicePorts())
+	}
 	return ports
 }
 

@@ -21,6 +21,7 @@ type Container struct {
 	Cmd            []string
 	Env            []string
 	Binds          []string
+	HostIP         string
 	ExposedPorts   map[string]interface{}
 	ImagePorts     map[string]interface{}
 	HostPorts      map[int]int
@@ -148,6 +149,27 @@ func (co *Container) GetContainerTCPPorts() []int {
 // exposed by the image.
 func (co *Container) GetImageTCPPorts() []int {
 	return co.getTCPPorts(co.ImagePorts)
+}
+
+// GetServicePorts will return a list of ports and their mapping as they
+// should be applied on a k8s service.
+func (co *Container) GetServicePorts() map[int]int {
+	ports := map[int]int{}
+	for _, pp := range co.GetImageTCPPorts() {
+		ports[pp] = pp
+	}
+	for _, pp := range co.GetContainerTCPPorts() {
+		ports[pp] = pp
+	}
+	if co.HostPorts != nil {
+		for src, dst := range co.HostPorts {
+			if src <= 0 {
+				src = dst
+			}
+			ports[src] = dst
+		}
+	}
+	return ports
 }
 
 // getTCPPorts will return a list of all tcp ports in given map.

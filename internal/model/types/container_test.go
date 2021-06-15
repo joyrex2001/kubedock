@@ -249,6 +249,42 @@ func TestAddHostPort(t *testing.T) {
 	}
 }
 
+func TestGetServicePorts(t *testing.T) {
+	tests := []struct {
+		in  *Container
+		out map[int]int
+	}{
+		{
+			in: &Container{ExposedPorts: map[string]interface{}{
+				"303/tcp": 0,
+				"909/tcp": 0,
+			}, ImagePorts: map[string]interface{}{
+				"606/tcp": 0,
+			}, HostPorts: map[int]int{
+				202: 202,
+			}},
+			out: map[int]int{202: 202, 303: 303, 606: 606, 909: 909},
+		},
+		{
+			in: &Container{ExposedPorts: map[string]interface{}{
+				"303/tcp": 0,
+				"909/tcp": 0,
+			}, ImagePorts: map[string]interface{}{
+				"303/tcp": 0,
+			}, HostPorts: map[int]int{
+				-202: 202,
+			}},
+			out: map[int]int{202: 202, 303: 303, 909: 909},
+		},
+	}
+	for i, tst := range tests {
+		res := tst.in.GetServicePorts()
+		if !reflect.DeepEqual(res, tst.out) {
+			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
+		}
+	}
+}
+
 func TestStop(t *testing.T) {
 	tainr := &Container{}
 	res := 0

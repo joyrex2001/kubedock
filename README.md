@@ -4,7 +4,7 @@ Kubedock is a minimal implementation of the docker api that will orchestrate con
 
 ## Quick start
 
-Running this locally with a testcontainers enabled unit-test requires to run kubedock (`kubedock server`). After that start the unit tests in another terminal with the below environment variables set, for example:
+Running this locally with a testcontainers enabled unit-test requires to run kubedock with port-forwarding enabled (`kubedock server --port-forward`). After that start the unit tests in another terminal with the below environment variables set, for example:
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
@@ -22,7 +22,7 @@ When kubedock is started with `kubedock server` it will start an API server on p
 
 ## Containers
 
-Container API calls are translated towards kubernetes Deployment resources. When a container is started, it will create port-forwards for the ports that should be exposed (only tcp is supported). Starting a container is a blocking call that will wait until the Deployment results in a running Pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
+Container API calls are translated towards kubernetes Deployment resources. When a container is started, it will create a service within the cluster and maps the ports to the ClusterIP of that service. This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward`. These are however not very performant, nor stable and are intended for local debugging. Only tcp ports are supported. Starting a container is a blocking call that will wait until the Deployment results in a running Pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
 
 ## Volumes
 

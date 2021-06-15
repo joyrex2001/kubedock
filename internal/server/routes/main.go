@@ -12,6 +12,8 @@ import (
 type Config struct {
 	// Inspector specifies if the image inspect feature is enabled
 	Inspector bool
+	// PortForward specifies if the the services should be port-forwarded
+	PortForward bool
 	// RequestCPU contains an optional default k8s cpu request
 	RequestCPU string
 	// RequestMemory contains an optional default k8s memory request
