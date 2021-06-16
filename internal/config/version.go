@@ -1,5 +1,9 @@
 package config
 
+import (
+	"fmt"
+)
+
 var (
 	// Version as injected during buildtime.
 	Version = "<undef>"
@@ -10,3 +14,8 @@ var (
 	// Image is the current image as injected during buildtime.
 	Image = "busybox:latest"
 )
+
+// VersionString will return a string with details of the current version.
+func VersionString() string {
+	return fmt.Sprintf("kubedock %s (%s)", Version, Date)
+}

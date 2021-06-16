@@ -23,6 +23,8 @@ import (
 
 // Main is the main entry point for starting this service.
 func Main() {
+	klog.Info(config.VersionString())
+
 	cfg, err := config.GetKubernetes()
 	if err != nil {
 		klog.Fatalf("error instantiating kubernetes client: %s", err)

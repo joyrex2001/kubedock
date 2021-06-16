@@ -80,6 +80,10 @@ func init() {
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("reaper.reapmax", "REAPER_REAPMAX")
 
+	serverCmd.PersistentFlags().Lookup("tls-enable").Hidden = true
+	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true
+	serverCmd.PersistentFlags().Lookup("tls-cert-file").Hidden = true
+
 	// kubeconfig
 	if home := homeDir(); home != "" {
 		serverCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
