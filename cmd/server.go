@@ -49,6 +49,7 @@ func init() {
 	serverCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
 	serverCmd.PersistentFlags().BoolP("prune-start", "P", false, "Prune all existing kubedock resources before starting")
 	serverCmd.PersistentFlags().Bool("port-forward", false, "Open port-forwards for all services")
+	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services to localhost as well")
 
 	viper.BindPFlag("server.listen-addr", serverCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", serverCmd.PersistentFlags().Lookup("unix-socket"))
@@ -67,6 +68,7 @@ func init() {
 	viper.BindPFlag("verbosity", serverCmd.PersistentFlags().Lookup("verbosity"))
 	viper.BindPFlag("prune-start", serverCmd.PersistentFlags().Lookup("prune-start"))
 	viper.BindPFlag("port-forward", serverCmd.PersistentFlags().Lookup("port-forward"))
+	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")

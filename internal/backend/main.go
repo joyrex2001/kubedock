@@ -14,6 +14,7 @@ import (
 type Backend interface {
 	StartContainer(*types.Container) (DeployState, error)
 	CreatePortForwards(*types.Container)
+	CreateReverseProxies(*types.Container)
 	GetServiceClusterIP(*types.Container) (string, error)
 	DeleteAll() error
 	DeleteWithKubedockID(string) error

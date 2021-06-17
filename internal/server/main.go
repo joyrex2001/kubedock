@@ -68,6 +68,15 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Infof("port-forwarding services to 127.0.0.1")
 	}
 
+	revprox := viper.GetBool("reverse-proxy")
+	if revprox && !pfwrd {
+		klog.Infof("enabled reverse-proxy services to localhost")
+	}
+	if revprox && pfwrd {
+		klog.Infof("ignored reverse-proxy as port-forward is enabled")
+		revprox = false
+	}
+
 	reqcpu := viper.GetString("kubernetes.request-cpu")
 	if reqcpu != "" {
 		klog.Infof("default cpu request: %s", reqcpu)
@@ -82,6 +91,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		RequestCPU:    reqcpu,
 		RequestMemory: reqmem,
 		PortForward:   pfwrd,
+		ReverseProxy:  revprox,
 	})
 
 	return router

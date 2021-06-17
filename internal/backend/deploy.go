@@ -18,6 +18,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
+	"github.com/joyrex2001/kubedock/internal/util/reverseproxy"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
@@ -124,8 +125,8 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 	if len(pods) == 0 {
 		return fmt.Errorf("no matching pod found")
 	}
-	for dst, src := range ports {
-		if dst < 0 {
+	for src, dst := range ports {
+		if src < 0 {
 			continue
 		}
 		stop := make(chan struct{}, 1)
@@ -133,13 +134,35 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		go portforward.ToPod(portforward.Request{
 			RestConfig: in.cfg,
 			Pod:        pods[0],
-			LocalPort:  dst,
-			PodPort:    src,
+			LocalPort:  src,
+			PodPort:    dst,
 			StopCh:     stop,
 			ReadyCh:    make(chan struct{}, 1),
 		})
 	}
 	return nil
+}
+
+// CreateReverseProxies sets up reverse-proxies for all fixed ports that
+// are configured in the container.
+func (in *instance) CreateReverseProxies(tainr *types.Container) {
+	for src, dst := range tainr.HostPorts {
+		if src < 0 {
+			continue
+		}
+		stop := make(chan struct{}, 1)
+		tainr.AddStopChannel(stop)
+		err := reverseproxy.Proxy(reverseproxy.Request{
+			LocalPort:  src,
+			RemotePort: dst,
+			RemoteIP:   tainr.HostIP,
+			StopCh:     stop,
+		})
+		if err != nil {
+			klog.Errorf("error setting up port-forward: %s", err)
+		}
+	}
+	return
 }
 
 // GetServiceClusterIP will return the clusterip of the created service for

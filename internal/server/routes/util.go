@@ -42,6 +42,9 @@ func (cr *Router) startContainer(tainr *types.Container) error {
 				return err
 			}
 			tainr.HostIP = ip
+			if cr.cfg.ReverseProxy {
+				cr.kub.CreateReverseProxies(tainr)
+			}
 		}
 	}
 

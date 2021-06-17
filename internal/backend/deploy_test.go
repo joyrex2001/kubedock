@@ -14,6 +14,52 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
+func TestStartContainer(t *testing.T) {
+	tests := []struct {
+		kub   *instance
+		in    *types.Container
+		state DeployState
+		err   bool
+	}{
+		{ // deployment not created
+			kub: &instance{
+				namespace: "default",
+				cli:       fake.NewSimpleClientset(),
+			},
+			in:    &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
+			state: DeployFailed,
+			err:   true,
+		},
+		{ // deployment already exists
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "tb303",
+						Namespace: "default",
+					},
+				}),
+			},
+			in:    &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			state: DeployFailed,
+			err:   true,
+		},
+	}
+
+	for i, tst := range tests {
+		state, err := tst.kub.StartContainer(tst.in)
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded instead", i)
+		}
+		if state != tst.state {
+			t.Errorf("failed test %d - expected state %d, but got state %d", i, tst.state, state)
+		}
+	}
+}
+
 func TestWaitReadyState(t *testing.T) {
 	tests := []struct {
 		in    *types.Container

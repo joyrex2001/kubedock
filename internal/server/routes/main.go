@@ -14,6 +14,8 @@ type Config struct {
 	Inspector bool
 	// PortForward specifies if the the services should be port-forwarded
 	PortForward bool
+	// ReverseProxy enables a reverse-proxy to the services on localhost
+	ReverseProxy bool
 	// RequestCPU contains an optional default k8s cpu request
 	RequestCPU string
 	// RequestMemory contains an optional default k8s memory request
