@@ -244,7 +244,10 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 // map contains the labels that link to the container definition, as well
 // as additional labels which are used internally by kubedock.
 func (in *instance) getLabels(tainr *types.Container) map[string]string {
-	l := config.DefaultLabels
+	l := map[string]string{}
+	for k, v := range config.DefaultLabels {
+		l[k] = v
+	}
 	l["kubedock.containerid"] = tainr.ShortID
 	return l
 }
@@ -379,10 +382,11 @@ func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 			RestConfig: in.cfg,
 			Pod:        pods[0],
 			Container:  "setup",
-			Cmd:        []string{"tar", "-xf", "-", "-C", rm},
+			Cmd:        []string{"tar", "-xvf", "-", "-C", rm},
 			Stdin:      reader,
 		}); err != nil {
-			return err
+			klog.Warningf("error during copy: %s", err)
+			return nil
 		}
 	}
 

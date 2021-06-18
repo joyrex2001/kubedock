@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/klog"
 )
 
 // Request is the structure used as argument for RemoteCmd
@@ -51,6 +52,8 @@ func RemoteCmd(req Request) error {
 	if err != nil {
 		return err
 	}
+
+	klog.V(3).Infof("exec %s:%v", req.Pod.Name, req.Cmd)
 
 	return ex.Stream(remotecommand.StreamOptions{
 		Stdin:  req.Stdin,

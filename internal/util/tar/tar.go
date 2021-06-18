@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"k8s.io/klog"
 )
 
 // PackFolder will write the given folder as a tar to the given Writer.
@@ -28,6 +30,8 @@ func PackFolder(src string, buf io.Writer) error {
 		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
+
+		klog.V(4).Infof("add to tar file: %s", header.Name)
 
 		// if not a dir, write file content
 		if !fi.IsDir() {

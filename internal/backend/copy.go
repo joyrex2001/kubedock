@@ -7,6 +7,7 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
+	"k8s.io/klog"
 )
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
@@ -28,6 +29,8 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path
 		writer.Write(archive)
 		writer.Close()
 	}()
+
+	klog.Infof("copy %d bytes to %s:%s", len(archive), tainr.ShortID, path)
 
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
