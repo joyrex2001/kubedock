@@ -386,7 +386,6 @@ func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 			Stdin:      reader,
 		}); err != nil {
 			klog.Warningf("error during copy: %s", err)
-			return nil
 		}
 	}
 
