@@ -19,8 +19,7 @@ type Backend interface {
 	DeleteAll() error
 	DeleteWithKubedockID(string) error
 	DeleteContainer(*types.Container) error
-	DeleteContainersOlderThan(time.Duration) error
-	DeleteServicesOlderThan(time.Duration) error
+	DeleteOlderThan(time.Duration) error
 	CopyToContainer(*types.Container, []byte, string) error
 	ExecContainer(*types.Container, *types.Exec, io.Writer) (int, error)
 	GetLogs(*types.Container, bool, int, chan struct{}, io.Writer) error

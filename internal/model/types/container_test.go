@@ -335,31 +335,49 @@ func TestDetach(t *testing.T) {
 
 func TestVolumes(t *testing.T) {
 	tests := []struct {
-		in  *Container
-		out map[string]string
-		vol bool
+		in      *Container
+		all     map[string]string
+		folders map[string]string
+		files   map[string]string
+		vol     bool
 	}{
 		{
 			in: &Container{Binds: []string{
-				"/tmp/code:/usr/wbass2/code:ro",
-				"/tmp/config:/etc/wbass2:ro",
+				"container_test.go:/tmp/container_test.go:ro",
+				"../types:/tmp/types:ro",
 			}},
-			out: map[string]string{
-				"/usr/wbass2/code": "/tmp/code",
-				"/etc/wbass2":      "/tmp/config",
+			all: map[string]string{
+				"/tmp/container_test.go": "container_test.go",
+				"/tmp/types":             "../types",
+			},
+			files: map[string]string{
+				"/tmp/container_test.go": "container_test.go",
+			},
+			folders: map[string]string{
+				"/tmp/types": "../types",
 			},
 			vol: true,
 		},
 		{
-			in:  &Container{Binds: []string{}},
-			out: map[string]string{},
-			vol: false,
+			in:      &Container{Binds: []string{}},
+			all:     map[string]string{},
+			files:   map[string]string{},
+			folders: map[string]string{},
+			vol:     false,
 		},
 	}
 	for i, tst := range tests {
 		res := tst.in.GetVolumes()
-		if !reflect.DeepEqual(res, tst.out) {
-			t.Errorf("failed test %d - expected %v, but got %v", i, tst.out, res)
+		if !reflect.DeepEqual(res, tst.all) {
+			t.Errorf("failed test %d all - expected %v, but got %v", i, tst.all, res)
+		}
+		res = tst.in.GetVolumeFiles()
+		if !reflect.DeepEqual(res, tst.files) {
+			t.Errorf("failed test %d files - expected %v, but got %v", i, tst.files, res)
+		}
+		res = tst.in.GetVolumeFolders()
+		if !reflect.DeepEqual(res, tst.folders) {
+			t.Errorf("failed test %d folders - expected %v, but got %v", i, tst.folders, res)
 		}
 		if tst.in.HasVolumes() != tst.vol {
 			t.Errorf("failed test %d - expected %t, but got %t", i, tst.in.HasVolumes(), tst.vol)

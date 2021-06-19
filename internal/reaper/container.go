@@ -34,8 +34,5 @@ func (in *Reaper) CleanContainers() error {
 // that are older than the configured keepMax duration, and stored
 // not stored in the local in memory database.
 func (in *Reaper) CleanContainersKubernetes() error {
-	if err := in.kub.DeleteContainersOlderThan(in.keepMax * 2); err != nil {
-		return err
-	}
-	return in.kub.DeleteServicesOlderThan(in.keepMax * 2)
+	return in.kub.DeleteOlderThan(in.keepMax * 2)
 }

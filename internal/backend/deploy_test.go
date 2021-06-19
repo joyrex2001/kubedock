@@ -294,7 +294,9 @@ func TestAddVolumes(t *testing.T) {
 		count int
 	}{
 		{in: &types.Container{}, count: 0},
-		{in: &types.Container{Binds: []string{"/local:/remote:rw"}}, count: 1},
+		{in: &types.Container{Binds: []string{".:/remote:rw"}}, count: 1},
+		{in: &types.Container{Binds: []string{".:/remote:rw", "deploy_test.go:/tmp/gogo.go"}}, count: 2},
+		{in: &types.Container{Binds: []string{".:/remote:rw", "xxx:/tmp/gogo.go"}}, count: 1},
 	}
 
 	for i, tst := range tests {
@@ -307,7 +309,7 @@ func TestAddVolumes(t *testing.T) {
 				},
 			},
 		}
-		kub := &instance{}
+		kub := &instance{cli: fake.NewSimpleClientset()}
 		kub.addVolumes(tst.in, dep)
 		count := len(dep.Spec.Template.Spec.Volumes)
 		if count != tst.count {

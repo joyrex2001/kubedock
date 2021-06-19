@@ -28,7 +28,7 @@ Container API calls are translated towards kubernetes Deployment resources. When
 
 Volumes are implemented by copying over the source content towards the container by means of an init-container that is started before the actual container is started. By default the kubedock image with the same version as the running kubedock is used as the init container. However, this can be any image that has tar available and can be configured with the `--initimage` argument.
 
-Volumes are one-way copies and emphemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket).
+Volumes are one-way copies and emphemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket). Volumes that point to a single file will be converted to a configmap (and is implicitly read-only always).
 
 Copying data from a running container back towards the client is not supported either. Also be aware that copying data towards a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead.
 

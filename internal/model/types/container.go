@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -213,6 +214,32 @@ func (co *Container) GetVolumes() map[string]string {
 	for _, bind := range co.Binds {
 		f := strings.Split(bind, ":")
 		mounts[f[1]] = f[0]
+	}
+	return mounts
+}
+
+// GetVolumeFolders will return a map of volumes that are pointing to a
+// folder and should be mounted on the target container. The key
+// is the target location, and the value is the local location.
+func (co *Container) GetVolumeFolders() map[string]string {
+	mounts := map[string]string{}
+	for dst, src := range co.GetVolumes() {
+		if info, err := os.Stat(src); err == nil && info.IsDir() {
+			mounts[dst] = src
+		}
+	}
+	return mounts
+}
+
+// GetVolumeFiles will return a map of volumes that are pointing to a
+// single file and should be mounted on the target container. The key
+// is the target location, and the value is the local location.
+func (co *Container) GetVolumeFiles() map[string]string {
+	mounts := map[string]string{}
+	for dst, src := range co.GetVolumes() {
+		if info, err := os.Stat(src); err == nil && !info.IsDir() {
+			mounts[dst] = src
+		}
 	}
 	return mounts
 }

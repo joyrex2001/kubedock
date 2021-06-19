@@ -2,6 +2,8 @@ package backend
 
 import (
 	"context"
+	"io/ioutil"
+	"os"
 	"regexp"
 
 	corev1 "k8s.io/api/core/v1"
@@ -40,4 +42,15 @@ func (in *instance) getPods(tainr *types.Container) ([]corev1.Pod, error) {
 		return nil, err
 	}
 	return pods.Items, nil
+}
+
+// readFile will read given file and return the contents as []byte. If
+// failed, it will return an error.
+func (in *instance) readFile(file string) ([]byte, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ioutil.ReadAll(f)
 }

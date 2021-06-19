@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"os"
@@ -74,7 +75,9 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		},
 	}
 	if tainr.HasVolumes() {
-		in.addVolumes(tainr, dep)
+		if err := in.addVolumes(tainr, dep); err != nil {
+			return DeployFailed, err
+		}
 	}
 
 	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
@@ -333,25 +336,78 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 
 // addVolumes will add an init-container "setup" and creates volumes and
 // volume mounts in both the init container and "main" container in order
-// to copy data before the container is started.
-func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) {
-	volumes := tainr.GetVolumes()
+// to copy data before the container is started. If files are inclueded,
+// rather than folders, it will create a configmap, and mounts the files
+// from this created configmap.
+func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) error {
 	dep.Spec.Template.Spec.InitContainers = []corev1.Container{{
 		Name:    "setup",
 		Image:   in.initImage,
 		Command: []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
 	}}
 
-	dep.Spec.Template.Spec.Volumes = []corev1.Volume{}
+	volumes := []corev1.Volume{}
 	mounts := []corev1.VolumeMount{}
-	for rm := range volumes {
-		id := in.toKubernetesName(rm)
-		dep.Spec.Template.Spec.Volumes = append(dep.Spec.Template.Spec.Volumes,
+
+	for dst := range tainr.GetVolumeFolders() {
+		id := in.toKubernetesName(dst)
+		volumes = append(volumes,
 			corev1.Volume{Name: id, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}})
-		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: rm})
+		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: dst})
 	}
+
+	files := tainr.GetVolumeFiles()
+	if len(files) > 0 {
+		_, err := in.createConfigMap(tainr, files)
+		if err != nil {
+			return err
+		}
+		volumes = append(volumes, corev1.Volume{
+			Name: "files",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: tainr.ShortID,
+				},
+			}},
+		})
+		for dst, src := range files {
+			mounts = append(mounts, corev1.VolumeMount{
+				Name:      "files",
+				MountPath: dst,
+				SubPath:   in.fileID(src),
+			})
+		}
+	}
+
+	dep.Spec.Template.Spec.Volumes = volumes
 	dep.Spec.Template.Spec.Containers[0].VolumeMounts = mounts
 	dep.Spec.Template.Spec.InitContainers[0].VolumeMounts = mounts
+
+	return nil
+}
+
+// createConfigMap will create a configmap with given name, and adds given
+// files to it. If failed, it will return an error.
+func (in *instance) createConfigMap(tainr *types.Container, files map[string]string) (*corev1.ConfigMap, error) {
+	dat := map[string][]byte{}
+	for _, src := range files {
+		d, err := in.readFile(src)
+		if err != nil {
+			return nil, err
+		}
+		klog.V(3).Infof("adding %s to configmap %s", src, tainr.ShortID)
+		dat[in.fileID(src)] = d
+	}
+	cm := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        tainr.ShortID,
+			Namespace:   in.namespace,
+			Labels:      in.getLabels(tainr),
+			Annotations: in.getAnnotations(tainr),
+		},
+		BinaryData: dat,
+	}
+	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.TODO(), &cm, metav1.CreateOptions{})
 }
 
 // copyVolumeFolders will copy the configured volumes of the container to
@@ -367,8 +423,8 @@ func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 		return err
 	}
 
-	volumes := tainr.GetVolumes()
-	for rm, src := range volumes {
+	volumes := tainr.GetVolumeFolders()
+	for dst, src := range volumes {
 		reader, writer := io.Pipe()
 		go func() {
 			defer writer.Close()
@@ -382,7 +438,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 			RestConfig: in.cfg,
 			Pod:        pods[0],
 			Container:  "setup",
-			Cmd:        []string{"tar", "-xvf", "-", "-C", rm},
+			Cmd:        []string{"tar", "-xf", "-", "-C", dst},
 			Stdin:      reader,
 		}); err != nil {
 			klog.Warningf("error during copy: %s", err)
@@ -390,6 +446,11 @@ func (in *instance) copyVolumeFolders(tainr *types.Container) error {
 	}
 
 	return in.signalDone(tainr)
+}
+
+// fileID will create an unique k8s compatible id to refer to the given file.
+func (in *instance) fileID(file string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(file)))
 }
 
 // signalDone will signal the prepare init container to exit.
