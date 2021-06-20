@@ -8,6 +8,7 @@ Running this locally with a testcontainers enabled unit-test requires to run kub
 
 ```bash
 export TESTCONTAINERS_RYUK_DISABLED=true
+export TESTCONTAINERS_CHECKS_DISABLE=true
 export DOCKER_HOST=tcp://127.0.0.1:2475
 mvn test
 ```

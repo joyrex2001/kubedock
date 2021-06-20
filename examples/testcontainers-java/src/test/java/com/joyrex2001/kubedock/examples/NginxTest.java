@@ -12,7 +12,6 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -26,6 +25,7 @@ import java.net.MalformedURLException;
 public class NginxTest {
 
     @Container
+    @SuppressWarnings("unchecked")
     public static GenericContainer nginx = new GenericContainer(DockerImageName.parse("library/nginx"))
         //.withFileSystemBind to a folder will copy the folder before the container starts
         .withFileSystemBind("./src/www", "/www", BindMode.READ_ONLY)
@@ -54,7 +54,7 @@ public class NginxTest {
 
     @Test
     void shouldBeStarted() throws IOException {
-        assertThat(TestcontainersUtil.readFromUrl(serviceUrl))
+        assertThat(Util.readFromUrl(serviceUrl))
             .contains("<title>Hello!</title>")
             .contains("<h1>Hello!</h1>");
     }
