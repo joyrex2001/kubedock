@@ -4,3 +4,4 @@
 coverage.out
 _archive
 dist/
+target/

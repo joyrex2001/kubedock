@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!--
+  Available properties: (can be defined with -Dproperty=warn for example)
+
+  - test.log.level (default: debug)
+    Log level for classes in scope of this test.
+  - stdout.log.level (default: info)
+    Log level for stdout.
+  - root.log.level (default: warn)
+    Log level for all other classes.
+  -->
+
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
+  <!-- read configuration which can be overridden by system properties -->
+  <variable scope="system" resource="logback-test.properties"/>
+
+  <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${config.stdout.log.pattern}</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>${config.stdout.log.level}</level>
+    </filter>
+  </appender>
+
+  <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${config.file.log.file}</file>
+    <encoder>
+      <pattern>${config.file.log.pattern}</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <maxIndex>10</maxIndex>
+      <FileNamePattern>${config.file.log.file}.%i</FileNamePattern>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>4MB</MaxFileSize>
+    </triggeringPolicy>
+  </appender>
+
+  <logger name="org.testcontainers" additivity="false" level="${config.sut.log.level}">
+    <appender-ref ref="stdout"/>
+    <appender-ref ref="file"/>
+  </logger>
+
+  <logger name="nginx" additivity="false" level="${config.sut.log.level}">
+    <appender-ref ref="stdout"/>
+    <appender-ref ref="file"/>
+  </logger>
+
+  <root level="${config.root.log.level}">
+    <appender-ref ref="stdout"/>
+    <appender-ref ref="file"/>
+  </root>
+
+</configuration>
