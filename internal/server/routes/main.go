@@ -62,6 +62,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/containers/json", cr.ContainerList)
 	router.GET("/containers/:id/json", cr.ContainerInfo)
 	router.GET("/containers/:id/logs", cr.ContainerLogs)
+	router.GET("/containers/:id/archive", cr.GetArchive)
 	router.PUT("/containers/:id/archive", cr.PutArchive)
 
 	router.POST("/exec/:id/start", cr.ExecStart)
@@ -91,7 +92,6 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/containers/:id/unpause", httputil.NotImplemented)
 	router.GET("/containers/:id/attach/ws", httputil.NotImplemented)
 	router.HEAD("/containers/:id/archive", httputil.NotImplemented)
-	router.GET("/containers/:id/archive", httputil.NotImplemented)
 	router.POST("/containers/prune", httputil.NotImplemented)
 	router.GET("/networks/reaper_default", httputil.NotImplemented)
 	router.POST("/build", httputil.NotImplemented)

@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -41,4 +43,33 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path
 		Stdin:      reader,
 		Stderr:     writer,
 	})
+}
+
+// CopyFromContainer will copy given path from the container as return it as a
+// tar archive. Note that this requires tar to be present on the container.
+func (in *instance) CopyFromContainer(tainr *types.Container, path string) ([]byte, error) {
+	pods, err := in.getPods(tainr)
+	if err != nil {
+		return nil, err
+	}
+	if len(pods) == 0 {
+		return nil, fmt.Errorf("no matching pod found")
+	}
+
+	var b bytes.Buffer
+	writer := bufio.NewWriter(&b)
+
+	err = exec.RemoteCmd(exec.Request{
+		Client:     in.cli,
+		RestConfig: in.cfg,
+		Pod:        pods[0],
+		Container:  "main",
+		Cmd:        []string{"tar", "-cf", "-", path},
+		Stdout:     writer,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
