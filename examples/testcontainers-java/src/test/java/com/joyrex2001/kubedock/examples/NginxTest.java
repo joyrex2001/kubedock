@@ -24,9 +24,12 @@ import java.net.MalformedURLException;
 @Testcontainers
 public class NginxTest {
 
+    private static final int NGINX_PORT = 8080;
+    private static final String NGINX_IMAGE = "nginxinc/nginx-unprivileged"; // "library/nginx"
+
     @Container
     @SuppressWarnings("unchecked")
-    public static GenericContainer nginx = new GenericContainer(DockerImageName.parse("library/nginx"))
+    public static GenericContainer nginx = new GenericContainer(DockerImageName.parse(NGINX_IMAGE))
         //.withFileSystemBind to a folder will copy the folder before the container starts
         .withFileSystemBind("./src/www", "/www", BindMode.READ_ONLY)
         //.withFileSystemBind to a file results into creation of a configmap before the container runs
@@ -35,7 +38,7 @@ public class NginxTest {
         //.withClasspathResourceMapping("nginx.conf", "/etc/nginx/conf.d/default.conf", BindMode.READ_ONLY)
         .withLogConsumer(new Slf4jLogConsumer(getLogger("nginx")))
         .waitingFor(Wait.forHttp("/"))
-        .withExposedPorts(80);
+        .withExposedPorts(NGINX_PORT);
 
     private static URL serviceUrl;
 
@@ -44,7 +47,7 @@ public class NginxTest {
         nginx.start();
         serviceUrl = URI.create(String.format("http://%s:%d/", 
                                         nginx.getContainerIpAddress(), 
-                                        nginx.getMappedPort(80))).toURL();
+                                        nginx.getMappedPort(NGINX_PORT))).toURL();
     }
 
     @AfterAll
