@@ -55,7 +55,7 @@ Kubedock will dynamically create deployments and services in the configured name
 
 ### Automatic reaping
 
-If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 15 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 30 minutes if the deployment or service has the label `kubedock=true`. 
+If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 60 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 120 minutes if the deployment or service has the label `kubedock=true`. 
 
 ### Forced cleaning
 

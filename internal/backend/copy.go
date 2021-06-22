@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"path"
 	"strings"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -13,7 +14,7 @@ import (
 )
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
-func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path string) error {
+func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, target string) error {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return err
@@ -22,8 +23,8 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path
 		return fmt.Errorf("no matching pod found")
 	}
 
-	if path != "/" && strings.HasSuffix(string(path[len(path)-1]), "/") {
-		path = path[:len(path)-1]
+	if target != "/" && strings.HasSuffix(string(target[len(target)-1]), "/") {
+		target = target[:len(target)-1]
 	}
 
 	reader, writer := io.Pipe()
@@ -32,14 +33,14 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path
 		writer.Close()
 	}()
 
-	klog.Infof("copy %d bytes to %s:%s", len(archive), tainr.ShortID, path)
+	klog.Infof("copy %d bytes to %s:%s", len(archive), tainr.ShortID, target)
 
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
 		Pod:        pods[0],
 		Container:  "main",
-		Cmd:        []string{"tar", "-xf", "-", "-C", path},
+		Cmd:        []string{"tar", "-xf", "-", "-C", target},
 		Stdin:      reader,
 		Stderr:     writer,
 	})
@@ -47,7 +48,7 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, path
 
 // CopyFromContainer will copy given path from the container as return it as a
 // tar archive. Note that this requires tar to be present on the container.
-func (in *instance) CopyFromContainer(tainr *types.Container, path string) ([]byte, error) {
+func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]byte, error) {
 	pods, err := in.getPods(tainr)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,7 @@ func (in *instance) CopyFromContainer(tainr *types.Container, path string) ([]by
 		RestConfig: in.cfg,
 		Pod:        pods[0],
 		Container:  "main",
-		Cmd:        []string{"tar", "-cf", "-", path},
+		Cmd:        []string{"tar", "-cf", "-", "-C", path.Dir(target), path.Base(target)},
 		Stdout:     writer,
 	})
 	if err != nil {
