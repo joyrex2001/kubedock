@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"regexp"
 
@@ -53,4 +54,11 @@ func (in *instance) readFile(file string) ([]byte, error) {
 	}
 	defer f.Close()
 	return ioutil.ReadAll(f)
+}
+
+// RandomPort will return a random port number.
+func (in *instance) RandomPort() int {
+	min := 32012
+	max := 64319
+	return (rand.Intn(max-min) + min)
 }

@@ -58,6 +58,7 @@ func Proxy(req Request) error {
 				conn2, err := net.Dial("tcp", remote)
 				if err != nil {
 					klog.Warningf("error dialing remote addr: %s", err)
+					conn.Close()
 					return
 				}
 				go io.Copy(conn2, conn)
