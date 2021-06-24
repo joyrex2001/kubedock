@@ -454,7 +454,7 @@ func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
 			ports[dst] = append(ports[dst], src)
 		}
 	}
-	if cr.cfg.PortForward {
+	if cr.cfg.PortForward || cr.cfg.ReverseProxy {
 		add(tainr.HostPorts)
 		add(tainr.MappedPorts)
 	} else {

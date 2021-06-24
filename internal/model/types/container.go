@@ -162,14 +162,16 @@ func (co *Container) GetServicePorts() map[int]int {
 	for _, pp := range co.GetContainerTCPPorts() {
 		ports[pp] = pp
 	}
-	if co.HostPorts != nil {
-		for src, dst := range co.HostPorts {
-			if src <= 0 {
+	add := func(prts map[int]int) {
+		for src, dst := range prts {
+			if src < 0 {
 				src = dst
 			}
 			ports[src] = dst
 		}
 	}
+	add(co.HostPorts)
+	add(co.MappedPorts)
 	return ports
 }
 

@@ -276,6 +276,19 @@ func TestGetServicePorts(t *testing.T) {
 			}},
 			out: map[int]int{202: 202, 303: 303, 909: 909},
 		},
+		{
+			in: &Container{ExposedPorts: map[string]interface{}{
+				"303/tcp": 0,
+				"909/tcp": 0,
+			}, ImagePorts: map[string]interface{}{
+				"303/tcp": 0,
+			}, HostPorts: map[int]int{
+				-202: 202,
+			}, MappedPorts: map[int]int{
+				606: 808,
+			}},
+			out: map[int]int{202: 202, 303: 303, 606: 808, 909: 909},
+		},
 	}
 	for i, tst := range tests {
 		res := tst.in.GetServicePorts()

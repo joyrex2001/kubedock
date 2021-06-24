@@ -77,6 +77,7 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 			},
 			out: gin.H{"101/tcp": []map[string]string{
 				{"HostIp": "127.0.0.1", "HostPort": "202"},
+				{"HostIp": "127.0.0.1", "HostPort": "303"},
 			}},
 			portfw: false,
 		},

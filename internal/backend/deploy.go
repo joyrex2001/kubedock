@@ -95,6 +95,10 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return state, err
 	}
 
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		tainr.MapPort(in.RandomPort(), pp)
+	}
+
 	if err := in.createServices(tainr); err != nil {
 		return state, err
 	}
@@ -105,9 +109,6 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 // CreatePortForwards sets up port-forwards for all available ports that
 // are configured in the container.
 func (in *instance) CreatePortForwards(tainr *types.Container) {
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		tainr.MapPort(in.RandomPort(), pp)
-	}
 	if err := in.portForward(tainr, tainr.HostPorts); err != nil {
 		klog.Errorf("port-forward failed: %s", err)
 	}
@@ -147,9 +148,6 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 // CreateReverseProxies sets up reverse-proxies for all fixed ports that
 // are configured in the container.
 func (in *instance) CreateReverseProxies(tainr *types.Container) {
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		tainr.MapPort(in.RandomPort(), pp)
-	}
 	in.reverseProxy(tainr, tainr.HostPorts)
 	in.reverseProxy(tainr, tainr.MappedPorts)
 }
