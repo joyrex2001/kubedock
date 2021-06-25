@@ -1,0 +1,44 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: mvn-test
+spec:
+  params:
+    - name: contextDir
+      type: string
+      default: "examples/testcontainers-java"
+  workspaces:
+    - name: source
+  steps:
+    - name: step-mvn-test
+      image: gcr.io/cloud-builders/mvn
+      workingDir: $(workspaces.source.path)/$(params.contextDir)
+      command:
+        - /usr/bin/mvn
+      args:
+        - test
+      env:
+        - name: TESTCONTAINERS_RYUK_DISABLED
+          value: "true"      
+        - name: TESTCONTAINERS_CHECKS_DISABLE
+          value: "true"      
+      resources: {}
+      volumeMounts:
+        - name: kubedock-socket
+          mountPath: /var/run/
+  sidecars:
+    - name: kubedock
+      image: joyrex2001/kubedock:latest
+      args:
+        - server
+        - --reverse-proxy
+        - --unix-socket
+        - /var/run/docker.sock
+      volumeMounts:
+        - name: $(workspaces.source.volume)
+          mountPath: $(workspaces.source.path)
+        - name: kubedock-socket
+          mountPath: /var/run/
+  volumes:
+    - name: kubedock-socket
+      emptyDir: {}

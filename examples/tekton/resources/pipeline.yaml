@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: kubedock-example
+spec:
+  params:
+    - name: git-url
+    - name: git-revision
+  workspaces:
+    - name: shared-workspace
+  tasks:
+  - name: clone
+    taskRef:
+      name: git-clone
+      kind: ClusterTask
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: $(params.git-revision)
+  - name: test
+    taskRef:
+      name: mvn-test
+      kind: Task
+    runAfter:
+      - clone
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+    params:
+    - name: contextDir
+      value: "examples/testcontainers-java"
