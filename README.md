@@ -55,11 +55,11 @@ Kubedock will dynamically create deployments and services in the configured name
 
 ### Automatic reaping
 
-If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments and services lingering around, kubedock will automatically delete deployments and services that are older than 60 minutes (default) if it's owned by the current process. If the deployment is not owned by the running process, it will delete it after 120 minutes if the deployment or service has the label `kubedock=true`. 
+If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments, configmaps and services lingering around, kubedock will automatically delete these resources. If these resorces are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
 
 ### Forced cleaning
 
-The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the `kubedock=true` before starting the API server. These resource includes resources created by other instances. 
+The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the label `kubedock=true`, before starting the API server. This includes resources that are created by other instances of kubedock. 
 
 # See also
 

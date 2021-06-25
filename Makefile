@@ -23,7 +23,7 @@ clean:
 	rm -f coverage.out
 
 cloc:
-	cloc --exclude-dir=vendor,node_modules,dist,_notes .
+	cloc --exclude-dir=vendor,node_modules,dist,_notes,_archive .
 
 fmt:
 	find ./internal -type f -name \*.go -exec gofmt -s -w {} \;

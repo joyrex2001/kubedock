@@ -6,7 +6,6 @@ spec:
   params:
     - name: contextDir
       type: string
-      default: "examples/testcontainers-java"
   workspaces:
     - name: source
   steps:
