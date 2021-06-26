@@ -25,7 +25,7 @@ public class NginxTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void tetNginx() throws IOException {
+    void testNginx() throws IOException {
         GenericContainer nginx = new GenericContainer(DockerImageName.parse(NGINX_IMAGE))
             //.withFileSystemBind to a folder will copy the folder before the container starts
             .withFileSystemBind("./src/www", "/www", BindMode.READ_ONLY)
