@@ -60,5 +60,12 @@ func (in *instance) readFile(file string) ([]byte, error) {
 func (in *instance) RandomPort() int {
 	min := 32012
 	max := 64319
-	return (rand.Intn(max-min) + min)
+	p := min
+	for i := 0; i < 10; i++ {
+		p = (rand.Intn(max-min) + min)
+		if _, ok := in.randomPorts[p]; !ok {
+			return p
+		}
+	}
+	return p
 }

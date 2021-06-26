@@ -29,11 +29,12 @@ type Backend interface {
 
 // instance is the internal representation of the Backend object.
 type instance struct {
-	cli       kubernetes.Interface
-	cfg       *rest.Config
-	initImage string
-	namespace string
-	timeOut   int
+	cli         kubernetes.Interface
+	cfg         *rest.Config
+	initImage   string
+	namespace   string
+	timeOut     int
+	randomPorts map[int]int
 }
 
 // Config is the structure to instantiate a Backend object
@@ -53,10 +54,11 @@ type Config struct {
 // New will return an Backend instance.
 func New(cfg Config) Backend {
 	return &instance{
-		cli:       cfg.Client,
-		cfg:       cfg.RestConfig,
-		initImage: cfg.InitImage,
-		namespace: cfg.Namespace,
-		timeOut:   int(cfg.TimeOut.Seconds()),
+		cli:         cfg.Client,
+		cfg:         cfg.RestConfig,
+		initImage:   cfg.InitImage,
+		namespace:   cfg.Namespace,
+		randomPorts: map[int]int{},
+		timeOut:     int(cfg.TimeOut.Seconds()),
 	}
 }
