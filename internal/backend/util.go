@@ -61,7 +61,7 @@ func (in *instance) RandomPort() int {
 	min := 32012
 	max := 64319
 	p := min
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		p = (rand.Intn(max-min) + min)
 		if _, ok := in.randomPorts[p]; !ok {
 			return p
