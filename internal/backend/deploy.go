@@ -167,6 +167,7 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 			RemotePort: dst,
 			RemoteIP:   tainr.HostIP,
 			StopCh:     stop,
+			TimeOut:    30 * time.Second,
 		})
 		if err != nil {
 			klog.Errorf("error setting up port-forward: %s", err)
