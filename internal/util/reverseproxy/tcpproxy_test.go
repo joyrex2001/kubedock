@@ -106,7 +106,7 @@ func TestProxyTimeOut(t *testing.T) {
 	stopP := make(chan struct{}, 1)
 	req := Request{
 		LocalPort:  30590,
-		RemoteIP:   "127.0.0.127",
+		RemoteIP:   "1.0.0.1",
 		RemotePort: 30393,
 		StopCh:     stopP,
 		TimeOut:    2 * time.Second,
