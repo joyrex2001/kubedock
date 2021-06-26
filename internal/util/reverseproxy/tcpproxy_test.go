@@ -84,7 +84,7 @@ func TestProxyNormal(t *testing.T) {
 func TestProxyRefused(t *testing.T) {
 	stopP := make(chan struct{}, 1)
 	req := Request{
-		LocalPort:  30390,
+		LocalPort:  30490,
 		RemoteIP:   "127.0.0.1",
 		RemotePort: 30392,
 		StopCh:     stopP,
@@ -94,7 +94,7 @@ func TestProxyRefused(t *testing.T) {
 		t.Errorf("unexpected error starting proxy: %s", err)
 	}
 
-	_, err := callServer("127.0.0.1", 30390)
+	_, err := callServer("127.0.0.1", 30490)
 	if err == nil {
 		t.Errorf("expected error calling helloServer via proxy but didn't get any")
 	}
@@ -105,7 +105,7 @@ func TestProxyRefused(t *testing.T) {
 func TestProxyTimeOut(t *testing.T) {
 	stopP := make(chan struct{}, 1)
 	req := Request{
-		LocalPort:  30390,
+		LocalPort:  30590,
 		RemoteIP:   "127.0.0.127",
 		RemotePort: 30393,
 		StopCh:     stopP,
@@ -118,7 +118,7 @@ func TestProxyTimeOut(t *testing.T) {
 
 	done := false
 	go func() {
-		_, err := callServer("127.0.0.1", 30390)
+		_, err := callServer("127.0.0.1", 30590)
 		if err == nil {
 			t.Errorf("expected error calling helloServer via proxy but didn't get any")
 		}
