@@ -6,6 +6,7 @@ spec:
   params:
     - name: git-url
     - name: git-revision
+    - name: context-dir
   workspaces:
     - name: shared-workspace
   tasks:
@@ -36,4 +37,4 @@ spec:
       workspace: shared-workspace
     params:
     - name: contextDir
-      value: "examples/testcontainers-java"
+      value: $(params.context-dir)

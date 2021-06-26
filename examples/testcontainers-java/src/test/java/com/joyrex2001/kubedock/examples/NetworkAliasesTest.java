@@ -15,16 +15,18 @@ import java.lang.InterruptedException;
 @Testcontainers
 public class NetworkAliasesTest {
 
-    private static final String ALPINE_IMAGE = "library/alpine"; // "library/nginx"
+    private static final String ALPINE_IMAGE = "library/alpine";
     private static final int TEST_PORT = 8080;
 
     @Test
-    void shouldBeStarted() throws IOException, InterruptedException {
+    void testNetworkAliases() throws IOException, InterruptedException {
         Network network = Network.newNetwork();
 
         GenericContainer foo = new GenericContainer(ALPINE_IMAGE)
                 .withNetwork(network)
                 .withNetworkAliases("foo")
+                // we need to explicitly define the ports we are exposing
+                // otherwise the k8s service will not be created.
                 .withExposedPorts(TEST_PORT)
                 .withCommand("/bin/sh", "-c", "while true ; do printf 'HTTP/1.1 200 OK\\n\\nyay' | nc -l -p 8080; done");
 
