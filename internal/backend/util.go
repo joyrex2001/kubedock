@@ -66,6 +66,7 @@ func (in *instance) RandomPort() int {
 		if _, ok := in.randomPorts[p]; !ok {
 			return p
 		}
+		in.randomPorts[p] = p
 	}
 	return p
 }
