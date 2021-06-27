@@ -32,14 +32,21 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	}
 	defer stream.Close()
 
+	stopL := make(chan struct{}, 1)
+	go func() {
+		select {
+		case <-stop:
+			stopL <- struct{}{}
+			stream.Close()
+			return
+		}
+	}()
+
 	out := ioproxy.New(w, ioproxy.Stdout)
 	for {
 		// close when container is done
 		select {
-		case <-stop:
-			// TODO: this doesn't work when the stream is still
-			// reading, which is a blocking call. This will make
-			// sigint not work properly in attach mode.
+		case <-stopL:
 			return nil
 		default:
 		}

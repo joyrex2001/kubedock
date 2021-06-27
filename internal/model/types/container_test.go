@@ -163,7 +163,14 @@ func TestGetImagePullPolicy(t *testing.T) {
 			policy: corev1.PullIfNotPresent,
 			err:    false,
 		},
-		{
+		{ // 1
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.pull-policy": "always",
+			}},
+			policy: corev1.PullAlways,
+			err:    false,
+		},
+		{ // 2
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.pull-policy": "something",
 			}},
