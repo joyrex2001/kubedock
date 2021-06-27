@@ -36,6 +36,9 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.cfg.RequestMemory != "" {
 		in.Labels[types.LabelRequestMemory] = cr.cfg.RequestMemory
 	}
+	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.cfg.PullPolicy != "" {
+		in.Labels[types.LabelPullPolicy] = cr.cfg.PullPolicy
+	}
 
 	tainr := &types.Container{
 		Name:         in.Name,

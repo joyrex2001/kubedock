@@ -152,6 +152,39 @@ func TestGetResourceRequirements(t *testing.T) {
 	}
 }
 
+func TestGetImagePullPolicy(t *testing.T) {
+	tests := []struct {
+		in     *Container
+		policy corev1.PullPolicy
+		err    bool
+	}{
+		{ // 0
+			in:     &Container{Labels: map[string]string{}},
+			policy: corev1.PullIfNotPresent,
+			err:    false,
+		},
+		{
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.pull-policy": "something",
+			}},
+			policy: corev1.PullIfNotPresent,
+			err:    true,
+		},
+	}
+	for i, tst := range tests {
+		res, err := tst.in.GetImagePullPolicy()
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded without error", i)
+		}
+		if res != tst.policy {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.policy, res)
+		}
+	}
+}
+
 func TestMapPort(t *testing.T) {
 	in := &Container{}
 	if in.MappedPorts != nil {

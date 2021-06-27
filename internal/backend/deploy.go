@@ -45,6 +45,11 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
+	pulpol, err := tainr.GetImagePullPolicy()
+	if err != nil {
+		return DeployFailed, err
+	}
+
 	// base deploment
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,12 +68,13 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:     tainr.Image,
-						Name:      "main",
-						Args:      tainr.Cmd,
-						Env:       tainr.GetEnvVar(),
-						Ports:     in.getContainerPorts(tainr),
-						Resources: reqlimits,
+						Image:           tainr.Image,
+						Name:            "main",
+						Args:            tainr.Cmd,
+						Env:             tainr.GetEnvVar(),
+						Ports:           in.getContainerPorts(tainr),
+						Resources:       reqlimits,
+						ImagePullPolicy: pulpol,
 					}},
 				},
 			},
@@ -348,10 +354,16 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 // rather than folders, it will create a configmap, and mounts the files
 // from this created configmap.
 func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) error {
+	pulpol, err := tainr.GetImagePullPolicy()
+	if err != nil {
+		return err
+	}
+
 	dep.Spec.Template.Spec.InitContainers = []corev1.Container{{
-		Name:    "setup",
-		Image:   in.initImage,
-		Command: []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
+		Name:            "setup",
+		Image:           in.initImage,
+		ImagePullPolicy: pulpol,
+		Command:         []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
 	}}
 
 	volumes := []corev1.Volume{}

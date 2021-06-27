@@ -39,7 +39,7 @@ Kubedock flattens all networking, which basicly means that everything will run i
 
 ## Images
 
-Kubedock implements the images API by tracking which images are requested. It is not able to actually build images. If kubedock is started with `--inspector`, kubedock will fetch configuration information about the image by calling external container registries. This configuration includes ports that are exposed by the container image itself, and increases network aliases support. The registries should be configured by the client (for example by doing a `skopeo login`).
+Kubedock implements the images API by tracking which images are requested. It is not able to actually build images. If kubedock is started with `--inspector`, kubedock will fetch configuration information about the image by calling external container registries. This configuration includes ports that are exposed by the container image itself, and increases network aliases support. The registries should be configured by the client (for example by doing a `skopeo login`). By default images that are used are deployed with a 'IfNotPresent' pull policy. This can be globally configured with the `--pull-policy` argument, and can be configured on container level by adding a label `com.joyrex2001.kubedock.pull-policy` to the container. Possible values are 'never', 'always' and 'ifnotpresent'.
 
 ## Namespace locking
 

@@ -86,10 +86,14 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Infof("default memory request: %s", reqmem)
 	}
 
+	pulpol := viper.GetString("kubernetes.pull-policy")
+	klog.Infof("default image pull policy: %s", pulpol)
+
 	routes.New(router, s.kub, routes.Config{
 		Inspector:     insp,
 		RequestCPU:    reqcpu,
 		RequestMemory: reqmem,
+		PullPolicy:    pulpol,
 		PortForward:   pfwrd,
 		ReverseProxy:  revprox,
 	})

@@ -40,10 +40,12 @@ type Container struct {
 }
 
 const (
-	// LabelRequestCPU is the label to be use to specify cpu request/limits
+	// LabelRequestCPU is the label to be used to specify cpu request/limits
 	LabelRequestCPU = "com.joyrex2001.kubedock.request-cpu"
-	// LabelRequestMemory is the label to be use to specify memory request/limits
+	// LabelRequestMemory is the label to use to specify memory request/limits
 	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
+	// LabelPullPolicy is the label to be used to configure the pull policy
+	LabelPullPolicy = "com.joyrex2001.kubedock.pull-policy"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -59,6 +61,27 @@ func (co *Container) GetEnvVar() []corev1.EnvVar {
 		env = append(env, corev1.EnvVar{Name: f[0], Value: f[1]})
 	}
 	return env
+}
+
+// GetImagePullPolicy will return the image pull policy that should be applied
+// for this container.
+func (co *Container) GetImagePullPolicy() (corev1.PullPolicy, error) {
+	ps := map[string]corev1.PullPolicy{
+		"default":      corev1.PullIfNotPresent,
+		"notpresent":   corev1.PullIfNotPresent,
+		"ifnotpresent": corev1.PullIfNotPresent,
+		"always":       corev1.PullAlways,
+		"allways":      corev1.PullAlways,
+		"never":        corev1.PullNever,
+	}
+	p := co.Labels[LabelPullPolicy]
+	if p != "" {
+		if c, ok := ps[strings.ToLower(p)]; ok {
+			return c, nil
+		}
+		return ps["default"], fmt.Errorf("invalid pull policy: %s", p)
+	}
+	return ps["default"], nil
 }
 
 // GetResourceRequirements will return a k8s request/limits configuration

@@ -20,6 +20,8 @@ type Config struct {
 	RequestCPU string
 	// RequestMemory contains an optional default k8s memory request
 	RequestMemory string
+	// PullPolicy contains the default pull policy for images
+	PullPolicy string
 }
 
 // Router is the object that facilitates the kubedock API endpoints.
