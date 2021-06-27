@@ -64,9 +64,9 @@ func (in *instance) RandomPort() int {
 	for i := 0; i < 100; i++ {
 		p = (rand.Intn(max-min) + min)
 		if _, ok := in.randomPorts[p]; !ok {
+			in.randomPorts[p] = p
 			return p
 		}
-		in.randomPorts[p] = p
 	}
 	return p
 }

@@ -48,7 +48,9 @@ func TestAsKubernetsName(t *testing.T) {
 
 func TestRandomPort(t *testing.T) {
 	m := map[int]int{}
-	kub := &instance{}
+	kub := &instance{
+		randomPorts: map[int]int{},
+	}
 	for i := 0; i < 100; i++ {
 		p := kub.RandomPort()
 		if p < 1024 {
