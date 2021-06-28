@@ -42,7 +42,14 @@ func (in *instance) getPods(tainr *types.Container) ([]corev1.Pod, error) {
 	if err != nil {
 		return nil, err
 	}
-	return pods.Items, nil
+	res := []corev1.Pod{}
+	for _, p := range pods.Items {
+		if p.ObjectMeta.DeletionTimestamp != nil {
+			continue
+		}
+		res = append(res, p)
+	}
+	return res, nil
 }
 
 // readFile will read given file and return the contents as []byte. If

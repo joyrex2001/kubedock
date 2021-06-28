@@ -110,6 +110,47 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
+// ContainerRestart - restart a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerRestart
+// POST "/containers/:id/restart"
+func (cr *Router) ContainerRestart(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	ts := c.Query("t")
+	t, _ := strconv.Atoi(ts)
+	if t > 0 {
+		time.Sleep(time.Duration(t) * time.Second)
+	}
+
+	if err := cr.kub.DeleteContainer(tainr); err != nil {
+		klog.Warningf("error while deleting k8s container: %s", err)
+	}
+	tainr.SignalDetach()
+	tainr.SignalStop()
+
+	tainr.Running = false
+	tainr.Completed = false
+	tainr.Stopped = true
+
+	if err := cr.db.SaveContainer(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	time.Sleep(time.Second)
+	if err := cr.startContainer(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
 // ContainerStop - stop a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop
 // POST "/containers/:id/stop"
