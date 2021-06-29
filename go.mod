@@ -11,7 +11,6 @@ require (
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
