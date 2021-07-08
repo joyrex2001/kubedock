@@ -1,10 +1,12 @@
 package routes
 
 import (
+	"os"
 	"strings"
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"k8s.io/klog"
 )
 
 // addNetworkAliases will add the networkaliases as defined in the provided
@@ -29,6 +31,12 @@ func (cr *Router) addNetworkAliases(tainr *types.Container, endp EndpointConfig)
 func (cr *Router) startContainer(tainr *types.Container) error {
 	state, err := cr.kub.StartContainer(tainr)
 	if err != nil {
+		if klog.V(2) {
+			klog.Infof("container %s log output:", tainr.ShortID)
+			stop := make(chan struct{}, 1)
+			_ = cr.kub.GetLogs(tainr, false, 100, stop, os.Stderr)
+			close(stop)
+		}
 		return err
 	}
 

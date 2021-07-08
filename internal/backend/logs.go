@@ -33,14 +33,18 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	defer stream.Close()
 
 	stopL := make(chan struct{}, 1)
-	go func() {
-		select {
-		case <-stop:
-			stopL <- struct{}{}
-			stream.Close()
-			return
-		}
-	}()
+	defer close(stopL)
+
+	if follow {
+		go func() {
+			select {
+			case <-stop:
+				stopL <- struct{}{}
+				stream.Close()
+				return
+			}
+		}()
+	}
 
 	out := ioproxy.New(w, ioproxy.Stdout)
 	for {
