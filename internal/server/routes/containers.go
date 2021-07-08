@@ -30,6 +30,10 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		in.Name = c.Query("name")
 	}
 
+	if in.Labels == nil {
+		in.Labels = map[string]string{}
+	}
+
 	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.cfg.RequestCPU != "" {
 		in.Labels[types.LabelRequestCPU] = cr.cfg.RequestCPU
 	}
