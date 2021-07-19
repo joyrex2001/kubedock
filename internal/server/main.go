@@ -89,6 +89,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 	pulpol := viper.GetString("kubernetes.pull-policy")
 	klog.Infof("default image pull policy: %s", pulpol)
 
+	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
+
 	routes.New(router, s.kub, routes.Config{
 		Inspector:     insp,
 		RequestCPU:    reqcpu,
