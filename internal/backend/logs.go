@@ -33,7 +33,6 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	defer stream.Close()
 
 	stopL := make(chan struct{}, 1)
-	defer close(stopL)
 
 	if follow {
 		go func() {
@@ -51,6 +50,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 		// close when container is done
 		select {
 		case <-stopL:
+			close(stopL)
 			return nil
 		default:
 		}
