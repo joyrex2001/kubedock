@@ -15,7 +15,7 @@ mvn test
 
 The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Services and Configmaps in the namespace.
 
-To see a complete list of available options and additional examples: `kubedock --help`.
+To see a complete list of available options: `kubedock --help`.
 
 # Implementation
 
