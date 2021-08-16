@@ -47,6 +47,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,
+		Entrypoint:   in.Entrypoint,
 		Cmd:          in.Cmd,
 		Env:          in.Env,
 		ExposedPorts: in.ExposedPorts,

@@ -7,6 +7,7 @@ type ContainerCreateRequest struct {
 	Image         string                 `json:"image"`
 	ExposedPorts  map[string]interface{} `json:"ExposedPorts"`
 	Labels        map[string]string      `json:"Labels"`
+	Entrypoint    []string               `json:"Entrypoint"`
 	Cmd           []string               `json:"Cmd"`
 	Env           []string               `json:"Env"`
 	HostConfig    HostConfig             `json:"HostConfig"`

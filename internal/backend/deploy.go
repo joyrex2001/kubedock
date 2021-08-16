@@ -70,6 +70,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 					Containers: []corev1.Container{{
 						Image:           tainr.Image,
 						Name:            "main",
+						Command:         tainr.Entrypoint,
 						Args:            tainr.Cmd,
 						Env:             tainr.GetEnvVar(),
 						Ports:           in.getContainerPorts(tainr),

@@ -19,6 +19,7 @@ type Container struct {
 	Name           string
 	Image          string
 	Labels         map[string]string
+	Entrypoint     []string
 	Cmd            []string
 	Env            []string
 	Binds          []string
