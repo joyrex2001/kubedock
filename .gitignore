@@ -1,5 +1,8 @@
 .DS_Store
 .vscode
+.settings
+.classpath
+.project
 *~
 coverage.out
 _archive
