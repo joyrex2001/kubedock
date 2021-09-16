@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -105,10 +107,15 @@ func homeDir() string {
 	return os.Getenv("USERPROFILE") // windows
 }
 
-// getContextNamespace will return the namespace that is set in the current
+// getContextNamespace will return the namespace that is either available
+// in the magic serviceaccount location, or is set in the current
 // kubeconfig context, and returns 'default' if none is set.
 func getContextNamespace() string {
 	res := "default"
+	ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err == nil {
+		return strings.TrimSpace(string(ns))
+	}
 	rul := clientcmd.NewDefaultClientConfigLoadingRules()
 	if rul == nil {
 		return res
