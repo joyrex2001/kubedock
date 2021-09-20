@@ -438,35 +438,6 @@ func TestVolumes(t *testing.T) {
 	}
 }
 
-func TestCommonStringDivisor(t *testing.T) {
-	tests := []struct {
-		in  []string
-		out string
-	}{
-		{
-			in: []string{
-				"/src/mytar/pkg",
-				"/src//mytar//internal",
-			},
-			out: "/src/mytar/",
-		},
-		{
-			in: []string{
-				"/src/mytar/pkg",
-				".abc//mytar//internal",
-			},
-			out: "",
-		},
-	}
-	for i, tst := range tests {
-		res := commonStringDivisor(tst.in)
-		if res != tst.out {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
-		}
-	}
-	return
-}
-
 func TestConnectNetwork(t *testing.T) {
 	var err error
 	in := &Container{}

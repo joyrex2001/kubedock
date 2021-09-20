@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -303,49 +302,6 @@ func (co *Container) GetPreArchiveFiles() map[string][]byte {
 		files[fls[0]] = dat.Bytes()
 	}
 	return files
-}
-
-// GetPreArchiveFolders will return a list of all root folders that will
-// be populated when extracting the pre-archives (and consequently should
-// be assigned to a volume).
-func (co *Container) GetPreArchiveFolders() map[string]*PreArchive {
-	folders := map[string]*PreArchive{}
-	for _, pa := range co.PreArchives {
-		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(*pa.Archive))
-		if err != nil {
-			klog.Errorf("error determining pre archive folders: %s", err)
-			continue
-		}
-		if len(fls) < 2 {
-			continue
-		}
-		folders[commonStringDivisor(fls)] = &pa
-	}
-	return folders
-}
-
-// commonStringDivisor will return the largest common string that each of the
-// given string starts with.
-func commonStringDivisor(folders []string) string {
-	res := ""
-	re := regexp.MustCompile(`/+`)
-	for _, f := range folders {
-		f = re.ReplaceAllString(f, "/")
-		if res == "" {
-			res = f
-			continue
-		}
-		for i := len(f); i >= 0; i-- {
-			if i > len(res) {
-				continue
-			}
-			if res[0:i] == f[0:i] {
-				res = f[0:i]
-				break
-			}
-		}
-	}
-	return res
 }
 
 // HasVolumes will return true if the container has volumes configured.
