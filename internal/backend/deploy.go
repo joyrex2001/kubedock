@@ -377,25 +377,48 @@ func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) e
 		mounts = append(mounts, corev1.VolumeMount{Name: id, MountPath: dst})
 	}
 
-	files := tainr.GetVolumeFiles()
-	if len(files) > 0 {
-		_, err := in.createConfigMap(tainr, files)
+	vfiles := tainr.GetVolumeFiles()
+	if len(vfiles) > 0 {
+		_, err := in.createConfigMapFromFiles(tainr, vfiles)
 		if err != nil {
 			return err
 		}
 		volumes = append(volumes, corev1.Volume{
-			Name: "files",
+			Name: "vfiles",
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: tainr.ShortID,
 				},
 			}},
 		})
-		for dst, src := range files {
+		for dst, src := range vfiles {
 			mounts = append(mounts, corev1.VolumeMount{
-				Name:      "files",
+				Name:      "vfiles",
 				MountPath: dst,
 				SubPath:   in.fileID(src),
+			})
+		}
+	}
+
+	pfiles := tainr.GetPreArchiveFiles()
+	if len(pfiles) > 0 {
+		_, err := in.createConfigMapFromRaw(tainr, pfiles)
+		if err != nil {
+			return err
+		}
+		volumes = append(volumes, corev1.Volume{
+			Name: "pfiles",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: tainr.ShortID,
+				},
+			}},
+		})
+		for dst := range pfiles {
+			mounts = append(mounts, corev1.VolumeMount{
+				Name:      "pfiles",
+				MountPath: dst,
+				SubPath:   in.fileID(dst),
 			})
 		}
 	}
@@ -407,15 +430,35 @@ func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) e
 	return nil
 }
 
-// createConfigMap will create a configmap with given name, and adds given
-// files to it. If failed, it will return an error.
-func (in *instance) createConfigMap(tainr *types.Container, files map[string]string) (*corev1.ConfigMap, error) {
+// createConfigMapFromFiles will create a configmap with given name, and adds
+// given files to it. If failed, it will return an error.
+func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[string]string) (*corev1.ConfigMap, error) {
 	dat := map[string][]byte{}
-	for _, src := range files {
-		d, err := in.readFile(src)
+	for _, dst := range files {
+		d, err := in.readFile(dst)
 		if err != nil {
 			return nil, err
 		}
+		klog.V(3).Infof("adding %s to configmap %s", dst, tainr.ShortID)
+		dat[in.fileID(dst)] = d
+	}
+	cm := corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        tainr.ShortID,
+			Namespace:   in.namespace,
+			Labels:      in.getLabels(tainr),
+			Annotations: in.getAnnotations(tainr),
+		},
+		BinaryData: dat,
+	}
+	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.TODO(), &cm, metav1.CreateOptions{})
+}
+
+// createConfigMapFromRaw will create a configmap with given name, and adds
+// given files to it. If failed, it will return an error.
+func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[string][]byte) (*corev1.ConfigMap, error) {
+	dat := map[string][]byte{}
+	for src, d := range files {
 		klog.V(3).Infof("adding %s to configmap %s", src, tainr.ShortID)
 		dat[in.fileID(src)] = d
 	}

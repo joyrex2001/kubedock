@@ -77,6 +77,11 @@ func (s *Server) getGinEngine() *gin.Engine {
 		revprox = false
 	}
 
+	prea := viper.GetBool("pre-archive")
+	if prea {
+		klog.Infof("copying archives without starting containers enabled")
+	}
+
 	reqcpu := viper.GetString("kubernetes.request-cpu")
 	if reqcpu != "" {
 		klog.Infof("default cpu request: %s", reqcpu)
@@ -98,6 +103,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		PullPolicy:    pulpol,
 		PortForward:   pfwrd,
 		ReverseProxy:  revprox,
+		PreArchive:    prea,
 	})
 
 	return router

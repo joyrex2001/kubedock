@@ -1,12 +1,16 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/joyrex2001/kubedock/internal/util/tar"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog"
@@ -23,6 +27,7 @@ type Container struct {
 	Cmd            []string
 	Env            []string
 	Binds          []string
+	PreArchives    []PreArchive
 	HostIP         string
 	ExposedPorts   map[string]interface{}
 	ImagePorts     map[string]interface{}
@@ -38,6 +43,13 @@ type Container struct {
 	Stopped        bool
 	Killed         bool
 	Created        time.Time
+}
+
+// PreArchive contains the path and contents of archives (tar) that need to be
+// copied over to the container before it has been started.
+type PreArchive struct {
+	Path    string
+	Archive *[]byte
 }
 
 const (
@@ -268,6 +280,72 @@ func (co *Container) GetVolumeFiles() map[string]string {
 		}
 	}
 	return mounts
+}
+
+// GetPreArchiveFiles will return all single files from the pre-archives as
+// a map with the filename as key, and the actual file contents as value.
+func (co *Container) GetPreArchiveFiles() map[string][]byte {
+	files := map[string][]byte{}
+	for _, pa := range co.PreArchives {
+		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(*pa.Archive))
+		if err != nil {
+			klog.Errorf("error determining pre archive filenames: %s", err)
+			continue
+		}
+		if len(fls) != 1 {
+			continue
+		}
+		var dat bytes.Buffer
+		if err := tar.UnpackFile(pa.Path, fls[0], bytes.NewReader(*pa.Archive), io.Writer(&dat)); err != nil {
+			klog.Errorf("error extracting %s from archive: %s", fls[0], err)
+			continue
+		}
+		files[fls[0]] = dat.Bytes()
+	}
+	return files
+}
+
+// GetPreArchiveFolders will return a list of all root folders that will
+// be populated when extracting the pre-archives (and consequently should
+// be assigned to a volume).
+func (co *Container) GetPreArchiveFolders() map[string]*PreArchive {
+	folders := map[string]*PreArchive{}
+	for _, pa := range co.PreArchives {
+		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(*pa.Archive))
+		if err != nil {
+			klog.Errorf("error determining pre archive folders: %s", err)
+			continue
+		}
+		if len(fls) < 2 {
+			continue
+		}
+		folders[commonStringDivisor(fls)] = &pa
+	}
+	return folders
+}
+
+// commonStringDivisor will return the largest common string that each of the
+// given string starts with.
+func commonStringDivisor(folders []string) string {
+	res := ""
+	re := regexp.MustCompile(`/+`)
+	for _, f := range folders {
+		f = re.ReplaceAllString(f, "/")
+		if res == "" {
+			res = f
+			continue
+		}
+		for i := len(f); i >= 0; i-- {
+			if i > len(res) {
+				continue
+			}
+			if res[0:i] == f[0:i] {
+				res = f[0:i]
+				break
+			}
+		}
+	}
+	return res
 }
 
 // HasVolumes will return true if the container has volumes configured.

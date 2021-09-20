@@ -9,7 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
 // PutArchive - extract an archive of files or folders to a directory in a container.
@@ -40,18 +42,30 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		return
 	}
 
-	// hmm... how to do this without a running container...
-	if !tainr.Running && !tainr.Completed {
-		if err := cr.startContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-	}
-
 	archive, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
+	}
+
+	if !tainr.Running && !tainr.Completed && cr.cfg.PreArchive && tar.IsSingleFileArchive(&archive) {
+		tainr.PreArchives = append(tainr.PreArchives, types.PreArchive{Path: path, Archive: &archive})
+		klog.V(2).Infof("adding prearchive: %v", tainr.PreArchives)
+		if err := cr.db.SaveContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "planned archive to be copied to container",
+		})
+		return
+	}
+
+	if !tainr.Running && !tainr.Completed && !cr.cfg.PreArchive {
+		if err := cr.startContainer(tainr); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
 	if err := cr.kub.CopyToContainer(tainr, archive, path); err != nil {

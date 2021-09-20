@@ -53,6 +53,7 @@ func init() {
 	serverCmd.PersistentFlags().BoolP("prune-start", "P", false, "Prune all existing kubedock resources before starting")
 	serverCmd.PersistentFlags().Bool("port-forward", false, "Open port-forwards for all services")
 	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services to localhost as well")
+	serverCmd.PersistentFlags().Bool("pre-archive", false, "Enable copy to container without starting the container")
 
 	viper.BindPFlag("server.listen-addr", serverCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", serverCmd.PersistentFlags().Lookup("unix-socket"))
@@ -73,6 +74,7 @@ func init() {
 	viper.BindPFlag("prune-start", serverCmd.PersistentFlags().Lookup("prune-start"))
 	viper.BindPFlag("port-forward", serverCmd.PersistentFlags().Lookup("port-forward"))
 	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
+	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")

@@ -54,6 +54,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
 		Binds:        in.HostConfig.Binds,
+		PreArchives:  []types.PreArchive{},
 	}
 
 	if img, err := cr.db.GetImageByNameOrID(in.Image); err != nil {

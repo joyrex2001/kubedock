@@ -22,6 +22,8 @@ type Config struct {
 	RequestMemory string
 	// PullPolicy contains the default pull policy for images
 	PullPolicy string
+	// PreArchive will enable copying files without starting containers
+	PreArchive bool
 }
 
 // Router is the object that facilitates the kubedock API endpoints.
