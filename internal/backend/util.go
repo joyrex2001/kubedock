@@ -31,7 +31,7 @@ func (in *instance) toKubernetesName(nm string) string {
 // getPodsLabelSelector will return a label selector that can be used to
 // uniquely idenitify pods that belong to this deployment.
 func (in *instance) getPodsLabelSelector(tainr *types.Container) string {
-	return "kubedock=" + tainr.ShortID
+	return "kubedock.containerid=" + tainr.ShortID
 }
 
 // getPods will return a list of pods that are spun up for this deployment.

@@ -18,6 +18,12 @@ func (in *instance) DeleteAll() error {
 	if err := in.deleteConfigMaps("kubedock=true"); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
 	}
+	if err := in.deleteJobs("kubedock=true"); err != nil {
+		klog.Errorf("error deleting jobs: %s", err)
+	}
+	if err := in.deletePods("kubedock=true"); err != nil {
+		klog.Errorf("error deleting pods: %s", err)
+	}
 	return in.deleteDeployments("kubedock=true")
 }
 
@@ -28,6 +34,9 @@ func (in *instance) DeleteWithKubedockID(id string) error {
 	}
 	if err := in.deleteConfigMaps("kubedock.id=" + id); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
+	}
+	if err := in.deleteJobs("kubedock.id=" + id); err != nil {
+		klog.Errorf("error deleting jobs: %s", err)
 	}
 	return in.deleteDeployments("kubedock.id=" + id)
 }
@@ -40,6 +49,9 @@ func (in *instance) DeleteContainer(tainr *types.Container) error {
 	if err := in.deleteConfigMaps("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
 	}
+	if err := in.deleteJobs("kubedock.containerid=" + tainr.ShortID); err != nil {
+		klog.Errorf("error deleting jobs: %s", err)
+	}
 	return in.deleteDeployments("kubedock.containerid=" + tainr.ShortID)
 }
 
@@ -50,6 +62,9 @@ func (in *instance) DeleteOlderThan(keepmax time.Duration) error {
 		return err
 	}
 	if err := in.DeleteConfigMapsOlderThan(keepmax); err != nil {
+		return err
+	}
+	if err := in.DeleteJobsOlderThan(keepmax); err != nil {
 		return err
 	}
 	return in.DeleteServicesOlderThan(keepmax)
@@ -121,6 +136,26 @@ func (in *instance) DeleteConfigMapsOlderThan(keepmax time.Duration) error {
 	return nil
 }
 
+// DeleteJobsOlderThan will delete jobs than are orchestrated by kubedock
+// and are older than the given keepmax duration.
+func (in *instance) DeleteJobsOlderThan(keepmax time.Duration) error {
+	svcs, err := in.cli.BatchV1().Jobs(in.namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "kubedock=true",
+	})
+	if err != nil {
+		return err
+	}
+	for _, job := range svcs.Items {
+		if in.isOlderThan(job.ObjectMeta, keepmax) {
+			klog.V(3).Infof("deleting service: %s", job.Name)
+			if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // isOlderThan will check if given resource metadata has an older timestamp
 // compared to given keepmax duration
 func (in *instance) isOlderThan(met metav1.ObjectMeta, keepmax time.Duration) bool {
@@ -161,6 +196,43 @@ func (in *instance) deleteConfigMaps(selector string) error {
 	for _, svc := range svcs.Items {
 		if err := in.cli.CoreV1().ConfigMaps(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// deletePods will delete k8s pod resources which match the given label
+// selector.
+func (in *instance) deletePods(selector string) error {
+	deps, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: selector,
+	})
+	if err != nil {
+		return err
+	}
+	for _, pod := range deps.Items {
+		if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// deleteJobs will delete k8s job resources which match the given label
+// selector.
+func (in *instance) deleteJobs(selector string) error {
+	deps, err := in.cli.BatchV1().Jobs(in.namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: selector,
+	})
+	if err != nil {
+		return err
+	}
+	for _, job := range deps.Items {
+		if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{}); err != nil {
+			return err
+		}
+		if err := in.deletePods("kubedock.containerid=" + job.Name); err != nil {
+			klog.Errorf("error deleting pods: %s", err)
 		}
 	}
 	return nil

@@ -114,7 +114,7 @@ func TestWaitReadyState(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "tr909"},
+						Labels:    map[string]string{"kubedock.containerid": "tr909"},
 					},
 					Status: corev1.PodStatus{
 						Phase: corev1.PodFailed,
@@ -137,7 +137,7 @@ func TestWaitReadyState(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "tr808"},
+						Labels:    map[string]string{"kubedock.containerid": "tr808"},
 					},
 					Status: corev1.PodStatus{
 						ContainerStatuses: []corev1.ContainerStatus{
@@ -162,7 +162,7 @@ func TestWaitReadyState(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "tr909"},
+						Labels:    map[string]string{"kubedock.containerid": "tr909"},
 					},
 					Status: corev1.PodStatus{
 						ContainerStatuses: []corev1.ContainerStatus{
@@ -207,7 +207,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "rc752"},
+						Labels:    map[string]string{"kubedock.containerid": "rc752"},
 					},
 					Status: corev1.PodStatus{
 						InitContainerStatuses: []corev1.ContainerStatus{
@@ -227,7 +227,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "tb303"},
+						Labels:    map[string]string{"kubedock.containerid": "tb303"},
 					},
 					Status: corev1.PodStatus{
 						InitContainerStatuses: []corev1.ContainerStatus{
@@ -300,18 +300,14 @@ func TestAddVolumes(t *testing.T) {
 	}
 
 	for i, tst := range tests {
-		dep := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Template: corev1.PodTemplateSpec{
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{{}},
-					},
-				},
+		podtm := &corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{{}},
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
-		kub.addVolumes(tst.in, dep)
-		count := len(dep.Spec.Template.Spec.Volumes)
+		kub.addVolumes(tst.in, podtm)
+		count := len(podtm.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d initContainers, but got %d", i, tst.count, count)
 		}

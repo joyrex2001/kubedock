@@ -10,6 +10,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -38,8 +39,6 @@ const (
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
-	match := in.getDeploymentMatchLabels(tainr)
-
 	reqlimits, err := tainr.GetResourceRequirements()
 	if err != nil {
 		return DeployFailed, err
@@ -50,45 +49,61 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
-	// base deploment
-	dep := &appsv1.Deployment{
+	meta := metav1.ObjectMeta{
+		Namespace:   in.namespace,
+		Name:        tainr.ShortID,
+		Labels:      in.getLabels(tainr),
+		Annotations: in.getAnnotations(tainr),
+	}
+
+	podtm := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   in.namespace,
-			Name:        tainr.ShortID,
-			Labels:      in.getLabels(tainr),
-			Annotations: in.getAnnotations(tainr),
+			Labels: in.getLabels(tainr),
 		},
-		Spec: appsv1.DeploymentSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: match,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: match,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Image:           tainr.Image,
-						Name:            "main",
-						Command:         tainr.Entrypoint,
-						Args:            tainr.Cmd,
-						Env:             tainr.GetEnvVar(),
-						Ports:           in.getContainerPorts(tainr),
-						Resources:       reqlimits,
-						ImagePullPolicy: pulpol,
-					}},
-				},
-			},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Image:           tainr.Image,
+				Name:            "main",
+				Command:         tainr.Entrypoint,
+				Args:            tainr.Cmd,
+				Env:             tainr.GetEnvVar(),
+				Ports:           in.getContainerPorts(tainr),
+				Resources:       reqlimits,
+				ImagePullPolicy: pulpol,
+			}},
 		},
 	}
+
 	if tainr.HasVolumes() {
-		if err := in.addVolumes(tainr, dep); err != nil {
+		if err := in.addVolumes(tainr, &podtm); err != nil {
 			return DeployFailed, err
 		}
 	}
 
-	if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
-		return DeployFailed, err
+	if tainr.ShouldCreateJob() {
+		job := &batchv1.Job{
+			ObjectMeta: meta,
+			Spec: batchv1.JobSpec{
+				Template: podtm,
+			},
+		}
+		job.Spec.Template.Spec.RestartPolicy = "Never"
+		if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
+			return DeployFailed, err
+		}
+	} else {
+		dep := &appsv1.Deployment{
+			ObjectMeta: meta,
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: in.getDeploymentMatchLabels(tainr),
+				},
+				Template: podtm,
+			},
+		}
+		if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
+			return DeployFailed, err
+		}
 	}
 
 	if tainr.HasVolumes() {
@@ -106,8 +121,10 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		tainr.MapPort(in.RandomPort(), pp)
 	}
 
-	if err := in.createServices(tainr); err != nil {
-		return state, err
+	if !tainr.ShouldCreateJob() {
+		if err := in.createServices(tainr); err != nil {
+			return state, err
+		}
 	}
 
 	return state, nil
@@ -286,19 +303,21 @@ func (in *instance) getAnnotations(tainr *types.Container) map[string]string {
 // match running pods for this container.
 func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]string {
 	return map[string]string{
-		"kubedock": tainr.ShortID,
+		"kubedock.containerid": tainr.ShortID,
 	}
 }
 
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployState, error) {
 	for max := 0; max < wait; max++ {
-		dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
-		if err != nil {
-			return DeployFailed, err
-		}
-		if dep.Status.ReadyReplicas > 0 {
-			return DeployRunning, nil
+		if !tainr.ShouldCreateJob() {
+			dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
+			if err != nil {
+				return DeployFailed, err
+			}
+			if dep.Status.ReadyReplicas > 0 {
+				return DeployRunning, nil
+			}
 		}
 		pods, err := in.getPods(tainr)
 		if err != nil {
@@ -309,8 +328,9 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployStat
 				return DeployFailed, fmt.Errorf("failed to start container")
 			}
 			for _, status := range pod.Status.ContainerStatuses {
-				term := status.LastTerminationState.Terminated
-				if term != nil && term.Reason == "Completed" {
+				term := status.State.Terminated
+				ters := status.LastTerminationState.Terminated
+				if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
 					return DeployCompleted, nil
 				}
 				if status.RestartCount > 0 {
@@ -354,13 +374,13 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 // to copy data before the container is started. If files are inclueded,
 // rather than folders, it will create a configmap, and mounts the files
 // from this created configmap.
-func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) error {
+func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplateSpec) error {
 	pulpol, err := tainr.GetImagePullPolicy()
 	if err != nil {
 		return err
 	}
 
-	dep.Spec.Template.Spec.InitContainers = []corev1.Container{{
+	podtm.Spec.InitContainers = []corev1.Container{{
 		Name:            "setup",
 		Image:           in.initImage,
 		ImagePullPolicy: pulpol,
@@ -423,9 +443,9 @@ func (in *instance) addVolumes(tainr *types.Container, dep *appsv1.Deployment) e
 		}
 	}
 
-	dep.Spec.Template.Spec.Volumes = volumes
-	dep.Spec.Template.Spec.Containers[0].VolumeMounts = mounts
-	dep.Spec.Template.Spec.InitContainers[0].VolumeMounts = mounts
+	podtm.Spec.Volumes = volumes
+	podtm.Spec.Containers[0].VolumeMounts = mounts
+	podtm.Spec.InitContainers[0].VolumeMounts = mounts
 
 	return nil
 }

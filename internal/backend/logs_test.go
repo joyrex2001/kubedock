@@ -90,7 +90,7 @@ func TestGetFirstPodName(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
-						Labels:    map[string]string{"kubedock": "tb303"},
+						Labels:    map[string]string{"kubedock.containerid": "tb303"},
 					},
 				}),
 			},
