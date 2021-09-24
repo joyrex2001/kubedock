@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,47 +13,81 @@ import (
 
 // DeleteAll will delete all resources that kubedock=true
 func (in *instance) DeleteAll() error {
+	ok := true
 	if err := in.deleteServices("kubedock=true"); err != nil {
 		klog.Errorf("error deleting services: %s", err)
+		ok = false
 	}
 	if err := in.deleteConfigMaps("kubedock=true"); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
+		ok = false
 	}
 	if err := in.deleteJobs("kubedock=true"); err != nil {
 		klog.Errorf("error deleting jobs: %s", err)
+		ok = false
+	}
+	if err := in.deleteDeployments("kubedock=true"); err != nil {
+		klog.Errorf("error deleting deployments: %s", err)
+		ok = false
 	}
 	if err := in.deletePods("kubedock=true"); err != nil {
 		klog.Errorf("error deleting pods: %s", err)
+		ok = false
 	}
-	return in.deleteDeployments("kubedock=true")
+	if !ok {
+		return fmt.Errorf("failed deleting all containers")
+	}
+	return nil
 }
 
 // DeleteWithKubedockID will delete all resources that have given kubedock.id
 func (in *instance) DeleteWithKubedockID(id string) error {
+	ok := true
 	if err := in.deleteServices("kubedock.id=" + id); err != nil {
 		klog.Errorf("error deleting services: %s", err)
+		ok = false
 	}
 	if err := in.deleteConfigMaps("kubedock.id=" + id); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
+		ok = false
 	}
 	if err := in.deleteJobs("kubedock.id=" + id); err != nil {
 		klog.Errorf("error deleting jobs: %s", err)
+		ok = false
 	}
-	return in.deleteDeployments("kubedock.id=" + id)
+	if err := in.deleteDeployments("kubedock.id=" + id); err != nil {
+		klog.Errorf("error deleting deployments: %s", err)
+		ok = false
+	}
+	if !ok {
+		return fmt.Errorf("failed deleting container %s", id)
+	}
+	return nil
 }
 
 // DeleteContainer will delete given container object in kubernetes.
 func (in *instance) DeleteContainer(tainr *types.Container) error {
+	ok := true
 	if err := in.deleteServices("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting services: %s", err)
+		ok = false
 	}
 	if err := in.deleteConfigMaps("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting configmaps: %s", err)
+		ok = false
 	}
 	if err := in.deleteJobs("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting jobs: %s", err)
+		ok = false
 	}
-	return in.deleteDeployments("kubedock.containerid=" + tainr.ShortID)
+	if err := in.deleteDeployments("kubedock.containerid=" + tainr.ShortID); err != nil {
+		klog.Errorf("error deleting deployments: %s", err)
+		ok = false
+	}
+	if !ok {
+		return fmt.Errorf("failed deleting container %s", tainr.ShortID)
+	}
+	return nil
 }
 
 // DeleteOlderThan will delete all kubedock created resources older

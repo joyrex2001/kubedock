@@ -99,9 +99,9 @@ func (co *Container) GetImagePullPolicy() (corev1.PullPolicy, error) {
 	return ps["default"], nil
 }
 
-// ShouldCreateJob will check if the job hint label is present, and if it
-// contains true. If so, a Job should be created, rather than a Deployment.
-func (co *Container) ShouldCreateJob() bool {
+// RunAsJob will check if the job hint label is present, and if it contains
+// true. If so, a Job should be created, rather than a Deployment.
+func (co *Container) RunAsJob() bool {
 	res, _ := strconv.ParseBool(co.Labels[LabelDeployJob])
 	return res
 }

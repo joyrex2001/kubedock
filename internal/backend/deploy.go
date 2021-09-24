@@ -80,7 +80,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
-	if tainr.ShouldCreateJob() {
+	if tainr.RunAsJob() {
 		job := &batchv1.Job{
 			ObjectMeta: meta,
 			Spec: batchv1.JobSpec{
@@ -121,10 +121,8 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		tainr.MapPort(in.RandomPort(), pp)
 	}
 
-	if !tainr.ShouldCreateJob() {
-		if err := in.createServices(tainr); err != nil {
-			return state, err
-		}
+	if err := in.createServices(tainr); err != nil {
+		return state, err
 	}
 
 	return state, nil
@@ -310,20 +308,14 @@ func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployState, error) {
 	for max := 0; max < wait; max++ {
-		if !tainr.ShouldCreateJob() {
-			dep, err := in.cli.AppsV1().Deployments(in.namespace).Get(context.TODO(), tainr.ShortID, metav1.GetOptions{})
-			if err != nil {
-				return DeployFailed, err
-			}
-			if dep.Status.ReadyReplicas > 0 {
-				return DeployRunning, nil
-			}
-		}
 		pods, err := in.getPods(tainr)
 		if err != nil {
 			return DeployFailed, err
 		}
 		for _, pod := range pods {
+			if pod.Status.Phase == corev1.PodRunning {
+				return DeployRunning, nil
+			}
 			if pod.Status.Phase == corev1.PodFailed {
 				return DeployFailed, fmt.Errorf("failed to start container")
 			}

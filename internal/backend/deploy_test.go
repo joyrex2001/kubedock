@@ -93,23 +93,6 @@ func TestWaitReadyState(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tb303",
-						Namespace: "default",
-					},
-					Status: appsv1.DeploymentStatus{
-						ReadyReplicas: 1,
-					},
-				}),
-			},
-			in:    &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
-			state: DeployRunning,
-			out:   false,
-		},
-		{
-			kub: &instance{
-				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",

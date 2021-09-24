@@ -239,9 +239,9 @@ func TestShouldCreateJob(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
-		res := tst.in.ShouldCreateJob()
+		res := tst.in.RunAsJob()
 		if res != tst.out {
-			t.Errorf("failed test %d - expected %t, but got %t", i, tst.out, res)
+			t.Errorf("failed job test %d - expected %t, but got %t", i, tst.out, res)
 		}
 	}
 }
