@@ -6,6 +6,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -292,6 +293,62 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 		tst.kub.DeleteContainersOlderThan(100 * time.Millisecond)
 		deps, _ := tst.kub.cli.AppsV1().Deployments("default").List(context.TODO(), metav1.ListOptions{})
 		cnt := len(deps.Items)
+		if cnt != tst.cnt {
+			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
+		}
+	}
+}
+
+func TestDeleteJobsOlderThan(t *testing.T) {
+	tests := []struct {
+		cnt int
+		kub *instance
+	}{
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+					},
+				}),
+			},
+			cnt: 1,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "f1spirit",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock": "true"},
+					},
+				}),
+			},
+			cnt: 0,
+		},
+		{
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "f1spirit",
+						Namespace:         "default",
+						Labels:            map[string]string{"kubedock": "true"},
+						DeletionTimestamp: &metav1.Time{},
+					},
+				}),
+			},
+			cnt: 1,
+		},
+	}
+
+	for i, tst := range tests {
+		tst.kub.DeleteJobsOlderThan(100 * time.Millisecond)
+		jobs, _ := tst.kub.cli.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
+		cnt := len(jobs.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
 		}
