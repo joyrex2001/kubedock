@@ -24,6 +24,8 @@ type Config struct {
 	PullPolicy string
 	// PreArchive will enable copying files without starting containers
 	PreArchive bool
+	// DeployAsJob will deploy containers as jobs instead of deployments
+	DeployAsJob bool
 }
 
 // Router is the object that facilitates the kubedock API endpoints.

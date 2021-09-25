@@ -87,7 +87,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 				Template: podtm,
 			},
 		}
-		job.Spec.Template.Spec.RestartPolicy = "Never"
+		job.Spec.Template.Spec.RestartPolicy = "OnFailure"
 		if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
 			return DeployFailed, err
 		}
@@ -96,7 +96,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 			ObjectMeta: meta,
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{
-					MatchLabels: in.getDeploymentMatchLabels(tainr),
+					MatchLabels: in.getPodMatchLabels(tainr),
 				},
 				Template: podtm,
 			},
@@ -245,7 +245,7 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 				Annotations: in.getAnnotations(tainr),
 			},
 			Spec: corev1.ServiceSpec{
-				Selector: in.getDeploymentMatchLabels(tainr),
+				Selector: in.getPodMatchLabels(tainr),
 				Ports:    []corev1.ServicePort{},
 			},
 		}
@@ -297,9 +297,9 @@ func (in *instance) getAnnotations(tainr *types.Container) map[string]string {
 	return l
 }
 
-// getDeploymentMatchLabels will return the map of labels that can be used to
+// getPodMatchLabels will return the map of labels that can be used to
 // match running pods for this container.
-func (in *instance) getDeploymentMatchLabels(tainr *types.Container) map[string]string {
+func (in *instance) getPodMatchLabels(tainr *types.Container) map[string]string {
 	return map[string]string{
 		"kubedock.containerid": tainr.ShortID,
 	}

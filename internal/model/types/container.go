@@ -58,9 +58,9 @@ const (
 	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
 	// LabelPullPolicy is the label to be used to configure the pull policy
 	LabelPullPolicy = "com.joyrex2001.kubedock.pull-policy"
-	// LabelDeployJob is the label to be used to force creating a Job rather
+	// LabelDeployAsJob is the label to be used to force creating a Job rather
 	// then a Deployment.
-	LabelDeployJob = "com.joyrex2001.kubedock.deploy-as-job"
+	LabelDeployAsJob = "com.joyrex2001.kubedock.deploy-as-job"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -102,7 +102,7 @@ func (co *Container) GetImagePullPolicy() (corev1.PullPolicy, error) {
 // RunAsJob will check if the job hint label is present, and if it contains
 // true. If so, a Job should be created, rather than a Deployment.
 func (co *Container) RunAsJob() bool {
-	res, _ := strconv.ParseBool(co.Labels[LabelDeployJob])
+	res, _ := strconv.ParseBool(co.Labels[LabelDeployAsJob])
 	return res
 }
 
