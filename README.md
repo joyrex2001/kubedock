@@ -13,7 +13,7 @@ export DOCKER_HOST=tcp://127.0.0.1:2475
 mvn test
 ```
 
-The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Services and Configmaps in the namespace.
+The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Configmaps in the namespace.
 
 To see a complete list of available options: `kubedock --help`.
 
@@ -23,7 +23,11 @@ When kubedock is started with `kubedock server` it will start an API server on p
 
 ## Containers
 
-Container API calls are translated towards kubernetes Deployment resources. When a container is started, it will create a kubernetes Service within the cluster and maps the ports to the ClusterIP of that service (note that only tcp is supported). This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutual exlusive with `--port-forward`. Starting a container is a blocking call that will wait until the Deployment results in a running Pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
+Container API calls are translated towards kubernetes Deployment (or Job) resources. When a container is started, it will create a kubernetes Service within the cluster and maps the ports to the ClusterIP of that service (note that only tcp is supported). This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutual exlusive with `--port-forward`.
+
+Starting a container is a blocking call that will wait until it results in a running Pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
+
+By default, all containers will be orchestrated using kubernetes Deployment resources. However, in some cases it could make more sense to deploy the container as a Job instead. The deployment resource type can be forced by adding a `com.joyrex2001.kubedock.deploy-as-job` label that contains `true` on the container that should be orchestrated as a Job instead. This can also be set globally with the `--deploy-as-job` argument, which will result in all containers being deployes as Jobs. The restart policy for Jobs is fixed to `OnFailure`.
 
 ## Volumes
 
@@ -31,7 +35,7 @@ Volumes are implemented by copying over the source content towards the container
 
 Volumes are one-way copies and emphemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket). Volumes that point to a single file will be converted to a configmap (and is implicitly read-only always).
 
-Copying data from a running container back towards the client is not supported either. Also be aware that copying data towards a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead.
+Copying data from a running container back towards the client is supported either, but only works if the container running has tar available. Also be aware that copying data towards a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead. Alternatively kubedock can be started with `--pre-archive`, which will convert copy statements of single files to configmaps when the container is started yet. This will implicitly make the target file read-only, and may not work in all use-cases (hence it's not the default).
 
 ## Networking
 

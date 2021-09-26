@@ -31,7 +31,7 @@ public class NginxTest {
             .withFileSystemBind("./src/www", "/www", BindMode.READ_ONLY)
             //.withFileSystemBind to a file results into creation of a configmap before the container runs
             .withFileSystemBind("./src/test/resources/nginx.conf", "/etc/nginx/conf.d/default.conf", BindMode.READ_ONLY)
-            //.withClasspathResourceMapping results into a copy in a running container
+            //.withClasspathResourceMapping results into a copy in a running container (unless kubedock runs with --pre-archive)
             //.withClasspathResourceMapping("nginx.conf", "/etc/nginx/conf.d/default.conf", BindMode.READ_ONLY)
             .withLogConsumer(new Slf4jLogConsumer(getLogger("nginx")))
             .waitingFor(Wait.forHttp("/"))
