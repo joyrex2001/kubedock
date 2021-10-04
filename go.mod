@@ -3,6 +3,7 @@ module github.com/joyrex2001/kubedock
 go 1.16
 
 require (
+	github.com/opencontainers/runc v1.0.0-rc95
 	github.com/containers/image/v5 v5.12.0
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.6.0 // indirect
