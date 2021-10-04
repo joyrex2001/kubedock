@@ -51,6 +51,11 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Unique:  true,
 						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
 					},
+					"name": {
+						Name:         "name",
+						AllowMissing: true,
+						Indexer:      &memdb.StringFieldIndex{Field: "Name"},
+					},
 				},
 			},
 			"exec": {
@@ -77,9 +82,9 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
 					},
 					"name": {
-						Name:    "name",
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "Name"},
+						Name:         "name",
+						AllowMissing: true,
+						Indexer:      &memdb.StringFieldIndex{Field: "Name"},
 					},
 				},
 			},
@@ -97,9 +102,9 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
 					},
 					"name": {
-						Name:    "name",
-						Unique:  true,
-						Indexer: &memdb.StringFieldIndex{Field: "Name"},
+						Name:         "name",
+						AllowMissing: true,
+						Indexer:      &memdb.StringFieldIndex{Field: "Name"},
 					},
 				},
 			},
@@ -129,9 +134,40 @@ func (in *Database) GetContainer(id string) (*types.Container, error) {
 		return nil, err
 	}
 	if raw == nil {
+		raw, err = txn.First("container", "name", id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if raw == nil {
 		return nil, fmt.Errorf("container %s not found", id)
 	}
 	return raw.(*types.Container), nil
+}
+
+// GetContainerByName will return a container with given name, or an error if
+// the instance does not exist.
+func (in *Database) GetContainerByName(name string) (*types.Container, error) {
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	raw, err := txn.First("container", "name", name)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("container %s not found", name)
+	}
+	return raw.(*types.Container), nil
+}
+
+// GetContainerByNameOrID will return a container with id/name, or an error
+// if the instance does not exist.
+func (in *Database) GetContainerByNameOrID(id string) (*types.Container, error) {
+	con, err := in.GetContainer(id)
+	if err == nil {
+		return con, nil
+	}
+	return in.GetContainerByName(id)
 }
 
 // GetContainers will return all stored containers.

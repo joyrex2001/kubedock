@@ -32,6 +32,7 @@ func TestDatabase(t *testing.T) {
 		t.Errorf("Expected ID when saving a new container")
 	}
 	con.Image = "busybox"
+	con.Name = "testymctestface"
 	if err := db.SaveContainer(con); err != nil {
 		t.Errorf("Unexpected error when updating a container")
 
@@ -45,6 +46,13 @@ func TestDatabase(t *testing.T) {
 	}
 	if conl, err := db.GetContainer(con.ShortID); err != nil {
 		t.Errorf("Unexpected error when loading an existing container shortid")
+	} else {
+		if conl.ID != con.ID || conl.Image != con.Image {
+			t.Errorf("Loaded shortid container differs to saved container")
+		}
+	}
+	if conl, err := db.GetContainerByNameOrID(con.Name); err != nil {
+		t.Errorf("Unexpected error when loading an existing container name; %s", err)
 	} else {
 		if conl.ID != con.ID || conl.Image != con.Image {
 			t.Errorf("Loaded shortid container differs to saved container")

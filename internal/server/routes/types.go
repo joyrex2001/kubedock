@@ -35,7 +35,7 @@ type ExecStartRequest struct {
 // NetworkCreateRequest represents the json structure that
 // is used for the /networks/create post endpoint.
 type NetworkCreateRequest struct {
-	Name string `json:"name"`
+	Name string `json:"Name"`
 }
 
 // NetworkConnectRequest represents the json structure that
