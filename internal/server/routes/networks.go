@@ -27,7 +27,7 @@ func (nr *Router) NetworksList(c *gin.Context) {
 		res = append(res, gin.H{
 			"Name":       netw.Name,
 			"ID":         netw.ID,
-			"Driver":     "host",
+			"Driver":     "bridge",
 			"Scope":      "local",
 			"Attachable": true,
 			"Containers": tainrs,
@@ -50,7 +50,7 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name":       netw.Name,
 		"ID":         netw.ID,
-		"Driver":     "host",
+		"Driver":     "bridge",
 		"Scope":      "local",
 		"Attachable": true,
 		"Containers": tainrs,

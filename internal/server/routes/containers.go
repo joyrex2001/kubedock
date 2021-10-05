@@ -396,7 +396,7 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 			"Ports":    cr.getNetworkSettingsPorts(tainr),
 		},
 		"HostConfig": gin.H{
-			"NetworkMode": "host",
+			"NetworkMode": "bridge",
 			"LogConfig": gin.H{
 				"Type":   "json-file",
 				"Config": gin.H{},
