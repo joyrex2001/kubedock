@@ -377,6 +377,9 @@ func (co *Container) DisconnectNetwork(id string) error {
 
 // Match will match given type with given key value pair.
 func (co *Container) Match(typ string, key string, val string) bool {
+	if typ == "name" {
+		return co.Name == key
+	}
 	if typ != "label" {
 		return true
 	}

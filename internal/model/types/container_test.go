@@ -509,6 +509,7 @@ func TestConnectNetwork(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	tests := []struct {
+		name   string
 		labels map[string]string
 		typ    string
 		key    string
@@ -543,9 +544,24 @@ func TestMatch(t *testing.T) {
 			val:    "thing",
 			match:  true,
 		},
+		{
+			labels: map[string]string{"some": "what"},
+			typ:    "name",
+			key:    "something",
+			val:    "",
+			match:  false,
+		},
+		{
+			name:   "testymctestface",
+			labels: map[string]string{"some": "what"},
+			typ:    "name",
+			key:    "testymctestface",
+			val:    "",
+			match:  true,
+		},
 	}
 	for i, tst := range tests {
-		in := &Container{Labels: tst.labels}
+		in := &Container{Labels: tst.labels, Name: tst.name}
 		if in.Match(tst.typ, tst.key, tst.val) != tst.match {
 			t.Errorf("failed test %d - match %v", i, tst.match)
 		}

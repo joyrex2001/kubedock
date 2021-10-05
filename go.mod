@@ -3,7 +3,6 @@ module github.com/joyrex2001/kubedock
 go 1.16
 
 require (
-	github.com/opencontainers/runc v1.0.0-rc95
 	github.com/containers/image/v5 v5.12.0
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.6.0 // indirect
@@ -13,6 +12,7 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6
+	github.com/opencontainers/runc v1.0.0-rc95 // indirect
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	github.com/ugorji/go v1.2.5 // indirect

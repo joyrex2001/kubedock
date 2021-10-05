@@ -46,7 +46,19 @@ func TestFilter(t *testing.T) {
 		{
 			filter:  `{"label":{"com.docker.compose.project=timesheet":true}}`,
 			matcher: &matcher{false},
-			suc:     false, // TODO: support this format (docker compose)
+			suc:     true,
+			match:   false,
+		},
+		{
+			filter:  `{"label":{"com.docker.compose.project=timesheet":true}}`,
+			matcher: &matcher{true},
+			suc:     true,
+			match:   true,
+		},
+		{
+			filter:  `{"label":{"com.docker.compose.project=timesheet":true},"name":{"mycontainer":true}}`,
+			matcher: &matcher{true},
+			suc:     true,
 			match:   true,
 		},
 		{
