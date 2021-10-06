@@ -127,5 +127,9 @@ func (cr *Router) ExecInfo(c *gin.Context) {
 		"ID":       id,
 		"Running":  false,
 		"ExitCode": exec.ExitCode,
+		"ProcessConfig": gin.H{
+			"arguments":  exec.Cmd,
+			"entrypoint": "",
+		},
 	})
 }
