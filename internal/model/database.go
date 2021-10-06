@@ -82,9 +82,9 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 						Indexer: &memdb.StringFieldIndex{Field: "ShortID"},
 					},
 					"name": {
-						Name:         "name",
-						AllowMissing: true,
-						Indexer:      &memdb.StringFieldIndex{Field: "Name"},
+						Name:    "name",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Name"},
 					},
 				},
 			},

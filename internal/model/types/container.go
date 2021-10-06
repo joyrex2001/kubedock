@@ -237,17 +237,18 @@ func (co *Container) getTCPPorts(ports map[string]interface{}) []int {
 	return res
 }
 
-// getTCPPort will convert a "9000/tcp" string to the port.
+// getTCPPort will convert a "9000/tcp" string to the port. If "/tcp" is
+// missing, it will add it as a default.
 func (co *Container) getTCPPort(p string) (int, error) {
 	f := strings.Split(p, "/")
-	if len(f) != 2 {
+	if len(f) == 0 || len(f) > 2 {
 		return 0, fmt.Errorf("could not parse exposed port %s", p)
 	}
 	pp, err := strconv.Atoi(f[0])
 	if err != nil {
 		return 0, fmt.Errorf("could not parse exposed port %s: %s", p, err)
 	}
-	if f[1] != "tcp" {
+	if len(f) == 2 && f[1] != "tcp" {
 		return 0, fmt.Errorf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
 	}
 	return pp, nil
