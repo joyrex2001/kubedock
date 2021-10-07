@@ -138,7 +138,9 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.Writer.WriteHeader(http.StatusNoContent)
+	c.JSON(http.StatusCreated, gin.H{
+		"ID": netw.ID,
+	})
 }
 
 // NetworksDisconnect - connect a container to a network.
