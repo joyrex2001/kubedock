@@ -57,17 +57,17 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 		// read log input (blocking read)
 		buf := make([]byte, 255)
 		n, err := stream.Read(buf)
-		if n == 0 {
-			if !follow {
-				break
-			}
-			continue
-		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return err
+		}
+		if n == 0 {
+			if !follow {
+				break
+			}
+			continue
 		}
 		// write log to output
 		if n, err = out.Write(buf[:n]); n == 0 || err != nil {
