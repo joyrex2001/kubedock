@@ -74,6 +74,10 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		},
 	}
 
+	for _, ps := range in.imagePullSecrets {
+		podtm.Spec.ImagePullSecrets = append(podtm.Spec.ImagePullSecrets, corev1.LocalObjectReference{Name: ps})
+	}
+
 	if tainr.HasVolumes() {
 		if err := in.addVolumes(tainr, &podtm); err != nil {
 			return DeployFailed, err

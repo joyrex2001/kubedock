@@ -2,8 +2,10 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -91,14 +93,24 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	ns := viper.GetString("kubernetes.namespace")
 	initimg := viper.GetString("kubernetes.initimage")
 	timeout := viper.GetDuration("kubernetes.timeout")
+	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
 
-	klog.Infof("kubernetes config: namespace=%s, initimage=%s, ready timeout=%s", ns, initimg, timeout)
+	optlog := ""
+	imgps := []string{}
+	if imgpsr != "" {
+		optlog = fmt.Sprintf(", pull secrets=%s", imgpsr)
+		imgps = strings.Split(imgpsr, ",")
+	}
+
+	klog.Infof("kubernetes config: namespace=%s, initimage=%s, ready timeout=%s%s", ns, initimg, timeout, optlog)
+
 	kub := backend.New(backend.Config{
-		Client:     cli,
-		RestConfig: cfg,
-		Namespace:  ns,
-		InitImage:  initimg,
-		TimeOut:    timeout,
+		Client:           cli,
+		RestConfig:       cfg,
+		Namespace:        ns,
+		InitImage:        initimg,
+		ImagePullSecrets: imgps,
+		TimeOut:          timeout,
 	})
 	return kub, nil
 }

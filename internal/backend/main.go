@@ -29,12 +29,13 @@ type Backend interface {
 
 // instance is the internal representation of the Backend object.
 type instance struct {
-	cli         kubernetes.Interface
-	cfg         *rest.Config
-	initImage   string
-	namespace   string
-	timeOut     int
-	randomPorts map[int]int
+	cli              kubernetes.Interface
+	cfg              *rest.Config
+	initImage        string
+	imagePullSecrets []string
+	namespace        string
+	timeOut          int
+	randomPorts      map[int]int
 }
 
 // Config is the structure to instantiate a Backend object
@@ -45,6 +46,9 @@ type Config struct {
 	RestConfig *rest.Config
 	// Namespace is the namespace in which all actions are performed
 	Namespace string
+	// ImagePullSecrets is an optional list of image pull secrets that need
+	// to be added to the used pod templates
+	ImagePullSecrets []string
 	// InitImage is the image that is used as init container to prepare vols
 	InitImage string
 	// TimeOut is the max amount of time to wait until a container started
@@ -54,11 +58,12 @@ type Config struct {
 // New will return an Backend instance.
 func New(cfg Config) Backend {
 	return &instance{
-		cli:         cfg.Client,
-		cfg:         cfg.RestConfig,
-		initImage:   cfg.InitImage,
-		namespace:   cfg.Namespace,
-		randomPorts: map[int]int{},
-		timeOut:     int(cfg.TimeOut.Seconds()),
+		cli:              cfg.Client,
+		cfg:              cfg.RestConfig,
+		initImage:        cfg.InitImage,
+		namespace:        cfg.Namespace,
+		imagePullSecrets: cfg.ImagePullSecrets,
+		randomPorts:      map[int]int{},
+		timeOut:          int(cfg.TimeOut.Seconds()),
 	}
 }
