@@ -141,7 +141,6 @@ func (in *instance) CreatePortForwards(tainr *types.Container) {
 	if err := in.portForward(tainr, tainr.MappedPorts); err != nil {
 		klog.Errorf("port-forward failed: %s", err)
 	}
-	return
 }
 
 // portForward will create port-forwards for all mapped ports.
@@ -199,7 +198,6 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 			klog.Errorf("error setting up port-forward: %s", err)
 		}
 	}
-	return
 }
 
 // GetServiceClusterIP will return the clusterip of the created service for

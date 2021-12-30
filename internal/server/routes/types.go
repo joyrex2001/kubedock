@@ -55,6 +55,8 @@ type NetworkDisconnectRequest struct {
 type HostConfig struct {
 	Binds        []string `json:"Binds"`
 	PortBindings map[string][]PortBinding
+	Memory       int `json:"Memory"`
+	NanoCpus     int `json:"NanoCpus"`
 }
 
 // PortBinding represents a binding between to a port

@@ -12,9 +12,9 @@ const (
 	// OS is the operating system as advertised when calling /info
 	OS = "kubernetes"
 	// DockerVersion is the docker version as advertised when calling /version
-	DockerVersion = "1.22"
+	DockerVersion = "1.25"
 	// DockerAPIVersion is the api version as advertised when calling /version
-	DockerAPIVersion = "1.22"
+	DockerAPIVersion = "1.25"
 )
 
 var (

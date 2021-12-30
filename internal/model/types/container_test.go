@@ -122,6 +122,20 @@ func TestGetResourceRequirements(t *testing.T) {
 			reqlim: map[string]string{"reqmem": "2000Mi", "limmem": "2000Mi"},
 			err:    false,
 		},
+		{ // 12
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-cpu": ",1000000000n",
+			}},
+			reqlim: map[string]string{"reqcpu": "1", "limcpu": "1"},
+			err:    false,
+		},
+		{ // 13
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "209715200",
+			}},
+			reqlim: map[string]string{"reqmem": "209715200"},
+			err:    false,
+		},
 	}
 	for i, tst := range tests {
 		res, err := tst.in.GetResourceRequirements()

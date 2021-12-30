@@ -46,6 +46,12 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if _, ok := in.Labels[types.LabelDeployAsJob]; !ok && cr.cfg.DeployAsJob {
 		in.Labels[types.LabelDeployAsJob] = "true"
 	}
+	if in.HostConfig.Memory != 0 {
+		in.Labels[types.LabelRequestMemory] = fmt.Sprintf("%d", in.HostConfig.Memory)
+	}
+	if in.HostConfig.NanoCpus != 0 {
+		in.Labels[types.LabelRequestCPU] = fmt.Sprintf("%dn", in.HostConfig.NanoCpus)
+	}
 
 	tainr := &types.Container{
 		Name:         in.Name,
