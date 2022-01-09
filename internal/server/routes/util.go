@@ -40,7 +40,7 @@ func (cr *Router) startContainer(tainr *types.Container) error {
 		return err
 	}
 
-	tainr.HostIP = "127.0.0.1"
+	tainr.HostIP = "0.0.0.0"
 	if cr.cfg.PortForward {
 		cr.kub.CreatePortForwards(tainr)
 	} else {
