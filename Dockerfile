@@ -16,7 +16,10 @@ RUN cd /go/src/${CODE} \
 ## Final image ## ------------------------------------------------------------
 #################
 
-FROM docker.io/busybox:latest
+FROM alpine:3
+
+RUN apk add --no-cache ca-certificates \
+    && update-ca-certificates
 
 COPY --from=kubedock /app /app
 
