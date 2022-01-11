@@ -206,6 +206,58 @@ func TestGetImagePullPolicy(t *testing.T) {
 	}
 }
 
+func TestGetRunasUser(t *testing.T) {
+	tests := []struct {
+		in         *Container
+		seccontext corev1.PodSecurityContext
+		err        bool
+	}{
+		{ // 0
+			in:         &Container{User: ""},
+			seccontext: corev1.PodSecurityContext{},
+			err:        false,
+		},
+		{ // 1
+			in:         &Container{User: "1000"},
+			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
+			err:        false,
+		},
+		{ // 2
+			in:         &Container{User: "0"},
+			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
+			err:        false,
+		},
+		{ // 3
+			in:         &Container{User: "9999999999999999999999999999999"},
+			seccontext: corev1.PodSecurityContext{},
+			err:        true,
+		},
+		{ // 4
+			in:         &Container{User: "abc"},
+			seccontext: corev1.PodSecurityContext{},
+			err:        true,
+		},
+	}
+	for i, tst := range tests {
+		res, err := tst.in.GetPodSecurityContext()
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded without error", i)
+		}
+		if res.RunAsUser == nil && tst.seccontext.RunAsUser != nil {
+			t.Errorf("failed test %d - expected %d, but got nil", i, *tst.seccontext.RunAsUser)
+		}
+		if res.RunAsUser != nil && tst.seccontext.RunAsUser == nil {
+			t.Errorf("failed test %d - expected nil, but got %d", i, *res.RunAsUser)
+		}
+		if res.RunAsUser != nil && tst.seccontext.RunAsUser != nil && *res.RunAsUser != *tst.seccontext.RunAsUser {
+			t.Errorf("failed test %d - expected %d, but got %d", i, *tst.seccontext.RunAsUser, *res.RunAsUser)
+		}
+	}
+}
+
 func TestMapPort(t *testing.T) {
 	in := &Container{}
 	if in.MappedPorts != nil {
@@ -581,4 +633,8 @@ func TestMatch(t *testing.T) {
 			t.Errorf("failed test %d - match %v", i, tst.match)
 		}
 	}
+}
+
+func makeIntPointer(x int64) *int64 {
+	return &x
 }

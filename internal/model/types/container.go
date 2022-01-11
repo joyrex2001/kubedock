@@ -22,6 +22,7 @@ type Container struct {
 	Name           string
 	Image          string
 	Labels         map[string]string
+	User           string
 	Entrypoint     []string
 	Cmd            []string
 	Env            []string
@@ -148,6 +149,27 @@ func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, err
 		}
 	}
 	return req, nil
+}
+
+// GetPodSecurityContext will create a security context for the Pod that implements
+// the relenvant features of the Docker API. Right now this only covers the ability
+// to specify the numeric user a container should run as.
+func (co *Container) GetPodSecurityContext() (corev1.PodSecurityContext, error) {
+	context := corev1.PodSecurityContext{}
+
+	if co.User == "" {
+		klog.Warningf("user not set, will run an user defined in image")
+		return context, nil
+	}
+
+	parsed, err := strconv.ParseInt(co.User, 10, 64)
+	if err != nil {
+		return context, fmt.Errorf("failed to parse %s to Int64", co.User)
+	}
+
+	context.RunAsUser = &parsed
+
+	return context, nil
 }
 
 // MapPort will map a pod port to a local port.

@@ -49,6 +49,11 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
+	seccontext, err := tainr.GetPodSecurityContext()
+	if err != nil {
+		return DeployFailed, err
+	}
+
 	meta := metav1.ObjectMeta{
 		Namespace:   in.namespace,
 		Name:        tainr.ShortID,
@@ -71,6 +76,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 				Resources:       reqlimits,
 				ImagePullPolicy: pulpol,
 			}},
+			SecurityContext: &seccontext,
 		},
 	}
 

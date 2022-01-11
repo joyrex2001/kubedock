@@ -10,6 +10,7 @@ type ContainerCreateRequest struct {
 	Entrypoint    []string               `json:"Entrypoint"`
 	Cmd           []string               `json:"Cmd"`
 	Env           []string               `json:"Env"`
+	User          string                 `json:"User"`
 	HostConfig    HostConfig             `json:"HostConfig"`
 	NetworkConfig NetworkingConfig       `json:"NetworkingConfig"`
 }
