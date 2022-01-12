@@ -20,6 +20,8 @@ type Config struct {
 	RequestCPU string
 	// RequestMemory contains an optional default k8s memory request
 	RequestMemory string
+	// RunasUser contains the UID to run pods as
+	RunasUser string
 	// PullPolicy contains the default pull policy for images
 	PullPolicy string
 	// PreArchive will enable copying files without starting containers

@@ -34,6 +34,12 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		in.Labels = map[string]string{}
 	}
 
+	// The User defined in HTTP request takes precedence over the CLI flag
+	// if not null.
+	if in.User == "" && cr.cfg.RunasUser != "" {
+		in.User = cr.cfg.RunasUser
+	}
+
 	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.cfg.RequestCPU != "" {
 		in.Labels[types.LabelRequestCPU] = cr.cfg.RequestCPU
 	}
@@ -57,6 +63,7 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		Name:         in.Name,
 		Image:        in.Image,
 		Entrypoint:   in.Entrypoint,
+		User:         in.User,
 		Cmd:          in.Cmd,
 		Env:          in.Env,
 		ExposedPorts: in.ExposedPorts,

@@ -48,6 +48,7 @@ func init() {
 	serverCmd.PersistentFlags().DurationP("reapmax", "r", 60*time.Minute, "Reap all resources older than this time")
 	serverCmd.PersistentFlags().String("request-cpu", "", "Default k8s cpu resource request (optionally add ,limit)")
 	serverCmd.PersistentFlags().String("request-memory", "", "Default k8s memory resource request (optionally add ,limit)")
+	serverCmd.PersistentFlags().String("runas-user", "", "Numeric UID to run pods as (defaults to UID in image)")
 	serverCmd.PersistentFlags().Bool("lock", false, "Lock namespace for this instance")
 	serverCmd.PersistentFlags().Duration("lock-timeout", 15*time.Minute, "Max time trying to acquire namespace lock")
 	serverCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
@@ -69,6 +70,7 @@ func init() {
 	viper.BindPFlag("kubernetes.timeout", serverCmd.PersistentFlags().Lookup("timeout"))
 	viper.BindPFlag("kubernetes.request-cpu", serverCmd.PersistentFlags().Lookup("request-cpu"))
 	viper.BindPFlag("kubernetes.request-memory", serverCmd.PersistentFlags().Lookup("request-memory"))
+	viper.BindPFlag("kubernetes.runas-user", serverCmd.PersistentFlags().Lookup("runas-user"))
 	viper.BindPFlag("registry.inspector", serverCmd.PersistentFlags().Lookup("inspector"))
 	viper.BindPFlag("reaper.reapmax", serverCmd.PersistentFlags().Lookup("reapmax"))
 	viper.BindPFlag("lock.enabled", serverCmd.PersistentFlags().Lookup("lock"))
@@ -90,6 +92,7 @@ func init() {
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("kubernetes.request-cpu", "K8S_REQUEST_CPU")
 	viper.BindEnv("kubernetes.request-memory", "K8S_REQUEST_MEMORY")
+	viper.BindEnv("kubernetes.runas-user", "K8S_RUNAS_USER")
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("reaper.reapmax", "REAPER_REAPMAX")
 
