@@ -46,6 +46,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	}
 
 	out := ioproxy.New(w, ioproxy.Stdout)
+	defer out.Flush()
 	for {
 		// close when container is done
 		select {

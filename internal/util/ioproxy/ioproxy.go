@@ -18,23 +18,59 @@ const (
 	Stderr
 )
 
+const (
+	// MaxBufSize is the maximum amount of bytes this io writer
+	// will buffer, until it forces a flush.
+	MaxBufSize = 256
+)
+
 // logProxy is a proxy writer which adds the output prefix before writing data.
-type logProxy struct {
+type IoProxy struct {
 	io.Writer
 	out    io.Writer
 	prefix StdType
+	buf    []byte
 }
 
 // New will return a new logproxy instance.
-func New(w io.Writer, prefix StdType) io.Writer {
-	return &logProxy{out: w, prefix: prefix}
+func New(w io.Writer, prefix StdType) *IoProxy {
+	return &IoProxy{out: w, prefix: prefix, buf: []byte{}}
 }
 
-// Write will write data to the configured writer, using the correct header.
-func (w *logProxy) Write(p []byte) (int, error) {
+// Write will write given data to the an internal buffer, which will be
+// flushed if a newline is encountered, of when the maximum size of the
+// buffer has been reached.
+func (w *IoProxy) Write(p []byte) (int, error) {
+	w.buf = append(w.buf, p...)
+	for w.process() != 0 {
+	}
+	return len(p), nil
+}
+
+// process will go through the buffer and writes chunks that end with
+// a newline to the output writer.
+func (w *IoProxy) process() int {
+	for pos := 0; pos < len(w.buf)-1; pos++ {
+		if w.buf[pos] == 10 { // write chunk if newline char is found
+			w.write(w.buf[:pos+1])
+			w.buf = w.buf[pos+1:]
+			return pos + 1
+		}
+	}
+	return 0
+}
+
+// write will write data to the configured writer, using the correct header.
+func (w *IoProxy) write(p []byte) (int, error) {
 	header := [8]byte{}
 	header[0] = byte(w.prefix)
 	binary.BigEndian.PutUint32(header[4:], uint32(len(p)))
 	w.out.Write(header[:])
 	return w.out.Write(p)
+}
+
+// Flush will write all buffer data still present.
+func (w *IoProxy) Flush() error {
+	_, err := w.write(w.buf)
+	return err
 }

@@ -30,10 +30,14 @@ func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, out io
 	}
 
 	if ex.Stdout {
-		req.Stdout = ioproxy.New(out, ioproxy.Stdout)
+		iop := ioproxy.New(out, ioproxy.Stdout)
+		req.Stdout = iop
+		defer iop.Flush()
 	}
 	if ex.Stderr {
-		req.Stderr = ioproxy.New(out, ioproxy.Stderr)
+		iop := ioproxy.New(out, ioproxy.Stderr)
+		req.Stderr = iop
+		defer iop.Flush()
 	}
 
 	err = exec.RemoteCmd(req)
