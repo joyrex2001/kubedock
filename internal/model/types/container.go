@@ -158,7 +158,7 @@ func (co *Container) GetPodSecurityContext() (corev1.PodSecurityContext, error) 
 	context := corev1.PodSecurityContext{}
 
 	if co.User == "" {
-		klog.Warningf("user not set, will run an user defined in image")
+		klog.Warningf("user not set, will run as user defined in image")
 		return context, nil
 	}
 
