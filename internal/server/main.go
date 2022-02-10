@@ -28,6 +28,7 @@ func (s *Server) Run() error {
 	}
 
 	router := s.getGinEngine()
+	router.SetTrustedProxies(nil)
 
 	socket := viper.GetString("server.socket")
 	if socket == "" {

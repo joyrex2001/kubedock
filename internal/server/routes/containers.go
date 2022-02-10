@@ -226,7 +226,7 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		return
 	}
 
-	if !strings.Contains(signal, "kil") && !strings.Contains(signal, "term") && !strings.Contains(signal, "quit") {
+	if signal != "" && !strings.Contains(signal, "kil") && !strings.Contains(signal, "term") && !strings.Contains(signal, "quit") {
 		klog.Infof("ignoring signal %s", signal)
 		c.Writer.WriteHeader(http.StatusNoContent)
 		return
