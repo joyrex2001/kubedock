@@ -3,6 +3,7 @@ package ioproxy
 import (
 	"bytes"
 	"testing"
+	"time"
 )
 
 func TestWrite(t *testing.T) {
@@ -27,16 +28,24 @@ func TestWrite(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
+		// with manual flush
 		buf := &bytes.Buffer{}
 		iop := New(buf, Stdout)
 		iop.Write([]byte(tst.write))
 		if !bytes.Equal(buf.Bytes(), tst.read) {
 			t.Errorf("failed read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
-
 		}
 		iop.Flush()
 		if !bytes.Equal(buf.Bytes(), tst.flush) {
 			t.Errorf("failed flush %d - expected %v, but got %v", i, tst.flush, buf.Bytes())
+		}
+		// without manual flushing
+		buf = &bytes.Buffer{}
+		iop = New(buf, Stdout)
+		iop.Write([]byte(tst.write))
+		time.Sleep(110 * time.Millisecond)
+		if !bytes.Equal(buf.Bytes(), tst.flush) {
+			t.Errorf("failed read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
 		}
 	}
 }

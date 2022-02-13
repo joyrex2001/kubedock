@@ -3,6 +3,7 @@ package ioproxy
 import (
 	"encoding/binary"
 	"io"
+	"time"
 )
 
 // StdType is the type of standard stream
@@ -27,9 +28,10 @@ const (
 // logProxy is a proxy writer which adds the output prefix before writing data.
 type IoProxy struct {
 	io.Writer
-	out    io.Writer
-	prefix StdType
-	buf    []byte
+	out     io.Writer
+	prefix  StdType
+	buf     []byte
+	bgflush bool
 }
 
 // New will return a new logproxy instance.
@@ -44,7 +46,19 @@ func (w *IoProxy) Write(p []byte) (int, error) {
 	w.buf = append(w.buf, p...)
 	for w.process() != 0 {
 	}
+	if !w.bgflush {
+		w.bgflush = true
+		go w.flusher()
+	}
 	return len(p), nil
+}
+
+// flusher will ensure the buffer is always flushed, even if no content
+// is written to the proxy.
+func (w *IoProxy) flusher() {
+	time.Sleep(100 * time.Millisecond)
+	w.bgflush = false
+	w.Flush()
 }
 
 // process will go through the buffer and writes chunks that end with
