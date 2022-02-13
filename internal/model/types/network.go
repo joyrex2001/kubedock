@@ -11,3 +11,8 @@ type Network struct {
 	Name    string
 	Created time.Time
 }
+
+// IsPredefined will return if the network is a pre-defined system network.
+func (nw *Network) IsPredefined() bool {
+	return nw.Name == "bridge" || nw.Name == "null" || nw.Name == "host"
+}

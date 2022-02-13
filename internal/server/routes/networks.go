@@ -89,7 +89,7 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 		return
 	}
 
-	if netw.Name == "bridge" || netw.Name == "null" || netw.Name == "host" {
+	if netw.IsPredefined() {
 		httputil.Error(c, http.StatusForbidden, fmt.Errorf("%s is a pre-defined network and cannot be removed", netw.Name))
 		return
 	}
@@ -172,6 +172,33 @@ func (nr *Router) NetworksDisconnect(c *gin.Context) {
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// NetworksPrune - delete unused networks.
+// https://docs.docker.com/engine/api/v1.41/#operation/NetworkPrune
+// POST "/networks/prune"
+func (nr *Router) NetworksPrune(c *gin.Context) {
+	netws, err := nr.db.GetNetworks()
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	names := []string{}
+	for _, netw := range netws {
+		if netw.IsPredefined() || len(nr.getContainersInNetwork(netw)) != 0 {
+			continue
+		}
+		if err := nr.db.DeleteNetwork(netw); err != nil {
+			httputil.Error(c, http.StatusNotFound, err)
+			return
+		}
+		names = append(names, netw.Name)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"NetworksDeleted": names,
+	})
 }
 
 // getContainersInNetwork will return an array of containers in an array

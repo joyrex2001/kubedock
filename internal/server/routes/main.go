@@ -83,6 +83,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/networks", cr.NetworksList)
 	router.GET("/networks/:id", cr.NetworksInfo)
 	router.DELETE("/networks/:id", cr.NetworksDelete)
+	router.POST("/networks/prune", cr.NetworksPrune)
 
 	router.POST("/images/create", cr.ImageCreate)
 	router.GET("/images/json", cr.ImageList)
@@ -103,4 +104,5 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/containers/prune", httputil.NotImplemented)
 	router.GET("/networks/reaper_default", httputil.NotImplemented)
 	router.POST("/build", httputil.NotImplemented)
+	router.POST("/volumes/prune", httputil.NoContent)
 }

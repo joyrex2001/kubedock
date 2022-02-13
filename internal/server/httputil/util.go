@@ -26,6 +26,11 @@ func NotImplemented(c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNotImplemented)
 }
 
+// NoContent will return a no content response.
+func NoContent(c *gin.Context) {
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
 // HijackConnection interrupts the http response writer to get the
 // underlying connection and operate with it.
 func HijackConnection(w http.ResponseWriter) (io.ReadCloser, io.Writer, error) {
