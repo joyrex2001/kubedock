@@ -39,13 +39,19 @@ func TestWrite(t *testing.T) {
 		if !bytes.Equal(buf.Bytes(), tst.flush) {
 			t.Errorf("failed flush %d - expected %v, but got %v", i, tst.flush, buf.Bytes())
 		}
+		if len(iop.buf) > 0 {
+			t.Errorf("failed flush %d - buffer not empty...", i)
+		}
 		// without manual flushing
 		buf = &bytes.Buffer{}
 		iop = New(buf, Stdout)
 		iop.Write([]byte(tst.write))
 		time.Sleep(110 * time.Millisecond)
 		if !bytes.Equal(buf.Bytes(), tst.flush) {
-			t.Errorf("failed read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
+			t.Errorf("failed auto flush read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
+		}
+		if len(iop.buf) > 0 {
+			t.Errorf("failed auto flush %d - buffer not empty...", i)
 		}
 	}
 }

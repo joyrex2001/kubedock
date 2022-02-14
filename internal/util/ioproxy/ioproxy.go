@@ -3,6 +3,7 @@ package ioproxy
 import (
 	"encoding/binary"
 	"io"
+	"sync"
 	"time"
 )
 
@@ -31,7 +32,8 @@ type IoProxy struct {
 	out     io.Writer
 	prefix  StdType
 	buf     []byte
-	bgflush bool
+	flusher bool
+	lock    sync.Mutex
 }
 
 // New will return a new logproxy instance.
@@ -43,22 +45,19 @@ func New(w io.Writer, prefix StdType) *IoProxy {
 // flushed if a newline is encountered, of when the maximum size of the
 // buffer has been reached.
 func (w *IoProxy) Write(p []byte) (int, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
 	w.buf = append(w.buf, p...)
 	for w.process() != 0 {
 	}
-	if !w.bgflush {
-		w.bgflush = true
-		go w.flusher()
+	if len(w.buf) > 0 && !w.flusher {
+		w.flusher = true
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			w.Flush()
+		}()
 	}
 	return len(p), nil
-}
-
-// flusher will ensure the buffer is always flushed, even if no content
-// is written to the proxy.
-func (w *IoProxy) flusher() {
-	time.Sleep(100 * time.Millisecond)
-	w.bgflush = false
-	w.Flush()
 }
 
 // process will go through the buffer and writes chunks that end with
@@ -85,6 +84,10 @@ func (w *IoProxy) write(p []byte) (int, error) {
 
 // Flush will write all buffer data still present.
 func (w *IoProxy) Flush() error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
 	_, err := w.write(w.buf)
+	w.buf = []byte{}
+	w.flusher = false
 	return err
 }
