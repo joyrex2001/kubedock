@@ -20,12 +20,6 @@ const (
 	Stderr
 )
 
-const (
-	// MaxBufSize is the maximum amount of bytes this io writer
-	// will buffer, until it forces a flush.
-	MaxBufSize = 256
-)
-
 // logProxy is a proxy writer which adds the output prefix before writing data.
 type IoProxy struct {
 	io.Writer

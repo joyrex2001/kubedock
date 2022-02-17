@@ -55,3 +55,20 @@ func TestWrite(t *testing.T) {
 		}
 	}
 }
+
+func TestLargeLine(t *testing.T) {
+	buf := &bytes.Buffer{}
+	iop := New(buf, Stdout)
+
+	data := make([]byte, 1350)
+	for i := 0; i < len(data); i++ {
+		data[i] = 65
+	}
+	data[1349] = 10
+	iop.Write(data)
+	iop.Flush()
+
+	if len(buf.Bytes()) != 1350+8 {
+		t.Errorf("failed large line test - buffer size was not linesize + header (%d) but %d", 1350+8, len(buf.Bytes()))
+	}
+}
