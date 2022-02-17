@@ -21,6 +21,7 @@ clean:
 	rm -rf dist
 	go mod tidy
 	rm -f coverage.out
+	go clean -testcache
 
 cloc:
 	cloc --exclude-dir=vendor,node_modules,dist,_notes,_archive .
