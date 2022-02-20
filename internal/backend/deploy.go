@@ -117,7 +117,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 	}
 
 	if tainr.HasVolumes() {
-		if err := in.copyVolumeFolders(tainr); err != nil {
+		if err := in.copyVolumeFolders(tainr, in.timeOut); err != nil {
 			return DeployFailed, err
 		}
 	}
@@ -497,8 +497,8 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 // copyVolumeFolders will copy the configured volumes of the container to
 // the running init container, and signal the init container when finished
 // with copying.
-func (in *instance) copyVolumeFolders(tainr *types.Container) error {
-	if err := in.waitInitContainerRunning(tainr, "setup", 30); err != nil {
+func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
+	if err := in.waitInitContainerRunning(tainr, "setup", wait); err != nil {
 		return err
 	}
 
