@@ -43,9 +43,9 @@ cover:
 	go tool cover -html=coverage.out
 	
 deps:
-	go get -u golang.org/x/lint/golint
-	go get -u github.com/kisielk/errcheck
-	go get -u github.com/mitchellh/gox
-	go get -u github.com/tcnksm/ghr
+	go install golang.org/x/lint/golint@latest
+	go install github.com/kisielk/errcheck@latest
+	go install github.com/mitchellh/gox@latest
+	go install github.com/tcnksm/ghr@latest
 
 .PHONY: run build gox docker clean cloc fmt test lint cover deps
