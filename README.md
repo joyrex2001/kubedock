@@ -13,7 +13,7 @@ export DOCKER_HOST=tcp://127.0.0.1:2475
 mvn test
 ```
 
-The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Leases in the namespace.
+The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Configmaps. If namespace locking is used, the service also requires permissions to create and Leases in the namespace.
 
 To see a complete list of available options: `kubedock --help`.
 
