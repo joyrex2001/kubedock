@@ -55,12 +55,12 @@ func Main() {
 	exitHandler(kub, cancel)
 
 	// exclusive mode, use the k8s leader election as a locking mechanism
-	lock := &resourcelock.ConfigMapLock{
-		ConfigMapMeta: metav1.ObjectMeta{
+	lock := &resourcelock.LeaseLock{
+		LeaseMeta: metav1.ObjectMeta{
 			Name:      "kubedock-lock",
 			Namespace: viper.GetString("kubernetes.namespace"),
 		},
-		Client: cli.CoreV1(),
+		Client: cli.CoordinationV1(),
 		LockConfig: resourcelock.ResourceLockConfig{
 			Identity: config.InstanceID,
 		},

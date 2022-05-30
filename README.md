@@ -13,7 +13,7 @@ export DOCKER_HOST=tcp://127.0.0.1:2475
 mvn test
 ```
 
-The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Configmaps in the namespace.
+The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Leases in the namespace.
 
 To see a complete list of available options: `kubedock --help`.
 
@@ -47,7 +47,7 @@ Kubedock implements the images API by tracking which images are requested. It is
 
 ## Namespace locking
 
-If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattend (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a Configmap called `kubedock-lock` in the namespace in which it tracks the current ownership.
+If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattend (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a Lease called `kubedock-lock` in the namespace in which it tracks the current ownership.
 
 ## Resource requests and limits
 
