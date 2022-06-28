@@ -65,6 +65,37 @@ If a test fails and didn't clean up its started containers, these resources will
 
 The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the label `kubedock=true`, before starting the API server. This includes resources that are created by other instances of kubedock. 
 
+## Service Account RBAC
+
+As a reference, the below role can be used to manage the permissions of the service account that is used to run kubedock in a cluster. The uncommented rules are the minimal permissions. Depending on use of `--deploy-as-job`, `--pre-archive` and `--lock`, the additional (commented) rules are required as well.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubedock
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["list", "get"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "get", "list"]
+## optional permissions (depending on kubedock use)
+# - apiGroups: ["batch"]
+#   resources: ["jobs"]
+#   verbs: ["create", "get", "list", "delete"]
+# - apiGroups: [""]
+#   resources: ["configmaps"]
+#   verbs: ["create", "get", "list", "delete"]
+# - apiGroups: ["coordination.k8s.io"]
+#   resources: ["leases"]
+#   verbs: ["create", "get", "list", "delete"]
+```
+
 # See also
 
 * https://github.com/joyrex2001/kubedock
