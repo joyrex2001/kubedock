@@ -27,7 +27,7 @@ type Request struct {
 // local port and proxies this to the given remote ip and destination port.
 // based on: https://gist.github.com/vmihailenco/1380352
 func Proxy(req Request) error {
-	local := fmt.Sprintf("localhost:%d", req.LocalPort)
+	local := fmt.Sprintf("0.0.0.0:%d", req.LocalPort)
 	remote := fmt.Sprintf("%s:%d", req.RemoteIP, req.RemotePort)
 
 	klog.Infof("start reverse-proxy %s->%s", local, remote)

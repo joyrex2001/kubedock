@@ -71,7 +71,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	revprox := viper.GetBool("reverse-proxy")
 	if revprox && !pfwrd {
-		klog.Infof("enabled reverse-proxy services to localhost")
+		klog.Infof("enabled reverse-proxy services via 0.0.0.0 on the kubedock host")
 	}
 	if revprox && pfwrd {
 		klog.Infof("ignored reverse-proxy as port-forward is enabled")
