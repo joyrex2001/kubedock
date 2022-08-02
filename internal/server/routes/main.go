@@ -14,7 +14,7 @@ type Config struct {
 	Inspector bool
 	// PortForward specifies if the the services should be port-forwarded
 	PortForward bool
-	// ReverseProxy enables a reverse-proxy to the services on localhost
+	// ReverseProxy enables a reverse-proxy to the services via 0.0.0.0 on the kubedock host
 	ReverseProxy bool
 	// RequestCPU contains an optional default k8s cpu request
 	RequestCPU string

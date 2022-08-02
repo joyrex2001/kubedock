@@ -54,7 +54,7 @@ func init() {
 	serverCmd.PersistentFlags().StringP("verbosity", "v", "1", "Log verbosity level")
 	serverCmd.PersistentFlags().BoolP("prune-start", "P", false, "Prune all existing kubedock resources before starting")
 	serverCmd.PersistentFlags().Bool("port-forward", false, "Open port-forwards for all services")
-	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services to localhost as well")
+	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services via 0.0.0.0 on the kubedock host as well")
 	serverCmd.PersistentFlags().Bool("pre-archive", false, "Enable support for copying single files to containers without starting them")
 	serverCmd.PersistentFlags().Bool("deploy-as-job", false, "Deploy pods via Jobs rather than Deployments")
 
