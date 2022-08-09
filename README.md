@@ -73,7 +73,8 @@ As a reference, the below role can be used to manage the permissions of the serv
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: kubedock
+  name: testcontainers
+  namespace: jenkins
 rules:
   - apiGroups: ["apps"]
     resources: ["deployments"]
@@ -82,8 +83,17 @@ rules:
     resources: ["pods", "pods/log"]
     verbs: ["list", "get"]
   - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  - apiGroups: [""]
     resources: ["services"]
-    verbs: ["create", "get", "list"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["list"]
 ## optional permissions (depending on kubedock use)
 # - apiGroups: ["batch"]
 #   resources: ["jobs"]
