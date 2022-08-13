@@ -28,8 +28,10 @@ import (
 type DeployState int
 
 const (
+	// DeployPending represents a pending deployment
+	DeployPending DeployState = iota
 	// DeployFailed represents a failed deployment
-	DeployFailed DeployState = iota
+	DeployFailed
 	// DeployRunning represents a running deployment
 	DeployRunning
 	// DeployCompleted represents a completed deployment
@@ -316,31 +318,40 @@ func (in *instance) getPodMatchLabels(tainr *types.Container) map[string]string 
 // waitReadyState will wait for the deploymemt to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployState, error) {
 	for max := 0; max < wait; max++ {
-		pods, err := in.getPods(tainr)
-		if err != nil {
-			return DeployFailed, err
-		}
-		for _, pod := range pods {
-			if pod.Status.Phase == corev1.PodRunning {
-				return DeployRunning, nil
-			}
-			if pod.Status.Phase == corev1.PodFailed {
-				return DeployFailed, fmt.Errorf("failed to start container")
-			}
-			for _, status := range pod.Status.ContainerStatuses {
-				term := status.State.Terminated
-				ters := status.LastTerminationState.Terminated
-				if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
-					return DeployCompleted, nil
-				}
-				if status.RestartCount > 0 {
-					return DeployFailed, fmt.Errorf("failed to start container")
-				}
-			}
+		status, err := in.GetContainerStatus(tainr)
+		if status != DeployPending || err != nil {
+			return status, err
 		}
 		time.Sleep(time.Second)
 	}
 	return DeployFailed, fmt.Errorf("timeout starting container")
+}
+
+// GetDeploymentStatus will return the state of the deployed container.
+func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, error) {
+	pods, err := in.getPods(tainr)
+	if err != nil {
+		return DeployFailed, err
+	}
+	for _, pod := range pods {
+		if pod.Status.Phase == corev1.PodRunning {
+			return DeployRunning, nil
+		}
+		if pod.Status.Phase == corev1.PodFailed {
+			return DeployFailed, fmt.Errorf("failed to start container")
+		}
+		for _, status := range pod.Status.ContainerStatuses {
+			term := status.State.Terminated
+			ters := status.LastTerminationState.Terminated
+			if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
+				return DeployCompleted, nil
+			}
+			if status.RestartCount > 0 {
+				return DeployFailed, fmt.Errorf("failed to start container")
+			}
+		}
+	}
+	return DeployPending, nil
 }
 
 // waitInitContainerRunning will wait for a specific container in the

@@ -13,6 +13,7 @@ import (
 // Backend is the interface to orchestrate and manage kubernetes objects.
 type Backend interface {
 	StartContainer(*types.Container) (DeployState, error)
+	GetContainerStatus(*types.Container) (DeployState, error)
 	CreatePortForwards(*types.Container)
 	CreateReverseProxies(*types.Container)
 	GetServiceClusterIP(*types.Container) (string, error)

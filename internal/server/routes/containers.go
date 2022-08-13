@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
@@ -417,18 +418,19 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		},
 	}
 	if detail {
+		fin, run := cr.getFinishedAt(tainr)
 		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": tainr.StatusString(),
 			},
-			"Running":    tainr.Running,
+			"Running":    run,
 			"Status":     tainr.StateString(),
 			"Paused":     false,
 			"Restarting": false,
 			"OOMKilled":  false,
 			"Dead":       tainr.Failed,
 			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
-			"FinishedAt": "0001-01-01T00:00:00Z",
+			"FinishedAt": fin,
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
@@ -543,4 +545,18 @@ func (cr *Router) getContainerNames(tainr *types.Container) []string {
 		}
 	}
 	return names
+}
+
+// getFinishedAt will return current timestamp if the started container is finished,
+// otherwhise it will return a 0 timestamp. It will also return a boolean indicating
+// if the container is still running.
+func (cr *Router) getFinishedAt(tainr *types.Container) (string, bool) {
+	status, err := cr.kub.GetContainerStatus(tainr)
+	if err != nil {
+		klog.Warningf("container status error: %s", err)
+	}
+	if status == backend.DeployCompleted {
+		return time.Now().Format("2006-01-02T15:04:05Z"), false
+	}
+	return "0001-01-01T00:00:00Z", true
 }
