@@ -418,19 +418,19 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		},
 	}
 	if detail {
-		fin, run := cr.getFinishedAt(tainr)
+		cr.updateContainerStatus(tainr)
 		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": tainr.StatusString(),
 			},
-			"Running":    run,
+			"Running":    tainr.Running,
 			"Status":     tainr.StateString(),
 			"Paused":     false,
 			"Restarting": false,
 			"OOMKilled":  false,
 			"Dead":       tainr.Failed,
 			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
-			"FinishedAt": fin,
+			"FinishedAt": tainr.Finished.Format("2006-01-02T15:04:05Z"),
 			"ExitCode":   0,
 			"Error":      errstr,
 		}
@@ -547,16 +547,17 @@ func (cr *Router) getContainerNames(tainr *types.Container) []string {
 	return names
 }
 
-// getFinishedAt will return current timestamp if the started container is finished,
-// otherwhise it will return a 0 timestamp. It will also return a boolean indicating
-// if the container is still running.
-func (cr *Router) getFinishedAt(tainr *types.Container) (string, bool) {
+// updateContainerStatus will check if the started container is finished and will
+// update the container database record accordingly.
+func (cr *Router) updateContainerStatus(tainr *types.Container) {
 	status, err := cr.kub.GetContainerStatus(tainr)
 	if err != nil {
 		klog.Warningf("container status error: %s", err)
+		tainr.Failed = true
 	}
 	if status == backend.DeployCompleted {
-		return time.Now().Format("2006-01-02T15:04:05Z"), false
+		tainr.Finished = time.Now()
+		tainr.Completed = true
+		tainr.Running = false
 	}
-	return "0001-01-01T00:00:00Z", true
 }

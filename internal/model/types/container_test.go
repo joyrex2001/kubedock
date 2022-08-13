@@ -9,6 +9,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+func TestNew(t *testing.T) {
+	c := &Container{}
+	if c.Finished.Format("2006-01-02T15:04:05Z") != "0001-01-01T00:00:00Z" {
+		t.Errorf("failed initial finished timestamp")
+	}
+}
+
 func TestGetEnvVar(t *testing.T) {
 	tests := []struct {
 		in  *Container

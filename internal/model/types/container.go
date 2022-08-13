@@ -43,6 +43,7 @@ type Container struct {
 	Stopped        bool
 	Killed         bool
 	Created        time.Time
+	Finished       time.Time
 }
 
 // PreArchive contains the path and contents of archives (tar) that need to be
