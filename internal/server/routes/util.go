@@ -3,6 +3,7 @@ package routes
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -63,4 +64,26 @@ func (cr *Router) startContainer(tainr *types.Container) error {
 	tainr.Running = (state == backend.DeployRunning)
 
 	return cr.db.SaveContainer(tainr)
+}
+
+// updateContainerStatus will check if the started container is finished and will
+// update the container database record accordingly.
+func (cr *Router) updateContainerStatus(tainr *types.Container) {
+	if tainr.Completed {
+		return
+	}
+	if !cr.plim.Allow() {
+		klog.V(2).Infof("rate-limited status request for container: %s", tainr.ID)
+		return
+	}
+	status, err := cr.kub.GetContainerStatus(tainr)
+	if err != nil {
+		klog.Warningf("container status error: %s", err)
+		tainr.Failed = true
+	}
+	if status == backend.DeployCompleted {
+		tainr.Finished = time.Now()
+		tainr.Completed = true
+		tainr.Running = false
+	}
 }

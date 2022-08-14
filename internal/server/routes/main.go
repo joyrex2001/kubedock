@@ -2,10 +2,18 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+)
+
+const (
+	// POLL_RATE defines maximum polling request per second towards the backend
+	POLL_RATE = 1
+	// POLL_BURST defines maximum burst poll requests towards the backend
+	POLL_BURST = 3
 )
 
 // Config is the structure to instantiate a Router object
@@ -32,9 +40,10 @@ type Config struct {
 
 // Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
-	db  *model.Database
-	kub backend.Backend
-	cfg Config
+	db   *model.Database
+	kub  backend.Backend
+	plim *rate.Limiter
+	cfg  Config
 }
 
 // New will instantiate a containerRouter object.
@@ -44,9 +53,10 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 		return nil, err
 	}
 	cr := &Router{
-		db:  db,
-		kub: kub,
-		cfg: cfg,
+		db:   db,
+		kub:  kub,
+		plim: rate.NewLimiter(POLL_RATE, POLL_BURST),
+		cfg:  cfg,
 	}
 	cr.initRoutes(router)
 	return cr, nil

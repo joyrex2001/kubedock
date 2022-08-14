@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
@@ -545,19 +544,4 @@ func (cr *Router) getContainerNames(tainr *types.Container) []string {
 		}
 	}
 	return names
-}
-
-// updateContainerStatus will check if the started container is finished and will
-// update the container database record accordingly.
-func (cr *Router) updateContainerStatus(tainr *types.Container) {
-	status, err := cr.kub.GetContainerStatus(tainr)
-	if err != nil {
-		klog.Warningf("container status error: %s", err)
-		tainr.Failed = true
-	}
-	if status == backend.DeployCompleted {
-		tainr.Finished = time.Now()
-		tainr.Completed = true
-		tainr.Running = false
-	}
 }
