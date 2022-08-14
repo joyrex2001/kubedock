@@ -343,7 +343,8 @@ func (cr *Router) ContainerWait(c *gin.Context) {
 	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
 		tainr, err := cr.db.GetContainer(id)
-		if err != nil || tainr.Stopped || tainr.Killed {
+		cr.updateContainerStatus(tainr)
+		if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
 			c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
 			return
 		}
