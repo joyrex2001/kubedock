@@ -13,19 +13,36 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
-// asKubernetesName will create a nice kubernetes name out of given random string.
-func (in *instance) toKubernetesName(nm string) string {
-	for _, exp := range []string{`^[^A-Za-z0-9]+`, `[^A-Za-z0-9-]`, `-*$`} {
+// toKubernetesValue will create a nice kubernetes string that can be used as a
+// key out of given random string.
+func (in *instance) toKubernetesKey(v string) string {
+	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\./]`, `[-/]*$`)
+}
+
+// toKubernetesValue will create a nice kubernetes string that can be used as a
+// value out of given random string.
+func (in *instance) toKubernetesValue(v string) string {
+	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\.]`, `-*$`)
+}
+
+// toKubernetesNamewill create a nice kubernetes string that can be used as a
+// value out of given random string.
+func (in *instance) toKubernetesName(v string) string {
+	return in.replaceValueWithPatterns(v, "undef", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-]`, `-*$`)
+}
+
+func (in *instance) replaceValueWithPatterns(v, def string, pt ...string) string {
+	for _, exp := range pt {
 		re := regexp.MustCompile(exp)
-		nm = re.ReplaceAllString(nm, ``)
-		if len(nm) > 63 {
-			nm = nm[:63]
+		v = re.ReplaceAllString(v, ``)
+		if len(v) > 63 {
+			v = v[:63]
 		}
 	}
-	if nm == "" {
-		nm = "undef"
+	if v == "" {
+		v = def
 	}
-	return nm
+	return v
 }
 
 // getPodsLabelSelector will return a label selector that can be used to

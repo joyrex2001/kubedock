@@ -288,6 +288,19 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 // as additional labels which are used internally by kubedock.
 func (in *instance) getLabels(tainr *types.Container) map[string]string {
 	l := map[string]string{}
+	for k, v := range tainr.Labels {
+		kk := in.toKubernetesKey(k)
+		kv := in.toKubernetesValue(v)
+		if kk == "" {
+			klog.V(2).Infof("not adding `%s` as a label: incompatible key", k)
+			continue
+		}
+		if kv == "" {
+			klog.V(2).Infof("not adding `%s` with value `%s` as a label: incompatible value", k, v)
+			continue
+		}
+		l[kk] = kv
+	}
 	for k, v := range config.DefaultLabels {
 		l[k] = v
 	}

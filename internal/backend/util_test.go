@@ -4,44 +4,78 @@ import (
 	"testing"
 )
 
-func TestAsKubernetsName(t *testing.T) {
+func TestToKubernetesValue(t *testing.T) {
 	tests := []struct {
-		in  string
-		out string
+		in    string
+		key   string
+		value string
+		name  string
 	}{
-		{in: "__-abc", out: "abc"},
-		{in: "/a/b/c", out: "abc"},
+		{in: "__-abc", key: "abc", value: "abc", name: "abc"},
+		{in: "/a/b/c", key: "a/b/c", value: "abc", name: "abc"},
 		{
-			in:  "StrategicMars",
-			out: "StrategicMars",
+			in:    "StrategicMars",
+			key:   "StrategicMars",
+			value: "StrategicMars",
+			name:  "StrategicMars",
 		},
 		{
-			in:  "2107007e-b7c8-df23-18fb-6a6f79726578",
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
+			in:    "2107007e-b7c8-df23-18fb-6a6f79726578",
+			key:   "2107007e-b7c8-df23-18fb-6a6f79726578",
+			value: "2107007e-b7c8-df23-18fb-6a6f79726578",
+			name:  "2107007e-b7c8-df23-18fb-6a6f79726578",
 		},
 		{
-			in:  "0123456789012345678901234567890123456789012345678901234567890123456789",
-			out: "012345678901234567890123456789012345678901234567890123456789012",
+			in:    "0123456789012345678901234567890123456789012345678901234567890123456789",
+			key:   "012345678901234567890123456789012345678901234567890123456789012",
+			value: "012345678901234567890123456789012345678901234567890123456789012",
+			name:  "012345678901234567890123456789012345678901234567890123456789012",
 		},
 		{
-			in:  "StrategicMars-",
-			out: "StrategicMars",
+			in:    "StrategicMars-",
+			key:   "StrategicMars",
+			value: "StrategicMars",
+			name:  "StrategicMars",
 		},
 		{
-			in:  "2107007e-b7c8-df23-18fb-6a6f79726578",
-			out: "2107007e-b7c8-df23-18fb-6a6f79726578",
+			in:    "StrategicMars/-",
+			key:   "StrategicMars",
+			value: "StrategicMars",
+			name:  "StrategicMars",
 		},
 		{
-			in:  "",
-			out: "undef",
+			in:    "2107007e-b7c8-df23-18fb-6a6f79726578",
+			key:   "2107007e-b7c8-df23-18fb-6a6f79726578",
+			value: "2107007e-b7c8-df23-18fb-6a6f79726578",
+			name:  "2107007e-b7c8-df23-18fb-6a6f79726578",
+		},
+		{
+			in:    "app.kubernetes.io/name",
+			key:   "app.kubernetes.io/name",
+			value: "app.kubernetes.ioname",
+			name:  "appkubernetesioname",
+		},
+		{
+			in:    "",
+			key:   "",
+			value: "",
+			name:  "undef",
 		},
 	}
 
 	for i, tst := range tests {
 		kub := &instance{}
-		out := kub.toKubernetesName(tst.in)
-		if out != tst.out {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, out)
+		key := kub.toKubernetesKey(tst.in)
+		if key != tst.key {
+			t.Errorf("failed test %d - expected key %s, but got %s", i, tst.key, key)
+		}
+		value := kub.toKubernetesValue(tst.in)
+		if value != tst.value {
+			t.Errorf("failed test %d - expected value %s, but got %s", i, tst.value, value)
+		}
+		name := kub.toKubernetesName(tst.in)
+		if name != tst.name {
+			t.Errorf("failed test %d - expected name %s, but got %s", i, tst.name, name)
 		}
 	}
 }

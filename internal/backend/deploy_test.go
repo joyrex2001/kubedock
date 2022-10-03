@@ -554,12 +554,16 @@ func TestGetLabels(t *testing.T) {
 		count int
 	}{
 		{in: &types.Container{}, count: 3},
-		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 3},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 4},
+		{in: &types.Container{Labels: map[string]string{"app.kubernetes.io/name": "kubedock"}}, count: 4},
+		{in: &types.Container{Labels: map[string]string{"c/": "---"}}, count: 3},
+		{in: &types.Container{Labels: map[string]string{"/": "abc"}}, count: 3},
 	}
 
 	for i, tst := range tests {
 		kub := &instance{}
-		count := len(kub.getLabels(tst.in))
+		lbls := kub.getLabels(tst.in)
+		count := len(lbls)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
 		}
