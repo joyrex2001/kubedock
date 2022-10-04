@@ -32,6 +32,20 @@ func TestGetEnvVar(t *testing.T) {
 				{Name: "rc768", Value: "Space Manbow"},
 			},
 		},
+		{
+			in: &Container{Env: []string{
+				"NO_EQUALS=123",
+				"EQUALS_AT_END=456=",
+				"EQUALS_IN_MIDDLE=abc123=aabbcc",
+				"MULTIPLE_EQUALS=abc123==aa=bb=cc==",
+			}},
+			out: []corev1.EnvVar{
+				{Name: "NO_EQUALS", Value: "123"},
+				{Name: "EQUALS_AT_END", Value: "456="},
+				{Name: "EQUALS_IN_MIDDLE", Value: "abc123=aabbcc"},
+				{Name: "MULTIPLE_EQUALS", Value: "abc123==aa=bb=cc=="},
+			},
+		},
 	}
 	for i, tst := range tests {
 		res := tst.in.GetEnvVar()

@@ -70,12 +70,13 @@ const (
 func (co *Container) GetEnvVar() []corev1.EnvVar {
 	env := []corev1.EnvVar{}
 	for _, e := range co.Env {
-		f := strings.Split(e, "=")
-		if len(f) != 2 {
+		//f := strings.Cut(e, "=")
+		key, value, found := strings.Cut(e, "=")
+		if !found {
 			klog.Errorf("could not parse env %s", e)
 			continue
 		}
-		env = append(env, corev1.EnvVar{Name: f[0], Value: f[1]})
+		env = append(env, corev1.EnvVar{Name: key, Value: value})
 	}
 	return env
 }
