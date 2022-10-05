@@ -70,7 +70,6 @@ const (
 func (co *Container) GetEnvVar() []corev1.EnvVar {
 	env := []corev1.EnvVar{}
 	for _, e := range co.Env {
-		//f := strings.Cut(e, "=")
 		key, value, found := strings.Cut(e, "=")
 		if !found {
 			klog.Errorf("could not parse env %s", e)
