@@ -340,7 +340,7 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployStat
 	return DeployFailed, fmt.Errorf("timeout starting container")
 }
 
-// GetDeploymentStatus will return the state of the deployed container.
+// GetContainerStatus will return the state of the deployed container.
 func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, error) {
 	pods, err := in.getPods(tainr)
 	if err != nil {
@@ -361,6 +361,9 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 			}
 			if status.RestartCount > 0 {
 				return DeployFailed, fmt.Errorf("failed to start container")
+			}
+			if status.State.Waiting != nil && status.State.Waiting.Reason == "ImagePullBackOff" {
+				return DeployFailed, fmt.Errorf("failed to start container; ImagePullBackOff")
 			}
 		}
 	}
