@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
 
 	"k8s.io/klog"
 )
@@ -19,8 +18,6 @@ type Request struct {
 	RemoteIP string
 	// StopCh is the channel used to manage the reverse proxy lifecycle
 	StopCh <-chan struct{}
-	// TimeOut is the timeout that is applied when dialing to a remote port.
-	TimeOut time.Duration
 }
 
 // Proxy will open a reverse tcp proxy, listening to the provided
@@ -58,7 +55,7 @@ func Proxy(req Request) error {
 				continue
 			}
 			go func() {
-				conn2, err := net.DialTimeout("tcp", remote, req.TimeOut)
+				conn2, err := net.Dial("tcp", remote)
 				if err != nil {
 					klog.Warningf("error dialing remote addr: %s", err)
 					conn.Close()
@@ -71,5 +68,6 @@ func Proxy(req Request) error {
 			}()
 		}
 	}()
+
 	return nil
 }

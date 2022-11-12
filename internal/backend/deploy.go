@@ -200,10 +200,9 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 			RemotePort: dst,
 			RemoteIP:   tainr.HostIP,
 			StopCh:     stop,
-			TimeOut:    30 * time.Second,
 		})
 		if err != nil {
-			klog.Errorf("error setting up port-forward: %s", err)
+			klog.Errorf("error setting up reverse-proxy: %s", err)
 		}
 	}
 }
@@ -363,7 +362,7 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 				return DeployFailed, fmt.Errorf("failed to start container")
 			}
 			if status.State.Waiting != nil && status.State.Waiting.Reason == "ImagePullBackOff" {
-				return DeployFailed, fmt.Errorf("failed to start container; ImagePullBackOff")
+				return DeployFailed, fmt.Errorf("failed to start container; error pulling image")
 			}
 		}
 	}
