@@ -217,6 +217,16 @@ func (in *instance) GetServiceClusterIP(tainr *types.Container) (string, error) 
 	return svc.Spec.ClusterIP, nil
 }
 
+// GetPodIP will return the ip of the given container.
+func (in *instance) GetPodIP(tainr *types.Container) (string, error) {
+	ip := ""
+	pods, err := in.getPods(tainr)
+	if err != nil {
+		return ip, err
+	}
+	return pods[0].Status.PodIP, nil
+}
+
 // createServices will create k8s service objects for each provided
 // external name, mapped with provided hostports ports.
 func (in *instance) createServices(tainr *types.Container) error {
@@ -291,11 +301,11 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 		kk := in.toKubernetesKey(k)
 		kv := in.toKubernetesValue(v)
 		if kk == "" {
-			klog.V(2).Infof("not adding `%s` as a label: incompatible key", k)
+			klog.V(3).Infof("not adding `%s` as a label: incompatible key", k)
 			continue
 		}
 		if kv == "" {
-			klog.V(2).Infof("not adding `%s` with value `%s` as a label: incompatible value", k, v)
+			klog.V(3).Infof("not adding `%s` with value `%s` as a label: incompatible value", k, v)
 			continue
 		}
 		l[kk] = kv

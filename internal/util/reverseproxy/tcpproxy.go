@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"k8s.io/klog"
 )
@@ -55,7 +56,7 @@ func Proxy(req Request) error {
 				continue
 			}
 			go func() {
-				conn2, err := net.Dial("tcp", remote)
+				conn2, err := net.DialTimeout("tcp", remote, time.Second)
 				if err != nil {
 					klog.Warningf("error dialing remote addr: %s", err)
 					conn.Close()

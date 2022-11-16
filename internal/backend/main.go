@@ -17,6 +17,7 @@ type Backend interface {
 	CreatePortForwards(*types.Container)
 	CreateReverseProxies(*types.Container)
 	GetServiceClusterIP(*types.Container) (string, error)
+	GetPodIP(*types.Container) (string, error)
 	DeleteAll() error
 	DeleteWithKubedockID(string) error
 	DeleteContainer(*types.Container) error

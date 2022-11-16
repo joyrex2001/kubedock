@@ -46,7 +46,7 @@ func (cr *Router) startContainer(tainr *types.Container) error {
 		cr.kub.CreatePortForwards(tainr)
 	} else {
 		if len(tainr.GetServicePorts()) > 0 {
-			ip, err := cr.kub.GetServiceClusterIP(tainr)
+			ip, err := cr.kub.GetPodIP(tainr)
 			if err != nil {
 				return err
 			}
