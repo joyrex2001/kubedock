@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	// POLL_RATE defines maximum polling request per second towards the backend
-	POLL_RATE = 1
-	// POLL_BURST defines maximum burst poll requests towards the backend
-	POLL_BURST = 3
+	// PollRate defines maximum polling request per second towards the backend
+	PollRate = 1
+	// PollBurst defines maximum burst poll requests towards the backend
+	PollBurst = 3
 )
 
 // Config is the structure to instantiate a Router object
@@ -55,7 +55,7 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 	cr := &Router{
 		db:   db,
 		kub:  kub,
-		plim: rate.NewLimiter(POLL_RATE, POLL_BURST),
+		plim: rate.NewLimiter(PollRate, PollBurst),
 		cfg:  cfg,
 	}
 	cr.initRoutes(router)

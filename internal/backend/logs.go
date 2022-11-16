@@ -36,12 +36,9 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 
 	if follow {
 		go func() {
-			select {
-			case <-stop:
-				stopL <- struct{}{}
-				stream.Close()
-				return
-			}
+			<-stop
+			stopL <- struct{}{}
+			stream.Close()
 		}()
 	}
 

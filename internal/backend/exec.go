@@ -52,11 +52,12 @@ func (in *instance) parseExecResponse(err error) (int, error) {
 		return 0, err
 	}
 
-	if !strings.Contains(err.Error(), "command terminated with exit code") {
+	const eterm = "command terminated with exit code"
+	if !strings.Contains(err.Error(), eterm) {
 		return 0, err
 	}
 
-	cod, cerr := strconv.Atoi(strings.TrimLeft(err.Error(), "command terminated with exit code "))
+	cod, cerr := strconv.Atoi(strings.TrimPrefix(err.Error(), eterm+" "))
 	if cerr != nil {
 		return 0, err
 	}

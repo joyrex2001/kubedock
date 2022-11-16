@@ -207,22 +207,11 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 	}
 }
 
-// GetServiceClusterIP will return the clusterip of the created service for
-// given container.
-func (in *instance) GetServiceClusterIP(tainr *types.Container) (string, error) {
-	svc, err := in.cli.CoreV1().Services(in.namespace).Get(context.TODO(), "kd-"+tainr.ShortID, metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	return svc.Spec.ClusterIP, nil
-}
-
 // GetPodIP will return the ip of the given container.
 func (in *instance) GetPodIP(tainr *types.Container) (string, error) {
-	ip := ""
 	pods, err := in.getPods(tainr)
 	if err != nil {
-		return ip, err
+		return "", err
 	}
 	return pods[0].Status.PodIP, nil
 }

@@ -20,7 +20,7 @@ const (
 	Stderr
 )
 
-// logProxy is a proxy writer which adds the output prefix before writing data.
+// IoProxy is a proxy writer which adds the output prefix before writing data.
 type IoProxy struct {
 	io.Writer
 	out     io.Writer
