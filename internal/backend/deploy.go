@@ -189,10 +189,10 @@ func (in *instance) CreateReverseProxies(tainr *types.Container) {
 // given ports.
 func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 	for src, dst := range ports {
-		klog.Infof("reverse proxy for %d to %d", src, dst)
 		if src < 0 {
 			continue
 		}
+		klog.Infof("reverse proxy for %d to %d", src, dst)
 		stop := make(chan struct{}, 1)
 		tainr.AddStopChannel(stop)
 		err := reverseproxy.Proxy(reverseproxy.Request{
