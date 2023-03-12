@@ -36,7 +36,6 @@ type instance struct {
 	imagePullSecrets []string
 	namespace        string
 	timeOut          int
-	randomPorts      map[int]int
 }
 
 // Config is the structure to instantiate a Backend object
@@ -64,7 +63,6 @@ func New(cfg Config) Backend {
 		initImage:        cfg.InitImage,
 		namespace:        cfg.Namespace,
 		imagePullSecrets: cfg.ImagePullSecrets,
-		randomPorts:      map[int]int{},
 		timeOut:          int(cfg.TimeOut.Seconds()),
 	}
 }

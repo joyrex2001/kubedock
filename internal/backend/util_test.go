@@ -82,11 +82,9 @@ func TestToKubernetesValue(t *testing.T) {
 
 func TestRandomPort(t *testing.T) {
 	m := map[int]int{}
-	kub := &instance{
-		randomPorts: map[int]int{},
-	}
+	kub := &instance{}
 	for i := 0; i < 100; i++ {
-		p := kub.RandomPort()
+		p, _ := kub.RandomPort()
 		if p < 1024 {
 			t.Errorf("Invalid random port %d", p)
 			break

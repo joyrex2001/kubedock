@@ -3,7 +3,7 @@ package backend
 import (
 	"context"
 	"io/ioutil"
-	"math/rand"
+	"net"
 	"os"
 	"regexp"
 
@@ -81,16 +81,16 @@ func (in *instance) readFile(file string) ([]byte, error) {
 }
 
 // RandomPort will return a random port number.
-func (in *instance) RandomPort() int {
-	min := 32012
-	max := 64319
-	p := min
-	for i := 0; i < 100; i++ {
-		p = (rand.Intn(max-min) + min)
-		if _, ok := in.randomPorts[p]; !ok {
-			in.randomPorts[p] = p
-			return p
-		}
+func (in *instance) RandomPort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
 	}
-	return p
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
