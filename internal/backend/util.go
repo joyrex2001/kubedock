@@ -80,17 +80,21 @@ func (in *instance) readFile(file string) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
-// RandomPort will return a random port number.
-func (in *instance) RandomPort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, err
-	}
+// MapContainerTCPPorts will map random available ports to the ports
+// in the container.
+func (in *instance) MapContainerTCPPorts(tainr *types.Container) error {
+	for _, pp := range tainr.GetContainerTCPPorts() {
+		addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
+		if err != nil {
+			return err
+		}
 
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, err
+		l, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			return err
+		}
+		tainr.MapPort(l.Addr().(*net.TCPAddr).Port, pp)
+		defer l.Close()
 	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port, nil
+	return nil
 }

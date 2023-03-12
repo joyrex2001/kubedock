@@ -2,6 +2,8 @@ package backend
 
 import (
 	"testing"
+
+	"github.com/joyrex2001/kubedock/internal/model/types"
 )
 
 func TestToKubernetesValue(t *testing.T) {
@@ -80,13 +82,37 @@ func TestToKubernetesValue(t *testing.T) {
 	}
 }
 
-func TestRandomPort(t *testing.T) {
+func TestMapContainerTCPPorts(t *testing.T) {
+	tests := []struct {
+		in  *types.Container
+		out map[int]int
+	}{
+		{
+			in: &types.Container{ExposedPorts: map[string]interface{}{
+				"303/tcp": 0,
+				"909/tcp": 0,
+			},
+			},
+		},
+	}
 	kub := &instance{}
-	for i := 0; i < 100; i++ {
-		p, _ := kub.RandomPort()
-		if p < 1024 {
-			t.Errorf("Invalid random port %d", p)
-			break
+	for j := 0; j < 100; j++ {
+		for i, tst := range tests {
+			err := kub.MapContainerTCPPorts(tst.in)
+			if err != nil {
+				t.Errorf("failed test %d/%d - unexpected error: %s", i, j, err)
+			}
+			m := map[int]int{}
+			for p := range tst.in.MappedPorts {
+				if p < 1024 {
+					t.Errorf("failed test %d/%d - invalid random port %d", i, j, p)
+					break
+				}
+				if _, ok := m[p]; ok {
+					t.Errorf("failed test %d/%d - tandom port collision, port %d already provided", i, j, p)
+					break
+				}
+			}
 		}
 	}
 }

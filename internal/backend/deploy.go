@@ -130,12 +130,8 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return state, err
 	}
 
-	for _, pp := range tainr.GetContainerTCPPorts() {
-		rp, err := in.RandomPort()
-		if err != nil {
-			return DeployFailed, err
-		}
-		tainr.MapPort(rp, pp)
+	if err := in.MapContainerTCPPorts(tainr); err != nil {
+		return DeployFailed, err
 	}
 
 	if err := in.createServices(tainr); err != nil {
