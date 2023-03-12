@@ -78,7 +78,8 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 				Resources:       reqlimits,
 				ImagePullPolicy: pulpol,
 			}},
-			SecurityContext: &seccontext,
+			ServiceAccountName: tainr.GetServiceAccountName(),
+			SecurityContext:    &seccontext,
 		},
 	}
 

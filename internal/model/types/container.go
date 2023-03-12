@@ -63,6 +63,9 @@ const (
 	// LabelDeployAsJob is the label to be used to force creating a Job rather
 	// then a Deployment.
 	LabelDeployAsJob = "com.joyrex2001.kubedock.deploy-as-job"
+	// LabelServiceAccount is the label to be used to enforce a service account
+	// other than 'default' for the created pods.
+	LabelServiceAccount = "com.joyrex2001.kubedock.service-account"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -150,6 +153,15 @@ func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, err
 		}
 	}
 	return req, nil
+}
+
+// GetServiceAccountName will return the service account to be used for containers
+// that are deployed.
+func (co *Container) GetServiceAccountName() string {
+	if sa, ok := co.Labels[LabelServiceAccount]; ok {
+		return sa
+	}
+	return "default"
 }
 
 // GetPodSecurityContext will create a security context for the Pod that implements

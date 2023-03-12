@@ -36,6 +36,8 @@ type Config struct {
 	PreArchive bool
 	// DeployAsJob will deploy containers as jobs instead of deployments
 	DeployAsJob bool
+	// ServiceAccount contains the service account name to be used for running containers
+	ServiceAccount string
 }
 
 // Router is the object that facilitates the kubedock API endpoints.

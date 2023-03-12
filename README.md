@@ -29,6 +29,8 @@ Starting a container is a blocking call that will wait until it results in a run
 
 By default, all containers will be orchestrated using kubernetes Deployment resources. However, in some cases it could make more sense to deploy the container as a Job instead. The deployment resource type can be forced by adding a `com.joyrex2001.kubedock.deploy-as-job` label that contains `true` on the container that should be orchestrated as a Job instead. This can also be set globally with the `--deploy-as-job` argument, which will result in all containers being deployes as Jobs. The restart policy for Jobs is fixed to `OnFailure`.
 
+The containers will be started with the `default` service account. This can be changed with the `--service-acount` argument, as well by adding a `com.joyrex2001.kubedock.service-account` label containing the service account to be used. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
+
 ## Volumes
 
 Volumes are implemented by copying over the source content towards the container by means of an init-container that is started before the actual container is started. By default the kubedock image with the same version as the running kubedock is used as the init container. However, this can be any image that has tar available and can be configured with the `--initimage` argument.

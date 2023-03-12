@@ -105,18 +105,22 @@ func (s *Server) getGinEngine() *gin.Engine {
 	pulpol := viper.GetString("kubernetes.pull-policy")
 	klog.Infof("default image pull policy: %s", pulpol)
 
+	sa := viper.GetString("kubernetes.service-account")
+	klog.Infof("service account used in deployments: %s", sa)
+
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
 	routes.New(router, s.kub, routes.Config{
-		Inspector:     insp,
-		RequestCPU:    reqcpu,
-		RequestMemory: reqmem,
-		RunasUser:     runasuid,
-		PullPolicy:    pulpol,
-		PortForward:   pfwrd,
-		ReverseProxy:  revprox,
-		PreArchive:    prea,
-		DeployAsJob:   djob,
+		Inspector:      insp,
+		RequestCPU:     reqcpu,
+		RequestMemory:  reqmem,
+		ServiceAccount: sa,
+		RunasUser:      runasuid,
+		PullPolicy:     pulpol,
+		PortForward:    pfwrd,
+		ReverseProxy:   revprox,
+		PreArchive:     prea,
+		DeployAsJob:    djob,
 	})
 
 	return router

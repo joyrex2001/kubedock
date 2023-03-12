@@ -58,6 +58,9 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 	if in.HostConfig.NanoCpus != 0 {
 		in.Labels[types.LabelRequestCPU] = fmt.Sprintf("%dn", in.HostConfig.NanoCpus)
 	}
+	if _, ok := in.Labels[types.LabelServiceAccount]; !ok && cr.cfg.ServiceAccount != "" {
+		in.Labels[types.LabelServiceAccount] = cr.cfg.ServiceAccount
+	}
 
 	tainr := &types.Container{
 		Name:         in.Name,

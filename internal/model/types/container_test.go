@@ -227,6 +227,36 @@ func TestGetImagePullPolicy(t *testing.T) {
 	}
 }
 
+func TestGetServiceAccountName(t *testing.T) {
+	tests := []struct {
+		in *Container
+		sa string
+	}{
+		{ // 0
+			in: &Container{Labels: map[string]string{}},
+			sa: "default",
+		},
+		{ // 1
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.service-account": "default",
+			}},
+			sa: "default",
+		},
+		{ // 2
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.service-account": "jtkirk",
+			}},
+			sa: "jtkirk",
+		},
+	}
+	for i, tst := range tests {
+		sa := tst.in.GetServiceAccountName()
+		if sa != tst.sa {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.sa, sa)
+		}
+	}
+}
+
 func TestGetRunasUser(t *testing.T) {
 	tests := []struct {
 		in         *Container
