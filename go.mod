@@ -20,7 +20,7 @@ replace github.com/docker/distribution => github.com/docker/distribution v2.8.1+
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.8
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.4
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.5
 
 replace gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.1
 
