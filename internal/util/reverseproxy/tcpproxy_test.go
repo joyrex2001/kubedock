@@ -56,6 +56,7 @@ func TestProxyNormal(t *testing.T) {
 		RemoteIP:   "127.0.0.1",
 		RemotePort: 30391,
 		StopCh:     stopP,
+		MaxRetry:   2,
 	}
 
 	if err := Proxy(req); err != nil {
@@ -91,6 +92,7 @@ func TestProxyRefused(t *testing.T) {
 		RemoteIP:   "127.0.0.1",
 		RemotePort: 30392,
 		StopCh:     stopP,
+		MaxRetry:   1,
 	}
 
 	if err := Proxy(req); err != nil {
@@ -112,6 +114,7 @@ func TestProxyNotReady(t *testing.T) {
 		RemoteIP:   "127.0.0.1",
 		RemotePort: 30393,
 		StopCh:     stopP,
+		MaxRetry:   2,
 	}
 
 	if err := Proxy(req); err != nil {
