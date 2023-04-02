@@ -85,6 +85,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/containers/:id/logs", cr.ContainerLogs)
 	router.GET("/containers/:id/archive", cr.GetArchive)
 	router.PUT("/containers/:id/archive", cr.PutArchive)
+	router.POST("/containers/:id/rename", cr.ContainerRename)
 
 	router.POST("/exec/:id/start", cr.ExecStart)
 	router.GET("/exec/:id/json", cr.ExecInfo)
@@ -108,7 +109,6 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/containers/:id/stats", httputil.NotImplemented)
 	router.POST("/containers/:id/resize", httputil.NotImplemented)
 	router.POST("/containers/:id/update", httputil.NotImplemented)
-	router.POST("/containers/:id/rename", httputil.NotImplemented)
 	router.POST("/containers/:id/pause", httputil.NotImplemented)
 	router.POST("/containers/:id/unpause", httputil.NotImplemented)
 	router.GET("/containers/:id/attach/ws", httputil.NotImplemented)

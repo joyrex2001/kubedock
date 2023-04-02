@@ -389,6 +389,29 @@ func (cr *Router) ContainerList(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// ContainerRename - rename a container.
+// https://docs.docker.com/engine/api/v1.41/#tag/Container/operation/ContainerRename
+// GET "/containers/:id/rename"
+func (cr *Router) ContainerRename(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	name := c.Query("name")
+	if _, err := cr.db.GetContainerByName(name); err == nil {
+		httputil.Error(c, http.StatusConflict, fmt.Errorf("name `%s` already in used", name))
+		return
+	}
+	tainr.Name = name
+	if err := cr.db.SaveContainer(tainr); err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
 // getContainerInfo will return a gin.H containing the details of the
 // given container.
 func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
