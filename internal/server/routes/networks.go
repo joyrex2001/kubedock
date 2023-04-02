@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
 
@@ -21,17 +22,24 @@ func (nr *Router) NetworksList(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+	filtr, err := filter.New(c.Query("filters"))
+	if err != nil {
+		klog.V(5).Infof("unsupported filter: %s", err)
+	}
 	res := []gin.H{}
 	for _, netw := range netws {
-		tainrs := nr.getContainersInNetwork(netw)
-		res = append(res, gin.H{
-			"Name":       netw.Name,
-			"ID":         netw.ID,
-			"Driver":     "bridge",
-			"Scope":      "local",
-			"Attachable": true,
-			"Containers": tainrs,
-		})
+		if filtr.Match(netw) {
+			tainrs := nr.getContainersInNetwork(netw)
+			res = append(res, gin.H{
+				"Name":       netw.Name,
+				"ID":         netw.ID,
+				"Driver":     "bridge",
+				"Scope":      "local",
+				"Attachable": true,
+				"Containers": tainrs,
+				"Labels":     netw.Labels,
+			})
+		}
 	}
 	c.JSON(http.StatusOK, res)
 }
@@ -54,6 +62,7 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 		"Scope":      "local",
 		"Attachable": true,
 		"Containers": tainrs,
+		"Labels":     netw.Labels,
 	})
 }
 
@@ -67,7 +76,8 @@ func (nr *Router) NetworksCreate(c *gin.Context) {
 		return
 	}
 	netw := &types.Network{
-		Name: in.Name,
+		Name:   in.Name,
+		Labels: in.Labels,
 	}
 	if err := nr.db.SaveNetwork(netw); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
