@@ -362,6 +362,20 @@ func (cr *Router) ContainerWait(c *gin.Context) {
 	}
 }
 
+// ContainerResize - resize the tty for a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerResize
+// POST "/containers/:id/rezise"
+func (cr *Router) ContainerResize(c *gin.Context) {
+	id := c.Param("id")
+	_, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("tty resizing not supported"))
+	return
+}
+
 // ContainerInfo - return low-level information about a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // GET "/containers/:id/json"
