@@ -93,14 +93,24 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 
 	for _, endp := range in.NetworkConfig.EndpointsConfig {
 		cr.addNetworkAliases(tainr, endp)
+		if endp.NetworkID != "" {
+			netw, err := cr.db.GetNetworkByNameOrID(endp.NetworkID)
+			if err != nil {
+				httputil.Error(c, http.StatusInternalServerError, err)
+				return
+			}
+			tainr.ConnectNetwork(netw.ID)
+		}
 	}
 
-	netw, err := cr.db.GetNetworkByName("bridge")
-	if err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
+	if len(tainr.Networks) == 0 {
+		netw, err := cr.db.GetNetworkByName("bridge")
+		if err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+		tainr.ConnectNetwork(netw.ID)
 	}
-	tainr.ConnectNetwork(netw.ID)
 
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -422,7 +432,11 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 	}
 	netdtl := gin.H{}
 	for _, netw := range netws {
-		netdtl[netw.Name] = gin.H{"NetworkID": netw.ID, "IPAddress": "127.0.0.1"}
+		netdtl[netw.Name] = gin.H{
+			"NetworkID": netw.ID,
+			"Aliases":   tainr.NetworkAliases,
+			"IPAddress": "127.0.0.1",
+		}
 	}
 	res := gin.H{
 		"Id":    tainr.ID,

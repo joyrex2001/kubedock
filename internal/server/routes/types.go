@@ -78,5 +78,6 @@ type NetworkConfig struct {
 
 // EndpointConfig contains information about network endpoints
 type EndpointConfig struct {
-	Aliases []string `json:"Aliases"`
+	Aliases   []string `json:"Aliases"`
+	NetworkID string   `json:"NetworkID"`
 }
