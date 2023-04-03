@@ -291,11 +291,11 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 	for k, v := range tainr.Labels {
 		kk := in.toKubernetesKey(k)
 		kv := in.toKubernetesValue(v)
-		if kk == "" {
+		if kk == "" && k != "" {
 			klog.V(3).Infof("not adding `%s` as a label: incompatible key", k)
 			continue
 		}
-		if kv == "" {
+		if kv == "" && v != "" {
 			klog.V(3).Infof("not adding `%s` with value `%s` as a label: incompatible value", k, v)
 			continue
 		}
