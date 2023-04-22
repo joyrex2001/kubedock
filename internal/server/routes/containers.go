@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
@@ -117,6 +118,8 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		return
 	}
 
+	cr.events.Publish(tainr.ID, events.Container, events.Create)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": tainr.ID,
 	})
@@ -140,6 +143,9 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 	} else {
 		klog.Warningf("container %s already running", id)
 	}
+
+	cr.events.Publish(tainr.ID, events.Container, events.Start)
+
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -212,6 +218,9 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
+	cr.events.Publish(tainr.ID, events.Container, events.Die)
+
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -260,6 +269,9 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
+	cr.events.Publish(tainr.ID, events.Container, events.Die)
+
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -281,6 +293,7 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 		if err := cr.kub.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
+		cr.events.Publish(tainr.ID, events.Container, events.Die)
 	}
 
 	if err := cr.db.DeleteContainer(tainr); err != nil {

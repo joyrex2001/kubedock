@@ -5,6 +5,7 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/joyrex2001/kubedock/internal/backend"
+	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/model"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -42,10 +43,11 @@ type Config struct {
 
 // Router is the object that facilitates the kubedock API endpoints.
 type Router struct {
-	db   *model.Database
-	kub  backend.Backend
-	plim *rate.Limiter
-	cfg  Config
+	db     *model.Database
+	kub    backend.Backend
+	plim   *rate.Limiter
+	cfg    Config
+	events events.Events
 }
 
 // New will instantiate a containerRouter object.
@@ -55,10 +57,11 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 		return nil, err
 	}
 	cr := &Router{
-		db:   db,
-		kub:  kub,
-		plim: rate.NewLimiter(PollRate, PollBurst),
-		cfg:  cfg,
+		db:     db,
+		kub:    kub,
+		plim:   rate.NewLimiter(PollRate, PollBurst),
+		cfg:    cfg,
+		events: events.New(),
 	}
 	cr.initRoutes(router)
 	return cr, nil
@@ -67,6 +70,7 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 // initRoutes will add all suported routes.
 func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/info", cr.Info)
+	router.GET("/events", cr.Events)
 	router.GET("/version", cr.Version)
 	router.GET("/_ping", cr.Ping)
 	router.HEAD("/_ping", cr.Ping)

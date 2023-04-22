@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -83,6 +84,9 @@ func (cr *Router) ImageCreate(c *gin.Context) {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
+
+	cr.events.Publish(from, events.Image, events.Pull)
+
 	c.JSON(http.StatusOK, gin.H{
 		"status": "Download complete",
 	})
