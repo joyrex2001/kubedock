@@ -10,10 +10,12 @@ type Message struct {
 }
 
 const (
-	// Image defines the event type image
+	// Image defines the event/filter type image
 	Image = "image"
-	// Container defines the event type container
+	// Container defines the event/filter type container
 	Container = "container"
+	// Type defines the filter type Type
+	Type = "type"
 	// Create defines the event action create (container)
 	Create = "create"
 	// Start defines the event action start (container)

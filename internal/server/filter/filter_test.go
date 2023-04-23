@@ -62,6 +62,12 @@ func TestFilter(t *testing.T) {
 			match:   true,
 		},
 		{
+			filter:  `{"container":{"f577e780ec1756037235f0d5ba8081dfcdeb30327c75513f088953fa979b79b3":true},"type":{"container":true}}`,
+			matcher: &matcher{true},
+			suc:     true,
+			match:   true,
+		},
+		{
 			filter:  ``,
 			matcher: &matcher{false},
 			match:   true,

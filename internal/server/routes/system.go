@@ -8,6 +8,7 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/config"
+	"github.com/joyrex2001/kubedock/internal/server/filter"
 )
 
 // Info - get system information.
@@ -59,7 +60,14 @@ func (cr *Router) Events(c *gin.Context) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Flush()
+
+	filtr, err := filter.New(c.Query("filters"))
+	if err != nil {
+		klog.V(5).Infof("unsupported filter: %s", err)
+	}
+
 	enc := json.NewEncoder(w)
+	_ = enc
 	el, id := cr.events.Subscribe()
 	for {
 		select {
@@ -67,20 +75,21 @@ func (cr *Router) Events(c *gin.Context) {
 			cr.events.Unsubscribe(id)
 			return
 		case msg := <-el:
-			// TODO: add (id) filter support
-			klog.Info("sending message")
-			enc.Encode(gin.H{
-				"id":     msg.ID,
-				"Type":   msg.Type,
-				"Action": msg.Action,
-				"Actor": gin.H{
-					"ID": msg.ID,
-				},
-				"scope":    "local",
-				"time":     msg.Time,
-				"timeNano": msg.TimeNano,
-			})
-			w.Flush()
+			if filtr.Match(&msg) {
+				klog.V(5).Infof("sending message to %s", id)
+				enc.Encode(gin.H{
+					"id":     msg.ID,
+					"Type":   msg.Type,
+					"Action": msg.Action,
+					"Actor": gin.H{
+						"ID": msg.ID,
+					},
+					"scope":    "local",
+					"time":     msg.Time,
+					"timeNano": msg.TimeNano,
+				})
+				w.Flush()
+			}
 		}
 	}
 }
