@@ -67,7 +67,6 @@ func (cr *Router) Events(c *gin.Context) {
 	}
 
 	enc := json.NewEncoder(w)
-	_ = enc
 	el, id := cr.events.Subscribe()
 	for {
 		select {
