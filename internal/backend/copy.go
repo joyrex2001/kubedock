@@ -107,9 +107,8 @@ func (in *instance) GetFileModeInContainer(tainr *types.Container, target string
 		return 0, err
 	}
 
-	res := string(b.Bytes())
 	mode := fs.FileMode(fs.ModePerm)
-	if strings.Contains(res, "folder") {
+	if strings.Contains(string(b.Bytes()), "folder") {
 		mode |= fs.ModeDir
 	}
 

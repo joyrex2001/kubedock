@@ -104,7 +104,7 @@ func (cr *Router) HeadArchive(c *gin.Context) {
 		return
 	}
 
-	stat, _ := json.Marshal(gin.H{"name": path, "mode": mode })
+	stat, _ := json.Marshal(gin.H{"name": path, "mode": mode})
 
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString(stat))
@@ -133,7 +133,7 @@ func (cr *Router) GetArchive(c *gin.Context) {
 		return
 	}
 
-	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": "", "mtime": "2021-01-01T20:00:00Z" })
+	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": "", "mtime": "2021-01-01T20:00:00Z"})
 
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("Content-Type", "application/x-tar")
