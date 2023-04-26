@@ -2,6 +2,7 @@ package backend
 
 import (
 	"io"
+	"io/fs"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -23,6 +24,7 @@ type Backend interface {
 	DeleteOlderThan(time.Duration) error
 	CopyFromContainer(tainr *types.Container, path string) ([]byte, error)
 	CopyToContainer(*types.Container, []byte, string) error
+	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
 	ExecContainer(*types.Container, *types.Exec, io.Writer) (int, error)
 	GetLogs(*types.Container, bool, int, chan struct{}, io.Writer) error
 	GetImageExposedPorts(string) (map[string]struct{}, error)

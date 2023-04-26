@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -78,6 +81,35 @@ func (cr *Router) PutArchive(c *gin.Context) {
 	})
 }
 
+// HeadArchive - get information about files in a container.
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchiveInfo
+// HEAD "/containers/:id/archive"
+func (cr *Router) HeadArchive(c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.db.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	path := c.Query("path")
+	if path == "" {
+		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("missing required path parameter"))
+		return
+	}
+
+	mode, err := cr.kub.GetFileModeInContainer(tainr, path)
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	stat, _ := json.Marshal(gin.H{"name": path, "mode": mode })
+
+	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString(stat))
+}
+
 // GetArchive - get a tar archive of a resource in the filesystem of container id.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchive
 // GET "/containers/:id/archive"
@@ -101,9 +133,10 @@ func (cr *Router) GetArchive(c *gin.Context) {
 		return
 	}
 
+	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": "", "mtime": "2021-01-01T20:00:00Z" })
+
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("Content-Type", "application/x-tar")
-	// {"name": "","size": 0,"mode": 0,"mtime": "2021-01-01T20:00:00Z","linkTarget": ""}
-	c.Writer.Header().Set("X-Docker-Container-Path-Stat", "eyJuYW1lIjogIiIsInNpemUiOiAwLCJtb2RlIjogMCwibXRpbWUiOiAiMjAyMS0wMS0wMVQyMDowMDowMFoiLCJsaW5rVGFyZ2V0IjogIiJ9Cg==")
+	c.Writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString(stat))
 	c.Writer.Write(dat)
 }
