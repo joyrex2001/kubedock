@@ -103,12 +103,19 @@ func ResponseLoggerMiddleware() gin.HandlerFunc {
 }
 
 // VersionAliasMiddleware is a gin-gonic middleware that will remove /v1.xx
-// from the url path (ignoring versioned apis).
+// and /v4.x.y from the url path (ignoring versioned apis).
 func VersionAliasMiddleware(router *gin.Engine) gin.HandlerFunc {
-	re := regexp.MustCompile(`^/v1.[0-9]+`)
+	red := regexp.MustCompile(`^/v1.[0-9]+`)
+	rep := regexp.MustCompile(`^/v[1-9]+.[0-9]+.[0-9]+`)
 	return func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/v1.") {
-			c.Request.URL.Path = re.ReplaceAllString(c.Request.URL.Path, ``)
+			c.Request.URL.Path = red.ReplaceAllString(c.Request.URL.Path, ``)
+			router.HandleContext(c)
+			c.Abort()
+			return
+		}
+		if matched, _ := regexp.MatchString(`^/v[1-9]+.[0-9]+.[0-9]+`, c.Request.URL.Path); matched {
+			c.Request.URL.Path = rep.ReplaceAllString(c.Request.URL.Path, ``)
 			router.HandleContext(c)
 			c.Abort()
 			return
