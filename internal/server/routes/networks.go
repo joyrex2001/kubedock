@@ -11,6 +11,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 // NetworksList - list networks.
@@ -70,7 +71,7 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate
 // POST "/networks/create"
 func (nr *Router) NetworksCreate(c *gin.Context) {
-	in := &NetworkCreateRequest{}
+	in := &docker.NetworkCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -120,7 +121,7 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkConnect
 // POST "/networks/:id/connect"
 func (nr *Router) NetworksConnect(c *gin.Context) {
-	in := &NetworkConnectRequest{}
+	in := &docker.NetworkConnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -157,7 +158,7 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkDisconnect
 // POST "/networks/:id/disconnect"
 func (nr *Router) NetworksDisconnect(c *gin.Context) {
-	in := &NetworkDisconnectRequest{}
+	in := &docker.NetworkDisconnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return

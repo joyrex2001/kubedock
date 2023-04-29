@@ -7,12 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 func TestGetNetworkSettingsPorts(t *testing.T) {
 	tests := []struct {
 		tainr  *types.Container
-		endp   EndpointConfig
+		endp   docker.EndpointConfig
 		out    gin.H
 		portfw bool
 	}{
@@ -92,7 +93,7 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 func TestGetContainerPorts(t *testing.T) {
 	tests := []struct {
 		tainr *types.Container
-		endp  EndpointConfig
+		endp  docker.EndpointConfig
 		out   []map[string]interface{}
 	}{
 		{

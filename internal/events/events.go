@@ -9,7 +9,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/util/stringid"
 )
 
-// Backend is the interface to publish and consume events.
+// Events is the interface to publish and consume events.
 type Events interface {
 	Subscribe() (<-chan Message, string)
 	Unsubscribe(string)

@@ -69,6 +69,7 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 
 // initRoutes will add all suported routes.
 func (cr *Router) initRoutes(router *gin.Engine) {
+	// docker api
 	router.GET("/info", cr.Info)
 	router.GET("/events", cr.Events)
 	router.GET("/version", cr.Version)
@@ -108,7 +109,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.GET("/images/json", cr.ImageList)
 	router.GET("/images/:image/*json", cr.ImageJSON)
 
-	// not supported at the moment
+	// not supported docker api at the moment
 	router.GET("/containers/:id/top", httputil.NotImplemented)
 	router.GET("/containers/:id/changes", httputil.NotImplemented)
 	router.GET("/containers/:id/export", httputil.NotImplemented)
@@ -124,4 +125,27 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.DELETE("/volumes/:id", httputil.NotImplemented)
 	router.POST("/volumes/create", httputil.NotImplemented)
 	router.POST("/volumes/prune", httputil.NotImplemented)
+
+	// podman api
+	router.GET("/libpod/_ping", cr.Ping)
+	router.HEAD("/libpod/_ping", cr.Ping)
+
+	router.POST("/libpod/images/pull", cr.LibpodImagePull)
+	router.GET("/libpod/images/json", cr.ImageList)
+
+	router.DELETE("/libpod/containers/:id", cr.ContainerDelete)
+	router.POST("/libpod/containers/:id/start", cr.ContainerStart)
+	router.POST("/libpod/containers/:id/stop", cr.ContainerStop)
+	router.POST("/libpod/containers/:id/restart", cr.ContainerRestart)
+	router.POST("/libpod/containers/:id/wait", cr.ContainerWait)
+	router.GET("/libpod/containers/:id/logs", cr.ContainerLogs)
+	router.POST("/libpod/containers/:id/kill", cr.ContainerKill)
+	router.POST("/libpod/containers/:id/rename", cr.ContainerRename)
+
+	// TODO: make compatible
+	router.POST("/libpod/containers/create", cr.LibpodContainerCreate)
+
+	// not supported podman api at the moment
+	router.GET("/libpod/info", httputil.NotImplemented)
+	router.POST("/libpod/images/build", httputil.NotImplemented)
 }

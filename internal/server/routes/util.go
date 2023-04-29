@@ -5,14 +5,16 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/klog"
+
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"k8s.io/klog"
+	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 // addNetworkAliases will add the networkaliases as defined in the provided
 // EndpointConfig to the container.
-func (cr *Router) addNetworkAliases(tainr *types.Container, endp EndpointConfig) {
+func (cr *Router) addNetworkAliases(tainr *types.Container, endp docker.EndpointConfig) {
 	aliases := []string{}
 	done := map[string]string{tainr.ShortID: tainr.ShortID}
 	for _, l := range [][]string{tainr.NetworkAliases, endp.Aliases} {
