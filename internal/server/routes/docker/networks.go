@@ -11,13 +11,14 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // NetworksList - list networks.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkList
 // GET "/networks"
-func (nr *Router) NetworksList(c *gin.Context) {
-	netws, err := nr.db.GetNetworks()
+func NetworksList(cr *routes.ContextRouter, c *gin.Context) {
+	netws, err := cr.DB.GetNetworks()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -29,7 +30,7 @@ func (nr *Router) NetworksList(c *gin.Context) {
 	res := []gin.H{}
 	for _, netw := range netws {
 		if filtr.Match(netw) {
-			tainrs := nr.getContainersInNetwork(netw)
+			tainrs := getContainersInNetwork(cr, netw)
 			res = append(res, gin.H{
 				"Name":       netw.Name,
 				"ID":         netw.ID,
@@ -47,14 +48,14 @@ func (nr *Router) NetworksList(c *gin.Context) {
 // NetworksInfo - inspect a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect
 // GET "/network/:id"
-func (nr *Router) NetworksInfo(c *gin.Context) {
+func NetworksInfo(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	netw, err := nr.db.GetNetworkByNameOrID(id)
+	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	tainrs := nr.getContainersInNetwork(netw)
+	tainrs := getContainersInNetwork(cr, netw)
 	c.JSON(http.StatusOK, gin.H{
 		"Name":       netw.Name,
 		"ID":         netw.ID,
@@ -69,7 +70,7 @@ func (nr *Router) NetworksInfo(c *gin.Context) {
 // NetworksCreate - create a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate
 // POST "/networks/create"
-func (nr *Router) NetworksCreate(c *gin.Context) {
+func NetworksCreate(cr *routes.ContextRouter, c *gin.Context) {
 	in := &NetworkCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -79,7 +80,7 @@ func (nr *Router) NetworksCreate(c *gin.Context) {
 		Name:   in.Name,
 		Labels: in.Labels,
 	}
-	if err := nr.db.SaveNetwork(netw); err != nil {
+	if err := cr.DB.SaveNetwork(netw); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -91,9 +92,9 @@ func (nr *Router) NetworksCreate(c *gin.Context) {
 // NetworksDelete - remove a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkDelete
 // DELETE "/networks/:id"
-func (nr *Router) NetworksDelete(c *gin.Context) {
+func NetworksDelete(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	netw, err := nr.db.GetNetworkByNameOrID(id)
+	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -104,12 +105,12 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 		return
 	}
 
-	if len(nr.getContainersInNetwork(netw)) != 0 {
+	if len(getContainersInNetwork(cr, netw)) != 0 {
 		httputil.Error(c, http.StatusForbidden, fmt.Errorf("cannot delete network, containers attachd"))
 		return
 	}
 
-	if err := nr.db.DeleteNetwork(netw); err != nil {
+	if err := cr.DB.DeleteNetwork(netw); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
@@ -119,19 +120,19 @@ func (nr *Router) NetworksDelete(c *gin.Context) {
 // NetworksConnect - connect a container to a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkConnect
 // POST "/networks/:id/connect"
-func (nr *Router) NetworksConnect(c *gin.Context) {
+func NetworksConnect(cr *routes.ContextRouter, c *gin.Context) {
 	in := &NetworkConnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	id := c.Param("id")
-	netw, err := nr.db.GetNetworkByNameOrID(id)
+	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	tainr, err := nr.db.GetContainer(in.Container)
+	tainr, err := cr.DB.GetContainer(in.Container)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -139,12 +140,12 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 
 	tainr.ConnectNetwork(netw.ID)
 	n := len(tainr.NetworkAliases)
-	nr.addNetworkAliases(tainr, in.EndpointConfig)
+	addNetworkAliases(tainr, in.EndpointConfig)
 
 	if tainr.Running && n != len(tainr.NetworkAliases) {
 		klog.Warningf("adding networkaliases to a running container, will not create new services...")
 	}
-	if err := nr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -156,19 +157,19 @@ func (nr *Router) NetworksConnect(c *gin.Context) {
 // NetworksDisconnect - connect a container to a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkDisconnect
 // POST "/networks/:id/disconnect"
-func (nr *Router) NetworksDisconnect(c *gin.Context) {
+func NetworksDisconnect(cr *routes.ContextRouter, c *gin.Context) {
 	in := &NetworkDisconnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	id := c.Param("id")
-	_, err := nr.db.GetNetworkByNameOrID(id)
+	_, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	tainr, err := nr.db.GetContainer(in.Container)
+	tainr, err := cr.DB.GetContainer(in.Container)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -177,7 +178,7 @@ func (nr *Router) NetworksDisconnect(c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := nr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -187,8 +188,8 @@ func (nr *Router) NetworksDisconnect(c *gin.Context) {
 // NetworksPrune - delete unused networks.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkPrune
 // POST "/networks/prune"
-func (nr *Router) NetworksPrune(c *gin.Context) {
-	netws, err := nr.db.GetNetworks()
+func NetworksPrune(cr *routes.ContextRouter, c *gin.Context) {
+	netws, err := cr.DB.GetNetworks()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -196,10 +197,10 @@ func (nr *Router) NetworksPrune(c *gin.Context) {
 
 	names := []string{}
 	for _, netw := range netws {
-		if netw.IsPredefined() || len(nr.getContainersInNetwork(netw)) != 0 {
+		if netw.IsPredefined() || len(getContainersInNetwork(cr, netw)) != 0 {
 			continue
 		}
-		if err := nr.db.DeleteNetwork(netw); err != nil {
+		if err := cr.DB.DeleteNetwork(netw); err != nil {
 			httputil.Error(c, http.StatusNotFound, err)
 			return
 		}
@@ -213,9 +214,9 @@ func (nr *Router) NetworksPrune(c *gin.Context) {
 
 // getContainersInNetwork will return an array of containers in an array
 // of gin.H structs, containing the details of the container.
-func (nr *Router) getContainersInNetwork(netw *types.Network) map[string]gin.H {
+func getContainersInNetwork(cr *routes.ContextRouter, netw *types.Network) map[string]gin.H {
 	res := map[string]gin.H{}
-	tainrs, err := nr.db.GetContainers()
+	tainrs, err := cr.DB.GetContainers()
 	if err == nil {
 		for _, tainr := range tainrs {
 			if _, ok := tainr.Networks[netw.ID]; ok {

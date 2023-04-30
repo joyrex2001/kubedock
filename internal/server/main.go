@@ -7,6 +7,7 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 	"github.com/joyrex2001/kubedock/internal/server/routes/docker"
 	"github.com/joyrex2001/kubedock/internal/server/routes/libpod"
 )
@@ -111,8 +112,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
-	// TODO: move config to ctx?
-	docker.New(router, s.kub, docker.Config{
+	cr, _ := routes.NewContextRouter(s.kub, routes.Config{
 		Inspector:      insp,
 		RequestCPU:     reqcpu,
 		RequestMemory:  reqmem,
@@ -125,18 +125,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 		DeployAsJob:    djob,
 	})
 
-	libpod.New(router, s.kub, libpod.Config{
-		Inspector:      insp,
-		RequestCPU:     reqcpu,
-		RequestMemory:  reqmem,
-		ServiceAccount: sa,
-		RunasUser:      runasuid,
-		PullPolicy:     pulpol,
-		PortForward:    pfwrd,
-		ReverseProxy:   revprox,
-		PreArchive:     prea,
-		DeployAsJob:    djob,
-	})
+	docker.RegisterRoutes(router, cr)
+	libpod.RegisterRoutes(router, cr)
 
 	return router
 }

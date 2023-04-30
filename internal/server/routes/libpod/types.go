@@ -10,7 +10,7 @@ type ContainerCreateRequest struct {
 	Command      []string          `json:"Command"`
 	Env          []string          `json:"Env"`
 	User         string            `json:"User"`
-	PortMappings []PortMapping     `json:portmappings`
+	PortMappings []PortMapping     `json:"portmappings"`
 }
 
 // PortMapping describes how to map a port into the container.

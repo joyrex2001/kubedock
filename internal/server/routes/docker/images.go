@@ -9,13 +9,14 @@ import (
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ImageList - list Images. Stubbed, not relevant on k8s.
 // https://docs.docker.com/engine/api/v1.41/#operation/ImageList
 // GET "/images/json"
-func (cr *Router) ImageList(c *gin.Context) {
-	imgs, err := cr.db.GetImages()
+func ImageList(cr *routes.ContextRouter, c *gin.Context) {
+	imgs, err := cr.DB.GetImages()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -34,20 +35,20 @@ func (cr *Router) ImageList(c *gin.Context) {
 // ImageJSON - return low-level information about an image.
 // https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect
 // GET "/images/:image/json"
-func (cr *Router) ImageJSON(c *gin.Context) {
+func ImageJSON(cr *routes.ContextRouter, c *gin.Context) {
 	id := strings.TrimSuffix(c.Param("image")+c.Param("json"), "/json")
-	img, err := cr.db.GetImageByNameOrID(id)
+	img, err := cr.DB.GetImageByNameOrID(id)
 	if err != nil {
 		img = &types.Image{Name: id}
-		if cr.cfg.Inspector {
-			pts, err := cr.kub.GetImageExposedPorts(id)
+		if cr.Config.Inspector {
+			pts, err := cr.Backend.GetImageExposedPorts(id)
 			if err != nil {
 				httputil.Error(c, http.StatusInternalServerError, err)
 				return
 			}
 			img.ExposedPorts = pts
 		}
-		if err := cr.db.SaveImage(img); err != nil {
+		if err := cr.DB.SaveImage(img); err != nil {
 			httputil.Error(c, http.StatusNotFound, err)
 			return
 		}
@@ -65,55 +66,29 @@ func (cr *Router) ImageJSON(c *gin.Context) {
 // ImageCreate - create an image.
 // https://docs.docker.com/engine/api/v1.41/#operation/ImageCreate
 // POST "/images/create"
-func (cr *Router) ImageCreate(c *gin.Context) {
+func ImageCreate(cr *routes.ContextRouter, c *gin.Context) {
 	from := c.Query("fromImage")
 	tag := c.Query("tag")
 	if tag != "" {
 		from = from + ":" + tag
 	}
 	img := &types.Image{Name: from}
-	if cr.cfg.Inspector {
-		pts, err := cr.kub.GetImageExposedPorts(from)
+	if cr.Config.Inspector {
+		pts, err := cr.Backend.GetImageExposedPorts(from)
 		if err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
 		img.ExposedPorts = pts
 	}
-	if err := cr.db.SaveImage(img); err != nil {
+	if err := cr.DB.SaveImage(img); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	cr.events.Publish(from, events.Image, events.Pull)
+	cr.Events.Publish(from, events.Image, events.Pull)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "Download complete",
-	})
-}
-
-// LibpodImagePull - pull one or more images from a container registry.
-// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/images/operation/ImagePullLibpod
-// POST "/libpod/images/pull"
-func (cr *Router) LibpodImagePull(c *gin.Context) {
-	from := c.Query("reference")
-	img := &types.Image{Name: from}
-	if cr.cfg.Inspector {
-		pts, err := cr.kub.GetImageExposedPorts(from)
-		if err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-		img.ExposedPorts = pts
-	}
-	if err := cr.db.SaveImage(img); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	cr.events.Publish(from, events.Image, events.Pull)
-
-	c.JSON(http.StatusOK, gin.H{
-		"Id": img.ID,
 	})
 }

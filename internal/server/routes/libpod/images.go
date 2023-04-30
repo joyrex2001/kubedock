@@ -9,13 +9,14 @@ import (
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ImageList - list Images. Stubbed, not relevant on k8s.
-// https://docs.docker.com/engine/api/v1.41/#operation/ImageList
-// GET "/images/json"
-func (cr *Router) ImageList(c *gin.Context) {
-	imgs, err := cr.db.GetImages()
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/images/operation/ImageListLibpod
+// GET "/libpod/images/json"
+func ImageList(cr *routes.ContextRouter, c *gin.Context) {
+	imgs, err := cr.DB.GetImages()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -34,23 +35,24 @@ func (cr *Router) ImageList(c *gin.Context) {
 // ImagePull - pull one or more images from a container registry.
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/images/operation/ImagePullLibpod
 // POST "/libpod/images/pull"
-func (cr *Router) ImagePull(c *gin.Context) {
+func ImagePull(cr *routes.ContextRouter, c *gin.Context) {
 	from := c.Query("reference")
 	img := &types.Image{Name: from}
-	if cr.cfg.Inspector {
-		pts, err := cr.kub.GetImageExposedPorts(from)
+	if cr.Config.Inspector {
+		pts, err := cr.Backend.GetImageExposedPorts(from)
 		if err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
 		img.ExposedPorts = pts
 	}
-	if err := cr.db.SaveImage(img); err != nil {
+
+	if err := cr.DB.SaveImage(img); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	cr.events.Publish(from, events.Image, events.Pull)
+	cr.Events.Publish(from, events.Image, events.Pull)
 
 	c.JSON(http.StatusOK, gin.H{
 		"Id": img.ID,

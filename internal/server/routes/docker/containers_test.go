@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 func TestGetNetworkSettingsPorts(t *testing.T) {
@@ -81,8 +82,8 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
-		routr := &Router{cfg: Config{PortForward: tst.portfw}}
-		res := routr.getNetworkSettingsPorts(tst.tainr)
+		cr := &routes.ContextRouter{Config: routes.Config{PortForward: tst.portfw}}
+		res := getNetworkSettingsPorts(cr, tst.tainr)
 		if !reflect.DeepEqual(res, tst.out) {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
 		}
@@ -150,8 +151,8 @@ func TestGetContainerPorts(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
-		routr := &Router{cfg: Config{PortForward: true}}
-		res := routr.getContainerPorts(tst.tainr)
+		cr := &routes.ContextRouter{Config: routes.Config{PortForward: true}}
+		res := getContainerPorts(cr, tst.tainr)
 		if !reflect.DeepEqual(res, tst.out) {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
 		}
@@ -174,8 +175,7 @@ func TestGetContainerNames(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
-		routr := &Router{}
-		res := routr.getContainerNames(tst.tainr)
+		res := getContainerNames(tst.tainr)
 		if !reflect.DeepEqual(res, tst.out) {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
 		}

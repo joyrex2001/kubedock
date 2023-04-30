@@ -9,18 +9,19 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ContainerLogs - get container logs.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerLogs
-// POST "/containers/:id/logs"
-func (cr *Router) ContainerLogs(c *gin.Context) {
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerLogsLibpod
+// POST "/libpod/containers/:id/logs"
+func ContainerLogs(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	follow, _ := strconv.ParseBool(c.Query("follow"))
 	// TODO: implement since
 	// TODO: implement until
 	// TODO: implement tail
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -37,7 +38,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 
 	if !follow {
 		stop := make(chan struct{}, 1)
-		if err := cr.kub.GetLogs(tainr, follow, 100, stop, w); err != nil {
+		if err := cr.Backend.GetLogs(tainr, follow, 100, stop, w); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -56,7 +57,7 @@ func (cr *Router) ContainerLogs(c *gin.Context) {
 	stop := make(chan struct{}, 1)
 	tainr.AddStopChannel(stop)
 
-	if err := cr.kub.GetLogs(tainr, follow, 100, stop, out); err != nil {
+	if err := cr.Backend.GetLogs(tainr, follow, 100, stop, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}

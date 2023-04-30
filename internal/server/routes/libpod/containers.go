@@ -15,12 +15,13 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ContainerCreate - create a container.
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerCreateLibpod
 // POST "/libpod/containers/create"
-func (cr *Router) ContainerCreate(c *gin.Context) {
+func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -35,23 +36,23 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		in.Labels = map[string]string{}
 	}
 
-	if in.User == "" && cr.cfg.RunasUser != "" {
-		in.User = cr.cfg.RunasUser
+	if in.User == "" && cr.Config.RunasUser != "" {
+		in.User = cr.Config.RunasUser
 	}
 
-	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.cfg.RequestCPU != "" {
-		in.Labels[types.LabelRequestCPU] = cr.cfg.RequestCPU
+	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.Config.RequestCPU != "" {
+		in.Labels[types.LabelRequestCPU] = cr.Config.RequestCPU
 	}
-	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.cfg.RequestMemory != "" {
-		in.Labels[types.LabelRequestMemory] = cr.cfg.RequestMemory
+	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.Config.RequestMemory != "" {
+		in.Labels[types.LabelRequestMemory] = cr.Config.RequestMemory
 	}
-	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.cfg.PullPolicy != "" {
-		in.Labels[types.LabelPullPolicy] = cr.cfg.PullPolicy
+	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
+		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
 	}
-	if _, ok := in.Labels[types.LabelDeployAsJob]; !ok && cr.cfg.DeployAsJob {
+	if _, ok := in.Labels[types.LabelDeployAsJob]; !ok && cr.Config.DeployAsJob {
 		in.Labels[types.LabelDeployAsJob] = "true"
 	}
-	in.Labels[types.LabelServiceAccount] = cr.cfg.ServiceAccount
+	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
 
 	tainr := &types.Container{
 		Name:       in.Name,
@@ -60,12 +61,11 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		User:       in.User,
 		Cmd:        in.Command,
 		Env:        in.Env,
-		// ExposedPorts: in.ExposedPorts,
 		ImagePorts: map[string]interface{}{},
 		Labels:     in.Labels,
 	}
 
-	if img, err := cr.db.GetImageByNameOrID(in.Image); err != nil {
+	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
 		klog.Warningf("unable to fetch image details: %s", err)
 	} else {
 		for pp := range img.ExposedPorts {
@@ -73,19 +73,19 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		}
 	}
 
-	netw, err := cr.db.GetNetworkByName("bridge")
+	netw, err := cr.DB.GetNetworkByName("bridge")
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 	tainr.ConnectNetwork(netw.ID)
 
-	if err := cr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	cr.events.Publish(tainr.ID, events.Container, events.Create)
+	cr.Events.Publish(tainr.ID, events.Container, events.Create)
 
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": tainr.ID,
@@ -95,15 +95,15 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 // ContainerStart - start a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart
 // POST "/containers/:id/start"
-func (cr *Router) ContainerStart(c *gin.Context) {
+func ContainerStart(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	if !tainr.Running && !tainr.Completed {
-		if err := cr.startContainer(tainr); err != nil {
+		if err := startContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -111,7 +111,7 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 		klog.Warningf("container %s already running", id)
 	}
 
-	cr.events.Publish(tainr.ID, events.Container, events.Start)
+	cr.Events.Publish(tainr.ID, events.Container, events.Start)
 
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -119,9 +119,9 @@ func (cr *Router) ContainerStart(c *gin.Context) {
 // ContainerRestart - restart a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerRestart
 // POST "/containers/:id/restart"
-func (cr *Router) ContainerRestart(c *gin.Context) {
+func ContainerRestart(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -133,7 +133,7 @@ func (cr *Router) ContainerRestart(c *gin.Context) {
 		time.Sleep(time.Duration(t) * time.Second)
 	}
 
-	if err := cr.kub.DeleteContainer(tainr); err != nil {
+	if err := cr.Backend.DeleteContainer(tainr); err != nil {
 		klog.Warningf("error while deleting k8s container: %s", err)
 	}
 	tainr.SignalDetach()
@@ -143,13 +143,13 @@ func (cr *Router) ContainerRestart(c *gin.Context) {
 	tainr.Completed = false
 	tainr.Stopped = true
 
-	if err := cr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	time.Sleep(time.Second)
-	if err := cr.startContainer(tainr); err != nil {
+	if err := startContainer(cr, tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -160,9 +160,9 @@ func (cr *Router) ContainerRestart(c *gin.Context) {
 // ContainerStop - stop a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop
 // POST "/containers/:id/stop"
-func (cr *Router) ContainerStop(c *gin.Context) {
+func ContainerStop(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -172,7 +172,7 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 	tainr.SignalStop()
 
 	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.kub.DeleteContainer(tainr); err != nil {
+		if err := cr.Backend.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
 	}
@@ -181,12 +181,12 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 	tainr.Completed = false
 	tainr.Stopped = true
 
-	if err := cr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	cr.events.Publish(tainr.ID, events.Container, events.Die)
+	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -194,9 +194,9 @@ func (cr *Router) ContainerStop(c *gin.Context) {
 // ContainerKill - kill a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerKill
 // POST "/containers/:id/kill"
-func (cr *Router) ContainerKill(c *gin.Context) {
+func ContainerKill(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -205,7 +205,7 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 	signal := strings.ToLower(c.Query("signal"))
 	if strings.Contains(signal, "int") {
 		tainr.SignalDetach()
-		if err := cr.db.SaveContainer(tainr); err != nil {
+		if err := cr.DB.SaveContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -223,7 +223,7 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 	tainr.SignalStop()
 
 	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.kub.DeleteContainer(tainr); err != nil {
+		if err := cr.Backend.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
 	}
@@ -232,12 +232,12 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 	tainr.Running = false
 	tainr.Completed = false
 
-	if err := cr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	cr.events.Publish(tainr.ID, events.Container, events.Die)
+	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
@@ -245,9 +245,9 @@ func (cr *Router) ContainerKill(c *gin.Context) {
 // ContainerDelete - remove a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
 // DELETE "/containers/:id"
-func (cr *Router) ContainerDelete(c *gin.Context) {
+func ContainerDelete(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -257,13 +257,13 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 	tainr.SignalStop()
 
 	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.kub.DeleteContainer(tainr); err != nil {
+		if err := cr.Backend.DeleteContainer(tainr); err != nil {
 			klog.Warningf("error while deleting k8s container: %s", err)
 		}
-		cr.events.Publish(tainr.ID, events.Container, events.Die)
+		cr.Events.Publish(tainr.ID, events.Container, events.Die)
 	}
 
-	if err := cr.db.DeleteContainer(tainr); err != nil {
+	if err := cr.DB.DeleteContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
@@ -274,9 +274,9 @@ func (cr *Router) ContainerDelete(c *gin.Context) {
 // ContainerAttach - attach to a container to read its output or send input.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach
 // POST "/containers/:id/attach"
-func (cr *Router) ContainerAttach(c *gin.Context) {
+func ContainerAttach(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -293,7 +293,7 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	}
 
 	if !tainr.Running && !tainr.Completed {
-		if err := cr.startContainer(tainr); err != nil {
+		if err := startContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -320,7 +320,7 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
 
-	if err := cr.kub.GetLogs(tainr, true, 100, stop, out); err != nil {
+	if err := cr.Backend.GetLogs(tainr, true, 100, stop, out); err != nil {
 		klog.Errorf("error retrieving logs: %s", err)
 		return
 	}
@@ -329,12 +329,12 @@ func (cr *Router) ContainerAttach(c *gin.Context) {
 // ContainerWait - Block until a container stops, then returns the exit code.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait
 // POST "/containers/:id/wait"
-func (cr *Router) ContainerWait(c *gin.Context) {
+func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	ticker := time.NewTicker(time.Second)
 	for range ticker.C {
-		tainr, err := cr.db.GetContainer(id)
-		cr.updateContainerStatus(tainr)
+		tainr, err := cr.DB.GetContainer(id)
+		updateContainerStatus(cr, tainr)
 		if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
 			c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
 			return
@@ -345,9 +345,9 @@ func (cr *Router) ContainerWait(c *gin.Context) {
 // ContainerResize - resize the tty for a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerResize
 // POST "/containers/:id/rezise"
-func (cr *Router) ContainerResize(c *gin.Context) {
+func ContainerResize(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	_, err := cr.db.GetContainer(id)
+	_, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -359,26 +359,26 @@ func (cr *Router) ContainerResize(c *gin.Context) {
 // ContainerInfo - return low-level information about a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // GET "/containers/:id/json"
-func (cr *Router) ContainerInfo(c *gin.Context) {
+func ContainerInfo(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	c.JSON(http.StatusOK, cr.getContainerInfo(tainr, true))
+	c.JSON(http.StatusOK, getContainerInfo(cr, tainr, true))
 }
 
 // ContainerList - returns a list of containers.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerList
 // GET "/containers/json"
-func (cr *Router) ContainerList(c *gin.Context) {
+func ContainerList(cr *routes.ContextRouter, c *gin.Context) {
 	filtr, err := filter.New(c.Query("filters"))
 	if err != nil {
 		klog.V(5).Infof("unsupported filter: %s", err)
 	}
 
-	tainrs, err := cr.db.GetContainers()
+	tainrs, err := cr.DB.GetContainers()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -387,7 +387,7 @@ func (cr *Router) ContainerList(c *gin.Context) {
 	res := []gin.H{}
 	for _, tainr := range tainrs {
 		if filtr.Match(tainr) {
-			res = append(res, cr.getContainerInfo(tainr, false))
+			res = append(res, getContainerInfo(cr, tainr, false))
 		}
 	}
 	c.JSON(http.StatusOK, res)
@@ -396,20 +396,20 @@ func (cr *Router) ContainerList(c *gin.Context) {
 // ContainerRename - rename a container.
 // https://docs.docker.com/engine/api/v1.41/#tag/Container/operation/ContainerRename
 // GET "/containers/:id/rename"
-func (cr *Router) ContainerRename(c *gin.Context) {
+func ContainerRename(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 	name := c.Query("name")
-	if _, err := cr.db.GetContainerByName(name); err == nil {
+	if _, err := cr.DB.GetContainerByName(name); err == nil {
 		httputil.Error(c, http.StatusConflict, fmt.Errorf("name `%s` already in used", name))
 		return
 	}
 	tainr.Name = name
-	if err := cr.db.SaveContainer(tainr); err != nil {
+	if err := cr.DB.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -418,9 +418,9 @@ func (cr *Router) ContainerRename(c *gin.Context) {
 
 // getContainerInfo will return a gin.H containing the details of the
 // given container.
-func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
+func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail bool) gin.H {
 	errstr := ""
-	netws, err := cr.db.GetNetworksByIDs(tainr.Networks)
+	netws, err := cr.DB.GetNetworksByIDs(tainr.Networks)
 	if err != nil {
 		errstr += err.Error()
 	}
@@ -436,10 +436,10 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		"Id":    tainr.ID,
 		"Name":  "/" + tainr.Name,
 		"Image": tainr.Image,
-		"Names": cr.getContainerNames(tainr),
+		"Names": getContainerNames(tainr),
 		"NetworkSettings": gin.H{
 			"Networks": netdtl,
-			"Ports":    cr.getNetworkSettingsPorts(tainr),
+			"Ports":    getNetworkSettingsPorts(cr, tainr),
 		},
 		"HostConfig": gin.H{
 			"NetworkMode": "bridge",
@@ -450,7 +450,7 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		},
 	}
 	if detail {
-		cr.updateContainerStatus(tainr)
+		updateContainerStatus(cr, tainr)
 		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": tainr.StatusString(),
@@ -479,15 +479,15 @@ func (cr *Router) getContainerInfo(tainr *types.Container, detail bool) gin.H {
 		res["State"] = tainr.StatusString()
 		res["Status"] = tainr.StateString()
 		res["Created"] = tainr.Created.Unix()
-		res["Ports"] = cr.getContainerPorts(tainr)
+		res["Ports"] = getContainerPorts(cr, tainr)
 	}
 	return res
 }
 
 // getNetworkSettingsPorts will return the available ports of the container
 // as a gin.H json structure to be used in container details.
-func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
-	ports := cr.getAvailablePorts(tainr)
+func getNetworkSettingsPorts(cr *routes.ContextRouter, tainr *types.Container) gin.H {
+	ports := getAvailablePorts(cr, tainr)
 	res := gin.H{}
 	if tainr.HostIP == "" {
 		return res
@@ -512,8 +512,8 @@ func (cr *Router) getNetworkSettingsPorts(tainr *types.Container) gin.H {
 
 // getContainerPorts will return the available ports of the container as
 // a gin.H json structure to be used in container list.
-func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interface{} {
-	ports := cr.getAvailablePorts(tainr)
+func getContainerPorts(cr *routes.ContextRouter, tainr *types.Container) []map[string]interface{} {
+	ports := getAvailablePorts(cr, tainr)
 	res := []map[string]interface{}{}
 	if tainr.HostIP == "" {
 		return res
@@ -541,7 +541,7 @@ func (cr *Router) getContainerPorts(tainr *types.Container) []map[string]interfa
 
 // getAvailablePorts will return all ports that are currently available on
 // the running container.
-func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
+func getAvailablePorts(cr *routes.ContextRouter, tainr *types.Container) map[int][]int {
 	ports := map[int][]int{}
 	add := func(prts map[int]int) {
 		for src, dst := range prts {
@@ -554,7 +554,7 @@ func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
 			ports[dst] = append(ports[dst], src)
 		}
 	}
-	if cr.cfg.PortForward || cr.cfg.ReverseProxy {
+	if cr.Config.PortForward || cr.Config.ReverseProxy {
 		add(tainr.HostPorts)
 		add(tainr.MappedPorts)
 	} else {
@@ -564,7 +564,7 @@ func (cr *Router) getAvailablePorts(tainr *types.Container) map[int][]int {
 }
 
 // getContainerNames will list of possible names to identify the container.
-func (cr *Router) getContainerNames(tainr *types.Container) []string {
+func getContainerNames(tainr *types.Container) []string {
 	names := []string{}
 	if tainr.Name != "" {
 		names = append(names, "/"+tainr.Name)

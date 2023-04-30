@@ -14,13 +14,14 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
 // PutArchive - extract an archive of files or folders to a directory in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive
 // PUT "/containers/:id/archive"
-func (cr *Router) PutArchive(c *gin.Context) {
+func PutArchive(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 
 	path := c.Query("path")
@@ -39,7 +40,7 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		klog.Warning("copyUIDGID is not supported, ignoring setting.")
 	}
 
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -51,10 +52,10 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		return
 	}
 
-	if !tainr.Running && !tainr.Completed && cr.cfg.PreArchive && tar.IsSingleFileArchive(&archive) {
+	if !tainr.Running && !tainr.Completed && cr.Config.PreArchive && tar.IsSingleFileArchive(&archive) {
 		tainr.PreArchives = append(tainr.PreArchives, types.PreArchive{Path: path, Archive: &archive})
 		klog.V(2).Infof("adding prearchive: %v", tainr.PreArchives)
-		if err := cr.db.SaveContainer(tainr); err != nil {
+		if err := cr.DB.SaveContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -64,14 +65,14 @@ func (cr *Router) PutArchive(c *gin.Context) {
 		return
 	}
 
-	if !tainr.Running && !tainr.Completed && !cr.cfg.PreArchive {
-		if err := cr.startContainer(tainr); err != nil {
+	if !tainr.Running && !tainr.Completed && !cr.Config.PreArchive {
+		if err := startContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
 	}
 
-	if err := cr.kub.CopyToContainer(tainr, archive, path); err != nil {
+	if err := cr.Backend.CopyToContainer(tainr, archive, path); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -84,9 +85,9 @@ func (cr *Router) PutArchive(c *gin.Context) {
 // HeadArchive - get information about files in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchiveInfo
 // HEAD "/containers/:id/archive"
-func (cr *Router) HeadArchive(c *gin.Context) {
+func HeadArchive(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -98,7 +99,7 @@ func (cr *Router) HeadArchive(c *gin.Context) {
 		return
 	}
 
-	mode, err := cr.kub.GetFileModeInContainer(tainr, path)
+	mode, err := cr.Backend.GetFileModeInContainer(tainr, path)
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -113,9 +114,9 @@ func (cr *Router) HeadArchive(c *gin.Context) {
 // GetArchive - get a tar archive of a resource in the filesystem of container id.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchive
 // GET "/containers/:id/archive"
-func (cr *Router) GetArchive(c *gin.Context) {
+func GetArchive(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.db.GetContainer(id)
+	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -127,7 +128,7 @@ func (cr *Router) GetArchive(c *gin.Context) {
 		return
 	}
 
-	dat, err := cr.kub.CopyFromContainer(tainr, path)
+	dat, err := cr.Backend.CopyFromContainer(tainr, path)
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return

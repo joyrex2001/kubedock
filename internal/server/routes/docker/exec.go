@@ -10,12 +10,13 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
+	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ContainerExec - create an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // POST "/containers/:id/exec"
-func (cr *Router) ContainerExec(c *gin.Context) {
+func ContainerExec(cr *routes.ContextRouter, c *gin.Context) {
 	in := &ContainerExecRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -38,7 +39,7 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	_, err := cr.db.GetContainer(id)
+	_, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -50,7 +51,7 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 		Stderr:      in.Stderr,
 		Stdout:      in.Stdout,
 	}
-	if err := cr.db.SaveExec(exec); err != nil {
+	if err := cr.DB.SaveExec(exec); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -63,7 +64,7 @@ func (cr *Router) ContainerExec(c *gin.Context) {
 // ExecStart - start an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ExecStart
 // POST "/exec/:id/start"
-func (cr *Router) ExecStart(c *gin.Context) {
+func ExecStart(cr *routes.ContextRouter, c *gin.Context) {
 	req := &ExecStartRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -76,13 +77,13 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	}
 
 	id := c.Param("id")
-	exec, err := cr.db.GetExec(id)
+	exec, err := cr.DB.GetExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
 
-	tainr, err := cr.db.GetContainer(exec.ContainerID)
+	tainr, err := cr.DB.GetContainer(exec.ContainerID)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -100,13 +101,13 @@ func (cr *Router) ExecStart(c *gin.Context) {
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
-	code, err := cr.kub.ExecContainer(tainr, exec, out)
+	code, err := cr.Backend.ExecContainer(tainr, exec, out)
 	if err != nil {
 		klog.Errorf("error during exec: %s", err)
 		return
 	}
 	exec.ExitCode = code
-	if err := cr.db.SaveExec(exec); err != nil {
+	if err := cr.DB.SaveExec(exec); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -115,9 +116,9 @@ func (cr *Router) ExecStart(c *gin.Context) {
 // ExecInfo - return low-level information about an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ExecInspect
 // GET "/exec/:id/json"
-func (cr *Router) ExecInfo(c *gin.Context) {
+func ExecInfo(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	exec, err := cr.db.GetExec(id)
+	exec, err := cr.DB.GetExec(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
