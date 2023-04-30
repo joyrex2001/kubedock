@@ -112,7 +112,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
-	cr, _ := routes.NewContextRouter(s.kub, routes.Config{
+	cr, err := routes.NewContextRouter(s.kub, routes.Config{
 		Inspector:      insp,
 		RequestCPU:     reqcpu,
 		RequestMemory:  reqmem,
@@ -124,6 +124,9 @@ func (s *Server) getGinEngine() *gin.Engine {
 		PreArchive:     prea,
 		DeployAsJob:    djob,
 	})
+	if err != nil {
+		klog.Errorf("error setting up context: %s", err)
+	}
 
 	docker.RegisterRoutes(router, cr)
 	libpod.RegisterRoutes(router, cr)

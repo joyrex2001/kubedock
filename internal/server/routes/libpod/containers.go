@@ -93,8 +93,8 @@ func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerStart - start a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart
-// POST "/containers/:id/start"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerStartLibpod
+// POST "/libpod/containers/:id/start"
 func ContainerStart(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -117,8 +117,8 @@ func ContainerStart(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerRestart - restart a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerRestart
-// POST "/containers/:id/restart"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerRestartLibpod
+// POST "/libpod/containers/:id/restart"
 func ContainerRestart(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -158,8 +158,8 @@ func ContainerRestart(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerStop - stop a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop
-// POST "/containers/:id/stop"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerStopLibpod
+// POST "/libpod/containers/:id/stop"
 func ContainerStop(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -192,8 +192,8 @@ func ContainerStop(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerKill - kill a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerKill
-// POST "/containers/:id/kill"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerKillLibpod
+// POST "/libpod/containers/:id/kill"
 func ContainerKill(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -243,8 +243,8 @@ func ContainerKill(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerDelete - remove a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
-// DELETE "/containers/:id"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerDeleteLibpod
+// DELETE "/libpod/containers/:id"
 func ContainerDelete(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -272,8 +272,8 @@ func ContainerDelete(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerAttach - attach to a container to read its output or send input.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach
-// POST "/containers/:id/attach"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerAttachLibpod
+// POST "/libpod/containers/:id/attach"
 func ContainerAttach(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -327,8 +327,8 @@ func ContainerAttach(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerWait - Block until a container stops, then returns the exit code.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait
-// POST "/containers/:id/wait"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerWaitLibpod
+// POST "/libpod/containers/:id/wait"
 func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	ticker := time.NewTicker(time.Second)
@@ -342,23 +342,9 @@ func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 	}
 }
 
-// ContainerResize - resize the tty for a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerResize
-// POST "/containers/:id/rezise"
-func ContainerResize(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	_, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-	httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("tty resizing not supported"))
-	return
-}
-
 // ContainerInfo - return low-level information about a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
-// GET "/containers/:id/json"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerInspectLibpod
+// GET "/libpod/containers/:id/json"
 func ContainerInfo(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -370,8 +356,8 @@ func ContainerInfo(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerList - returns a list of containers.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerList
-// GET "/containers/json"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerListLibpod
+// GET "/libpod/containers/json"
 func ContainerList(cr *routes.ContextRouter, c *gin.Context) {
 	filtr, err := filter.New(c.Query("filters"))
 	if err != nil {
@@ -394,8 +380,8 @@ func ContainerList(cr *routes.ContextRouter, c *gin.Context) {
 }
 
 // ContainerRename - rename a container.
-// https://docs.docker.com/engine/api/v1.41/#tag/Container/operation/ContainerRename
-// GET "/containers/:id/rename"
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerRenameLibpod
+// GET "/libpod/containers/:id/rename"
 func ContainerRename(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
@@ -437,20 +423,9 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 		"Name":  "/" + tainr.Name,
 		"Image": tainr.Image,
 		"Names": getContainerNames(tainr),
-		"NetworkSettings": gin.H{
-			"Networks": netdtl,
-			"Ports":    getNetworkSettingsPorts(cr, tainr),
-		},
-		"HostConfig": gin.H{
-			"NetworkMode": "bridge",
-			"LogConfig": gin.H{
-				"Type":   "json-file",
-				"Config": gin.H{},
-			},
-		},
 	}
+	updateContainerStatus(cr, tainr)
 	if detail {
-		updateContainerStatus(cr, tainr)
 		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": tainr.StatusString(),
@@ -473,94 +448,13 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 			"Cmd":    tainr.Cmd,
 			"Tty":    false,
 		}
-		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
+		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 		res["Labels"] = tainr.Labels
 		res["State"] = tainr.StatusString()
 		res["Status"] = tainr.StateString()
-		res["Created"] = tainr.Created.Unix()
-		res["Ports"] = getContainerPorts(cr, tainr)
 	}
 	return res
-}
-
-// getNetworkSettingsPorts will return the available ports of the container
-// as a gin.H json structure to be used in container details.
-func getNetworkSettingsPorts(cr *routes.ContextRouter, tainr *types.Container) gin.H {
-	ports := getAvailablePorts(cr, tainr)
-	res := gin.H{}
-	if tainr.HostIP == "" {
-		return res
-	}
-	for dst, prts := range ports {
-		pp := []map[string]string{}
-		done := map[int]int{}
-		for _, src := range prts {
-			if _, ok := done[src]; ok {
-				continue
-			}
-			pp = append(pp, map[string]string{
-				"HostIp":   tainr.HostIP,
-				"HostPort": fmt.Sprintf("%d", src),
-			})
-			done[src] = 1
-		}
-		res[fmt.Sprintf("%d/tcp", dst)] = pp
-	}
-	return res
-}
-
-// getContainerPorts will return the available ports of the container as
-// a gin.H json structure to be used in container list.
-func getContainerPorts(cr *routes.ContextRouter, tainr *types.Container) []map[string]interface{} {
-	ports := getAvailablePorts(cr, tainr)
-	res := []map[string]interface{}{}
-	if tainr.HostIP == "" {
-		return res
-	}
-	for dst, prts := range ports {
-		done := map[int]int{}
-		for _, src := range prts {
-			if _, ok := done[src]; ok {
-				continue
-			}
-			pp := map[string]interface{}{
-				"IP":          tainr.HostIP,
-				"PrivatePort": dst,
-				"Type":        "tcp",
-			}
-			if src > 0 {
-				pp["PublicPort"] = src
-			}
-			res = append(res, pp)
-			done[src] = 1
-		}
-	}
-	return res
-}
-
-// getAvailablePorts will return all ports that are currently available on
-// the running container.
-func getAvailablePorts(cr *routes.ContextRouter, tainr *types.Container) map[int][]int {
-	ports := map[int][]int{}
-	add := func(prts map[int]int) {
-		for src, dst := range prts {
-			if src < 0 {
-				continue
-			}
-			if _, ok := ports[dst]; !ok {
-				ports[dst] = []int{}
-			}
-			ports[dst] = append(ports[dst], src)
-		}
-	}
-	if cr.Config.PortForward || cr.Config.ReverseProxy {
-		add(tainr.HostPorts)
-		add(tainr.MappedPorts)
-	} else {
-		add(tainr.GetServicePorts())
-	}
-	return ports
 }
 
 // getContainerNames will list of possible names to identify the container.
