@@ -1,47 +1,46 @@
-package routes
+package docker
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 func TestAddNetworkAliases(t *testing.T) {
 	tests := []struct {
 		tainr  *types.Container
-		endp   docker.EndpointConfig
+		endp   EndpointConfig
 		out    []string
 		portfw bool
 	}{
 		{
 			tainr:  &types.Container{},
-			endp:   docker.EndpointConfig{Aliases: []string{"tb303"}},
+			endp:   EndpointConfig{Aliases: []string{"tb303"}},
 			out:    []string{"tb303"},
 			portfw: true,
 		},
 		{
 			tainr:  &types.Container{NetworkAliases: []string{"tb303"}},
-			endp:   docker.EndpointConfig{},
+			endp:   EndpointConfig{},
 			out:    []string{"tb303"},
 			portfw: true,
 		},
 		{
 			tainr:  &types.Container{NetworkAliases: []string{"tb303"}},
-			endp:   docker.EndpointConfig{Aliases: []string{"tb303"}},
+			endp:   EndpointConfig{Aliases: []string{"tb303"}},
 			out:    []string{"tb303"},
 			portfw: true,
 		},
 		{
 			tainr:  &types.Container{NetworkAliases: []string{"tb303", "tr909"}},
-			endp:   docker.EndpointConfig{Aliases: []string{"tb303"}},
+			endp:   EndpointConfig{Aliases: []string{"tb303"}},
 			out:    []string{"tb303", "tr909"},
 			portfw: true,
 		},
 		{
 			tainr:  &types.Container{NetworkAliases: []string{"tb303"}},
-			endp:   docker.EndpointConfig{Aliases: []string{"tb303", "tr909"}},
+			endp:   EndpointConfig{Aliases: []string{"tb303", "tr909"}},
 			out:    []string{"tb303", "tr909"},
 			portfw: true,
 		},

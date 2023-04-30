@@ -1,4 +1,4 @@
-package routes
+package libpod
 
 import (
 	"github.com/gin-gonic/gin"
@@ -69,68 +69,12 @@ func New(router *gin.Engine, kub backend.Backend, cfg Config) (*Router, error) {
 
 // initRoutes will add all suported routes.
 func (cr *Router) initRoutes(router *gin.Engine) {
-	// docker api
-	router.GET("/info", cr.Info)
-	router.GET("/events", cr.Events)
-	router.GET("/version", cr.Version)
-	router.GET("/_ping", cr.Ping)
-	router.HEAD("/_ping", cr.Ping)
-
-	router.POST("/containers/create", cr.ContainerCreate)
-	router.POST("/containers/:id/start", cr.ContainerStart)
-	router.POST("/containers/:id/attach", cr.ContainerAttach)
-	router.POST("/containers/:id/exec", cr.ContainerExec)
-	router.POST("/containers/:id/stop", cr.ContainerStop)
-	router.POST("/containers/:id/restart", cr.ContainerRestart)
-	router.POST("/containers/:id/kill", cr.ContainerKill)
-	router.POST("/containers/:id/wait", cr.ContainerWait)
-	router.POST("/containers/:id/resize", cr.ContainerResize)
-	router.DELETE("/containers/:id", cr.ContainerDelete)
-	router.GET("/containers/json", cr.ContainerList)
-	router.GET("/containers/:id/json", cr.ContainerInfo)
-	router.GET("/containers/:id/logs", cr.ContainerLogs)
-	router.HEAD("/containers/:id/archive", cr.HeadArchive)
-	router.GET("/containers/:id/archive", cr.GetArchive)
-	router.PUT("/containers/:id/archive", cr.PutArchive)
-	router.POST("/containers/:id/rename", cr.ContainerRename)
-
-	router.POST("/exec/:id/start", cr.ExecStart)
-	router.GET("/exec/:id/json", cr.ExecInfo)
-
-	router.POST("/networks/create", cr.NetworksCreate)
-	router.POST("/networks/:id/connect", cr.NetworksConnect)
-	router.POST("/networks/:id/disconnect", cr.NetworksDisconnect)
-	router.GET("/networks", cr.NetworksList)
-	router.GET("/networks/:id", cr.NetworksInfo)
-	router.DELETE("/networks/:id", cr.NetworksDelete)
-	router.POST("/networks/prune", cr.NetworksPrune)
-
-	router.POST("/images/create", cr.ImageCreate)
-	router.GET("/images/json", cr.ImageList)
-	router.GET("/images/:image/*json", cr.ImageJSON)
-
-	// not supported docker api at the moment
-	router.GET("/containers/:id/top", httputil.NotImplemented)
-	router.GET("/containers/:id/changes", httputil.NotImplemented)
-	router.GET("/containers/:id/export", httputil.NotImplemented)
-	router.GET("/containers/:id/stats", httputil.NotImplemented)
-	router.POST("/containers/:id/update", httputil.NotImplemented)
-	router.POST("/containers/:id/pause", httputil.NotImplemented)
-	router.POST("/containers/:id/unpause", httputil.NotImplemented)
-	router.GET("/containers/:id/attach/ws", httputil.NotImplemented)
-	router.POST("/containers/prune", httputil.NotImplemented)
-	router.POST("/build", httputil.NotImplemented)
-	router.GET("/volumes", httputil.NotImplemented)
-	router.GET("/volumes/:id", httputil.NotImplemented)
-	router.DELETE("/volumes/:id", httputil.NotImplemented)
-	router.POST("/volumes/create", httputil.NotImplemented)
-	router.POST("/volumes/prune", httputil.NotImplemented)
 
 	// podman api
 	router.GET("/libpod/_ping", cr.Ping)
 	router.HEAD("/libpod/_ping", cr.Ping)
 
-	router.POST("/libpod/images/pull", cr.LibpodImagePull)
+	router.POST("/libpod/images/pull", cr.ImagePull)
 	router.GET("/libpod/images/json", cr.ImageList)
 
 	router.DELETE("/libpod/containers/:id", cr.ContainerDelete)
@@ -143,7 +87,7 @@ func (cr *Router) initRoutes(router *gin.Engine) {
 	router.POST("/libpod/containers/:id/rename", cr.ContainerRename)
 
 	// TODO: make compatible
-	router.POST("/libpod/containers/create", cr.LibpodContainerCreate)
+	router.POST("/libpod/containers/create", cr.ContainerCreate)
 
 	// not supported podman api at the moment
 	router.GET("/libpod/info", httputil.NotImplemented)

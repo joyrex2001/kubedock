@@ -1,4 +1,4 @@
-package routes
+package docker
 
 import (
 	"reflect"
@@ -7,13 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 func TestGetNetworkSettingsPorts(t *testing.T) {
 	tests := []struct {
 		tainr  *types.Container
-		endp   docker.EndpointConfig
+		endp   EndpointConfig
 		out    gin.H
 		portfw bool
 	}{
@@ -93,7 +92,7 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 func TestGetContainerPorts(t *testing.T) {
 	tests := []struct {
 		tainr *types.Container
-		endp  docker.EndpointConfig
+		endp  EndpointConfig
 		out   []map[string]interface{}
 	}{
 		{

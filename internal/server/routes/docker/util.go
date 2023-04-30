@@ -1,4 +1,4 @@
-package routes
+package docker
 
 import (
 	"os"
@@ -9,12 +9,11 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/model/types"
-	"github.com/joyrex2001/kubedock/internal/server/types/docker"
 )
 
 // addNetworkAliases will add the networkaliases as defined in the provided
 // EndpointConfig to the container.
-func (cr *Router) addNetworkAliases(tainr *types.Container, endp docker.EndpointConfig) {
+func (cr *Router) addNetworkAliases(tainr *types.Container, endp EndpointConfig) {
 	aliases := []string{}
 	done := map[string]string{tainr.ShortID: tainr.ShortID}
 	for _, l := range [][]string{tainr.NetworkAliases, endp.Aliases} {

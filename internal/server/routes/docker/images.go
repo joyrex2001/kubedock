@@ -1,4 +1,4 @@
-package routes
+package docker
 
 import (
 	"net/http"

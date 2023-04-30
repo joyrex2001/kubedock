@@ -1,4 +1,4 @@
-package routes
+package docker
 
 import (
 	"encoding/json"
@@ -15,15 +15,13 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/types/docker"
-	"github.com/joyrex2001/kubedock/internal/server/types/libpod"
 )
 
 // ContainerCreate - create a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerCreate
 // POST "/containers/create"
 func (cr *Router) ContainerCreate(c *gin.Context) {
-	in := &docker.ContainerCreateRequest{}
+	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
@@ -114,81 +112,6 @@ func (cr *Router) ContainerCreate(c *gin.Context) {
 		}
 		tainr.ConnectNetwork(netw.ID)
 	}
-
-	if err := cr.db.SaveContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	cr.events.Publish(tainr.ID, events.Container, events.Create)
-
-	c.JSON(http.StatusCreated, gin.H{
-		"Id": tainr.ID,
-	})
-}
-
-// LibpodContainerCreate - create a container.
-// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerCreateLibpod
-// POST "/libpod/containers/create"
-func (cr *Router) LibpodContainerCreate(c *gin.Context) {
-	in := &libpod.ContainerCreateRequest{}
-	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	if in.Name == "" {
-		in.Name = c.Query("name")
-	}
-
-	if in.Labels == nil {
-		in.Labels = map[string]string{}
-	}
-
-	if in.User == "" && cr.cfg.RunasUser != "" {
-		in.User = cr.cfg.RunasUser
-	}
-
-	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.cfg.RequestCPU != "" {
-		in.Labels[types.LabelRequestCPU] = cr.cfg.RequestCPU
-	}
-	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.cfg.RequestMemory != "" {
-		in.Labels[types.LabelRequestMemory] = cr.cfg.RequestMemory
-	}
-	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.cfg.PullPolicy != "" {
-		in.Labels[types.LabelPullPolicy] = cr.cfg.PullPolicy
-	}
-	if _, ok := in.Labels[types.LabelDeployAsJob]; !ok && cr.cfg.DeployAsJob {
-		in.Labels[types.LabelDeployAsJob] = "true"
-	}
-	in.Labels[types.LabelServiceAccount] = cr.cfg.ServiceAccount
-
-	tainr := &types.Container{
-		Name:       in.Name,
-		Image:      in.Image,
-		Entrypoint: in.Entrypoint,
-		User:       in.User,
-		Cmd:        in.Command,
-		Env:        in.Env,
-		// ExposedPorts: in.ExposedPorts,
-		ImagePorts: map[string]interface{}{},
-		Labels:     in.Labels,
-	}
-
-	if img, err := cr.db.GetImageByNameOrID(in.Image); err != nil {
-		klog.Warningf("unable to fetch image details: %s", err)
-	} else {
-		for pp := range img.ExposedPorts {
-			tainr.ImagePorts[pp] = pp
-		}
-	}
-
-	netw, err := cr.db.GetNetworkByName("bridge")
-	if err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-	tainr.ConnectNetwork(netw.ID)
 
 	if err := cr.db.SaveContainer(tainr); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
