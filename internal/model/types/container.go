@@ -203,7 +203,7 @@ func (co *Container) AddHostPort(src string, dst string) error {
 		return err
 	}
 
-	if src != "" {
+	if src != "" && src != "0" {
 		sp, err = strconv.Atoi(src)
 		if err != nil {
 			return fmt.Errorf("could not parse exposed port %s: %s", dst, err)

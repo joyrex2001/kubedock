@@ -55,14 +55,15 @@ func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
 
 	tainr := &types.Container{
-		Name:       in.Name,
-		Image:      in.Image,
-		Entrypoint: in.Entrypoint,
-		User:       in.User,
-		Cmd:        in.Command,
-		Env:        in.Env,
-		ImagePorts: map[string]interface{}{},
-		Labels:     in.Labels,
+		Name:         in.Name,
+		Image:        in.Image,
+		Entrypoint:   in.Entrypoint,
+		User:         in.User,
+		Cmd:          in.Command,
+		Env:          in.Env,
+		ExposedPorts: map[string]interface{}{},
+		ImagePorts:   map[string]interface{}{},
+		Labels:       in.Labels,
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
@@ -71,6 +72,16 @@ func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 		for pp := range img.ExposedPorts {
 			tainr.ImagePorts[pp] = pp
 		}
+	}
+
+	for _, mapping := range in.PortMappings {
+		src := fmt.Sprintf("%d", mapping.HostPort)
+		dst := fmt.Sprintf("%d", mapping.ContainerPort)
+		if err := tainr.AddHostPort(src, dst); err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+		tainr.ExposedPorts[dst] = src
 	}
 
 	netw, err := cr.DB.GetNetworkByName("bridge")
