@@ -2,6 +2,7 @@ package libpod
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"k8s.io/klog"
@@ -10,6 +11,23 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
+
+// addNetworkAliases will add the networkaliases as defined in the provided
+// NetworksProperty to the container.
+func addNetworkAliases(tainr *types.Container, networks map[string]NetworksProperty) {
+	aliases := []string{}
+	done := map[string]string{tainr.ShortID: tainr.ShortID}
+	for _, netwp := range networks {
+		for _, a := range netwp.Aliases {
+			if _, ok := done[a]; !ok {
+				alias := strings.ToLower(a)
+				aliases = append(aliases, alias)
+				done[alias] = alias
+			}
+		}
+	}
+	tainr.NetworkAliases = aliases
+}
 
 // startContainer will start given container and saves the appropriate state
 // in the database.

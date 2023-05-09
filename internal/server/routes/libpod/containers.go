@@ -84,6 +84,8 @@ func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 		tainr.ExposedPorts[dst] = src
 	}
 
+	addNetworkAliases(tainr, in.Network)
+
 	netw, err := cr.DB.GetNetworkByName("bridge")
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)

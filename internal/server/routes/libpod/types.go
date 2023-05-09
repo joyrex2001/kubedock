@@ -3,14 +3,15 @@ package libpod
 // ContainerCreateRequest represents the json structure that
 // is used for the /libpod/container/create post endpoint.
 type ContainerCreateRequest struct {
-	Name         string            `json:"name"`
-	Image        string            `json:"image"`
-	Labels       map[string]string `json:"Labels"`
-	Entrypoint   []string          `json:"Entrypoint"`
-	Command      []string          `json:"Command"`
-	Env          []string          `json:"Env"`
-	User         string            `json:"User"`
-	PortMappings []PortMapping     `json:"portmappings"`
+	Name         string                      `json:"name"`
+	Image        string                      `json:"image"`
+	Labels       map[string]string           `json:"Labels"`
+	Entrypoint   []string                    `json:"Entrypoint"`
+	Command      []string                    `json:"Command"`
+	Env          []string                    `json:"Env"`
+	User         string                      `json:"User"`
+	PortMappings []PortMapping               `json:"portmappings"`
+	Network      map[string]NetworksProperty `json:"Networks"`
 }
 
 // PortMapping describes how to map a port into the container.
@@ -20,4 +21,9 @@ type PortMapping struct {
 	HostPort      int    `json:"host_port"`
 	Protocol      string `json:"protocol"`
 	Range         int    `json:"range"`
+}
+
+// NetworksProperty describes the container networks.
+type NetworksProperty struct {
+	Aliases []string `json:"aliases"`
 }
