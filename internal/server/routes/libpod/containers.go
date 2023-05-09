@@ -349,7 +349,7 @@ func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 		tainr, err := cr.DB.GetContainer(id)
 		updateContainerStatus(cr, tainr)
 		if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
-			c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
+			c.Data(http.StatusOK, "application/json", []byte("0"))
 			return
 		}
 	}

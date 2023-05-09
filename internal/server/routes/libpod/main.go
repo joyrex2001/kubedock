@@ -24,6 +24,7 @@ func RegisterRoutes(router *gin.Engine, cr *routes.ContextRouter) {
 
 	router.POST("/libpod/containers/create", wrap(ContainerCreate))
 	router.POST("/libpod/containers/:id/start", wrap(ContainerStart))
+	router.POST("/libpod/containers/:id/attach", wrap(ContainerAttach))
 	router.POST("/libpod/containers/:id/stop", wrap(ContainerStop))
 	router.POST("/libpod/containers/:id/restart", wrap(ContainerRestart))
 	router.POST("/libpod/containers/:id/kill", wrap(ContainerKill))

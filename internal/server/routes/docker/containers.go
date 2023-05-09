@@ -386,7 +386,7 @@ func ContainerResize(cr *routes.ContextRouter, c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("tty resizing not supported"))
+	c.JSON(http.StatusOK, gin.H{})
 	return
 }
 
