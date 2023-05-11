@@ -366,12 +366,17 @@ func ContainerAttach(cr *routes.ContextRouter, c *gin.Context) {
 func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	ticker := time.NewTicker(time.Second)
-	for range ticker.C {
-		tainr, err := cr.DB.GetContainer(id)
-		updateContainerStatus(cr, tainr)
-		if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
-			c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
+	for {
+		select {
+		case <-c.Request.Context().Done():
 			return
+		case <-ticker.C:
+			tainr, err := cr.DB.GetContainer(id)
+			updateContainerStatus(cr, tainr)
+			if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
+				c.Data(http.StatusOK, "application/json", []byte("0"))
+				return
+			}
 		}
 	}
 }
