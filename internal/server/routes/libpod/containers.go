@@ -438,8 +438,11 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 	}
 	res := gin.H{
 		"Id":    tainr.ID,
-		"Name":  "/" + tainr.Name,
+		"Name":  tainr.Name,
 		"Image": tainr.Image,
+		"NetworkSettings": gin.H{
+			"Networks": netdtl,
+		},
 		"Names": getContainerNames(tainr),
 	}
 	updateContainerStatus(cr, tainr)
@@ -479,13 +482,13 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 func getContainerNames(tainr *types.Container) []string {
 	names := []string{}
 	if tainr.Name != "" {
-		names = append(names, "/"+tainr.Name)
+		names = append(names, tainr.Name)
 	}
-	names = append(names, "/"+tainr.ID)
-	names = append(names, "/"+tainr.ShortID)
+	names = append(names, tainr.ID)
+	names = append(names, tainr.ShortID)
 	for _, alias := range tainr.NetworkAliases {
 		if alias != tainr.Name {
-			names = append(names, "/"+alias)
+			names = append(names, alias)
 		}
 	}
 	return names
