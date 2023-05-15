@@ -9,6 +9,9 @@ import (
 	"k8s.io/klog"
 )
 
+const RATE = 5                        // number of tries per second for retry scenarios
+const INITIAL_CONNECT_TRY_TIMEOUT = 5 // number of seconds to try to wait before actually listening
+
 // Request is the structure used as argument for Proxy
 type Request struct {
 	// LocalPort is the local port that will be selected for the reverse proxy
@@ -33,6 +36,11 @@ func Proxy(req Request) error {
 
 	klog.Infof("start reverse-proxy %s->%s", local, remote)
 
+	// this is a workaround to make sure that healthchecks based on log output, rather than
+	// end-to-end connectivity, have a bit more slack setting up this connectivity; this
+	// fixes liquibase read-timeouts whe using quarkus + postgres + liquibase.
+	waitUntilRemoteAcceptsConnection(remote, INITIAL_CONNECT_TRY_TIMEOUT)
+
 	listener, err := net.Listen("tcp", local)
 	if err != nil {
 		return err
@@ -47,26 +55,17 @@ func Proxy(req Request) error {
 	}()
 
 	go func() {
-		try := 0
-		accept := false
-		for {
-			if done {
-				return
-			}
-			if !accept && try < req.MaxRetry {
-				// wait until the target endpoint is also accepting connections before
-				// accepting proxied connections.
-				var conn net.Conn
-				if conn, err = net.DialTimeout("tcp", remote, time.Second); err != nil {
-					try++
-					time.Sleep(time.Second)
-					continue
-				}
+		for try := 0; try < req.MaxRetry*RATE && !done; try++ {
+			if remoteAcceptsConnection(remote) {
 				klog.V(3).Infof("proxying from 127.0.0.1:%s -> %s", local, remote)
-				accept = true
-				conn.Close()
+				break
+			} else {
+				time.Sleep(time.Second / RATE)
 			}
+		}
+		for !done {
 			conn, err := listener.Accept()
+			klog.V(3).Infof("accepted connection for %s to %s", local, remote)
 			if err != nil {
 				if !done {
 					klog.Errorf("error accepting connection: %s", err)
@@ -75,6 +74,7 @@ func Proxy(req Request) error {
 			}
 			go handleConnection(conn, local, remote, req.MaxRetry)
 		}
+		return
 	}()
 
 	return nil
@@ -86,8 +86,8 @@ func Proxy(req Request) error {
 func handleConnection(conn net.Conn, local, remote string, maxRetry int) {
 	var err error
 	var conn2 net.Conn
-	for try := 0; try < maxRetry; try++ {
-		conn2, err = net.DialTimeout("tcp", remote, time.Second)
+	for try := 0; try < maxRetry*RATE; try++ {
+		conn2, err = net.DialTimeout("tcp", remote, time.Second/RATE)
 		if err == nil {
 			klog.V(3).Infof("handling connection for %s", local)
 			go io.Copy(conn2, conn)
@@ -100,4 +100,28 @@ func handleConnection(conn net.Conn, local, remote string, maxRetry int) {
 	}
 	klog.Errorf("error dialing %s: max retry attempts reached", remote)
 	conn.Close()
+}
+
+// waitUntilAcceptConnection will wait until the given remote is accepting connections,
+// if given timeout seconds is passed, it will return a timeout error.
+func waitUntilRemoteAcceptsConnection(remote string, timeout int) error {
+	for try := 0; try < timeout*RATE; try++ {
+		if !remoteAcceptsConnection(remote) {
+			time.Sleep(time.Second / RATE)
+			continue
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("timeout connecting to %s", remote)
+}
+
+// remoteAcceptsConnection will check if the given remote is accepting connections.
+func remoteAcceptsConnection(remote string) bool {
+	conn, err := net.DialTimeout("tcp", remote, time.Second/RATE)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
 }
