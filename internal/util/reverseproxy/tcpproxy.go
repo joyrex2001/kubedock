@@ -9,8 +9,8 @@ import (
 	"k8s.io/klog"
 )
 
-const RATE = 5                        // number of tries per second for retry scenarios
-const INITIAL_CONNECT_TRY_TIMEOUT = 5 // number of seconds to try to wait before actually listening
+const retryRate = 5             // number of tries per second for retry scenarios
+const initialConnectTimeOut = 5 // number of seconds to try to wait before actually listening
 
 // Request is the structure used as argument for Proxy
 type Request struct {
@@ -39,7 +39,7 @@ func Proxy(req Request) error {
 	// this is a workaround to make sure that healthchecks based on log output, rather than
 	// end-to-end connectivity, have a bit more slack setting up this connectivity; this
 	// fixes liquibase read-timeouts whe using quarkus + postgres + liquibase.
-	waitUntilRemoteAcceptsConnection(remote, INITIAL_CONNECT_TRY_TIMEOUT)
+	waitUntilRemoteAcceptsConnection(remote, initialConnectTimeOut)
 
 	listener, err := net.Listen("tcp", local)
 	if err != nil {
@@ -55,12 +55,12 @@ func Proxy(req Request) error {
 	}()
 
 	go func() {
-		for try := 0; try < req.MaxRetry*RATE && !done; try++ {
+		for try := 0; try < req.MaxRetry*retryRate && !done; try++ {
 			if remoteAcceptsConnection(remote) {
 				klog.V(3).Infof("proxying from 127.0.0.1:%s -> %s", local, remote)
 				break
 			} else {
-				time.Sleep(time.Second / RATE)
+				time.Sleep(time.Second / retryRate)
 			}
 		}
 		for !done {
@@ -86,8 +86,8 @@ func Proxy(req Request) error {
 func handleConnection(conn net.Conn, local, remote string, maxRetry int) {
 	var err error
 	var conn2 net.Conn
-	for try := 0; try < maxRetry*RATE; try++ {
-		conn2, err = net.DialTimeout("tcp", remote, time.Second/RATE)
+	for try := 0; try < maxRetry*retryRate; try++ {
+		conn2, err = net.DialTimeout("tcp", remote, time.Second/retryRate)
 		if err == nil {
 			klog.V(3).Infof("handling connection for %s", local)
 			go io.Copy(conn2, conn)
@@ -105,9 +105,9 @@ func handleConnection(conn net.Conn, local, remote string, maxRetry int) {
 // waitUntilAcceptConnection will wait until the given remote is accepting connections,
 // if given timeout seconds is passed, it will return a timeout error.
 func waitUntilRemoteAcceptsConnection(remote string, timeout int) error {
-	for try := 0; try < timeout*RATE; try++ {
+	for try := 0; try < timeout*retryRate; try++ {
 		if !remoteAcceptsConnection(remote) {
-			time.Sleep(time.Second / RATE)
+			time.Sleep(time.Second / retryRate)
 			continue
 		} else {
 			return nil
@@ -118,7 +118,7 @@ func waitUntilRemoteAcceptsConnection(remote string, timeout int) error {
 
 // remoteAcceptsConnection will check if the given remote is accepting connections.
 func remoteAcceptsConnection(remote string) bool {
-	conn, err := net.DialTimeout("tcp", remote, time.Second/RATE)
+	conn, err := net.DialTimeout("tcp", remote, time.Second/retryRate)
 	if err != nil {
 		return false
 	}
