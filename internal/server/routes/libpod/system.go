@@ -5,13 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joyrex2001/kubedock/internal/config"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // Version - get version.
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/system/operation/SystemVersionLibpod
 // GET "/libpod/version"
-func Version(cr *routes.ContextRouter, c *gin.Context) {
+func Version(cr *common.ContextRouter, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"GitCommit": config.Build,
 		"Os":        config.OS,
@@ -22,6 +22,6 @@ func Version(cr *routes.ContextRouter, c *gin.Context) {
 // Ping - dummy endpoint you can use to test if the server is accessible.
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/system/operation/SystemPing
 // GET "/libpod/_ping"
-func Ping(cr *routes.ContextRouter, c *gin.Context) {
+func Ping(cr *common.ContextRouter, c *gin.Context) {
 	c.String(http.StatusOK, "OK")
 }

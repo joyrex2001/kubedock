@@ -11,13 +11,13 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // NetworksList - list networks.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkList
 // GET "/networks"
-func NetworksList(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksList(cr *common.ContextRouter, c *gin.Context) {
 	netws, err := cr.DB.GetNetworks()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -48,7 +48,7 @@ func NetworksList(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksInfo - inspect a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkInspect
 // GET "/network/:id"
-func NetworksInfo(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksInfo(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
@@ -70,7 +70,7 @@ func NetworksInfo(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksCreate - create a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkCreate
 // POST "/networks/create"
-func NetworksCreate(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksCreate(cr *common.ContextRouter, c *gin.Context) {
 	in := &NetworkCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -92,7 +92,7 @@ func NetworksCreate(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksDelete - remove a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkDelete
 // DELETE "/networks/:id"
-func NetworksDelete(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksDelete(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
@@ -120,7 +120,7 @@ func NetworksDelete(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksConnect - connect a container to a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkConnect
 // POST "/networks/:id/connect"
-func NetworksConnect(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksConnect(cr *common.ContextRouter, c *gin.Context) {
 	in := &NetworkConnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -157,7 +157,7 @@ func NetworksConnect(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksDisconnect - connect a container to a network.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkDisconnect
 // POST "/networks/:id/disconnect"
-func NetworksDisconnect(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksDisconnect(cr *common.ContextRouter, c *gin.Context) {
 	in := &NetworkDisconnectRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -188,7 +188,7 @@ func NetworksDisconnect(cr *routes.ContextRouter, c *gin.Context) {
 // NetworksPrune - delete unused networks.
 // https://docs.docker.com/engine/api/v1.41/#operation/NetworkPrune
 // POST "/networks/prune"
-func NetworksPrune(cr *routes.ContextRouter, c *gin.Context) {
+func NetworksPrune(cr *common.ContextRouter, c *gin.Context) {
 	netws, err := cr.DB.GetNetworks()
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -214,7 +214,7 @@ func NetworksPrune(cr *routes.ContextRouter, c *gin.Context) {
 
 // getContainersInNetwork will return an array of containers in an array
 // of gin.H structs, containing the details of the container.
-func getContainersInNetwork(cr *routes.ContextRouter, netw *types.Network) map[string]gin.H {
+func getContainersInNetwork(cr *common.ContextRouter, netw *types.Network) map[string]gin.H {
 	res := map[string]gin.H{}
 	tainrs, err := cr.DB.GetContainers()
 	if err == nil {

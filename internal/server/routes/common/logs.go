@@ -1,4 +1,4 @@
-package docker
+package common
 
 import (
 	"fmt"
@@ -9,13 +9,12 @@ import (
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
 )
 
 // ContainerLogs - get container logs.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerLogs
 // POST "/containers/:id/logs"
-func ContainerLogs(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	follow, _ := strconv.ParseBool(c.Query("follow"))
 	// TODO: implement since

@@ -9,13 +9,13 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // Info - get system information.
 // https://docs.docker.com/engine/api/v1.41/#operation/SystemInfo
 // GET "/info"
-func Info(cr *routes.ContextRouter, c *gin.Context) {
+func Info(cr *common.ContextRouter, c *gin.Context) {
 	labels := []string{}
 	for k, v := range config.DefaultLabels {
 		labels = append(labels, k+"="+v)
@@ -33,7 +33,7 @@ func Info(cr *routes.ContextRouter, c *gin.Context) {
 // Version - get version.
 // https://docs.docker.com/engine/api/v1.41/#operation/SystemVersion
 // GET "/version"
-func Version(cr *routes.ContextRouter, c *gin.Context) {
+func Version(cr *common.ContextRouter, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Version":    config.DockerVersion,
 		"ApiVersion": config.DockerAPIVersion,
@@ -49,14 +49,14 @@ func Version(cr *routes.ContextRouter, c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/SystemPing
 // HEAD "/_ping"
 // GET "/_ping"
-func Ping(cr *routes.ContextRouter, c *gin.Context) {
+func Ping(cr *common.ContextRouter, c *gin.Context) {
 	c.String(http.StatusOK, "OK")
 }
 
 // Events - Stream real-time events from the server.
 // https://docs.docker.com/engine/api/v1.41/#tag/System/operation/SystemEvents
 // GET "/events"
-func Events(cr *routes.ContextRouter, c *gin.Context) {
+func Events(cr *common.ContextRouter, c *gin.Context) {
 	w := c.Writer
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

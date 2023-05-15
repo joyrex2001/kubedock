@@ -8,8 +8,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes"
-	"github.com/joyrex2001/kubedock/internal/server/routes/docker"
-	"github.com/joyrex2001/kubedock/internal/server/routes/libpod"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // Server is the API server.
@@ -112,7 +111,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
-	cr, err := routes.NewContextRouter(s.kub, routes.Config{
+	cr, err := common.NewContextRouter(s.kub, common.Config{
 		Inspector:      insp,
 		RequestCPU:     reqcpu,
 		RequestMemory:  reqmem,
@@ -128,8 +127,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Errorf("error setting up context: %s", err)
 	}
 
-	docker.RegisterRoutes(router, cr)
-	libpod.RegisterRoutes(router, cr)
+	routes.RegisterDockerRoutes(router, cr)
+	routes.RegisterLibpodRoutes(router, cr)
 
 	return router
 }

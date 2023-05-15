@@ -1,4 +1,4 @@
-package routes
+package common
 
 import (
 	"golang.org/x/time/rate"

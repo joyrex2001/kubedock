@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,13 +13,13 @@ import (
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/filter"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // ContainerCreate - create a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerCreate
 // POST "/containers/create"
-func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	in := &ContainerCreateRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -126,244 +124,10 @@ func ContainerCreate(cr *routes.ContextRouter, c *gin.Context) {
 	})
 }
 
-// ContainerStart - start a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStart
-// POST "/containers/:id/start"
-func ContainerStart(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-	if !tainr.Running && !tainr.Completed {
-		if err := startContainer(cr, tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-	} else {
-		klog.Warningf("container %s already running", id)
-	}
-
-	cr.Events.Publish(tainr.ID, events.Container, events.Start)
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
-// ContainerRestart - restart a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerRestart
-// POST "/containers/:id/restart"
-func ContainerRestart(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	ts := c.Query("t")
-	t, _ := strconv.Atoi(ts)
-	if t > 0 {
-		time.Sleep(time.Duration(t) * time.Second)
-	}
-
-	if err := cr.Backend.DeleteContainer(tainr); err != nil {
-		klog.Warningf("error while deleting k8s container: %s", err)
-	}
-	tainr.SignalDetach()
-	tainr.SignalStop()
-
-	tainr.Running = false
-	tainr.Completed = false
-	tainr.Stopped = true
-
-	if err := cr.DB.SaveContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	time.Sleep(time.Second)
-	if err := startContainer(cr, tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
-// ContainerStop - stop a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerStop
-// POST "/containers/:id/stop"
-func ContainerStop(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	tainr.SignalDetach()
-	tainr.SignalStop()
-
-	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.Backend.DeleteContainer(tainr); err != nil {
-			klog.Warningf("error while deleting k8s container: %s", err)
-		}
-	}
-
-	tainr.Running = false
-	tainr.Completed = false
-	tainr.Stopped = true
-
-	if err := cr.DB.SaveContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	cr.Events.Publish(tainr.ID, events.Container, events.Die)
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
-// ContainerKill - kill a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerKill
-// POST "/containers/:id/kill"
-func ContainerKill(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	signal := strings.ToLower(c.Query("signal"))
-	if strings.Contains(signal, "int") {
-		tainr.SignalDetach()
-		if err := cr.DB.SaveContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	if signal != "" && !strings.Contains(signal, "kil") && !strings.Contains(signal, "term") && !strings.Contains(signal, "quit") {
-		klog.Infof("ignoring signal %s", signal)
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	tainr.SignalDetach()
-	tainr.SignalStop()
-
-	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.Backend.DeleteContainer(tainr); err != nil {
-			klog.Warningf("error while deleting k8s container: %s", err)
-		}
-	}
-
-	tainr.Killed = true
-	tainr.Running = false
-	tainr.Completed = false
-
-	if err := cr.DB.SaveContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	cr.Events.Publish(tainr.ID, events.Container, events.Die)
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
-// ContainerDelete - remove a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
-// DELETE "/containers/:id"
-func ContainerDelete(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	tainr.SignalDetach()
-	tainr.SignalStop()
-
-	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.Backend.DeleteContainer(tainr); err != nil {
-			klog.Warningf("error while deleting k8s container: %s", err)
-		}
-		cr.Events.Publish(tainr.ID, events.Container, events.Die)
-	}
-
-	if err := cr.DB.DeleteContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
-// ContainerAttach - attach to a container to read its output or send input.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach
-// POST "/containers/:id/attach"
-func ContainerAttach(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	stdin, _ := strconv.ParseBool(c.Query("stdin"))
-	if stdin {
-		c.Writer.WriteHeader(http.StatusNotImplemented)
-	}
-	stdout, _ := strconv.ParseBool(c.Query("stdout"))
-	stderr, _ := strconv.ParseBool(c.Query("stderr"))
-	if !stdout || !stderr {
-		klog.Warningf("Ignoring stdout/stderr filtering")
-	}
-
-	if !tainr.Running && !tainr.Completed {
-		if err := startContainer(cr, tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-	}
-
-	stream, _ := strconv.ParseBool(c.Query("stream"))
-	if !stream {
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	r := c.Request
-	w := c.Writer
-	w.WriteHeader(http.StatusOK)
-
-	in, out, err := httputil.HijackConnection(w)
-	if err != nil {
-		klog.Errorf("error during hijack connection: %s", err)
-		return
-	}
-	defer httputil.CloseStreams(in, out)
-	httputil.UpgradeConnection(r, out)
-
-	stop := make(chan struct{}, 1)
-	tainr.AddAttachChannel(stop)
-
-	if err := cr.Backend.GetLogs(tainr, true, 100, stop, out); err != nil {
-		klog.Errorf("error retrieving logs: %s", err)
-		return
-	}
-}
-
 // ContainerWait - Block until a container stops, then returns the exit code.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait
 // POST "/containers/:id/wait"
-func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	ticker := time.NewTicker(time.Second)
 	for {
@@ -372,33 +136,19 @@ func ContainerWait(cr *routes.ContextRouter, c *gin.Context) {
 			return
 		case <-ticker.C:
 			tainr, err := cr.DB.GetContainer(id)
-			updateContainerStatus(cr, tainr)
+			common.UpdateContainerStatus(cr, tainr)
 			if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
-				c.Data(http.StatusOK, "application/json", []byte("0"))
+				c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
 				return
 			}
 		}
 	}
 }
 
-// ContainerResize - resize the tty for a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerResize
-// POST "/containers/:id/rezise"
-func ContainerResize(cr *routes.ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	_, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{})
-	return
-}
-
 // ContainerInfo - return low-level information about a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
 // GET "/containers/:id/json"
-func ContainerInfo(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerInfo(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
@@ -411,7 +161,7 @@ func ContainerInfo(cr *routes.ContextRouter, c *gin.Context) {
 // ContainerList - returns a list of containers.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerList
 // GET "/containers/json"
-func ContainerList(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerList(cr *common.ContextRouter, c *gin.Context) {
 	filtr, err := filter.New(c.Query("filters"))
 	if err != nil {
 		klog.V(5).Infof("unsupported filter: %s", err)
@@ -435,7 +185,7 @@ func ContainerList(cr *routes.ContextRouter, c *gin.Context) {
 // ContainerRename - rename a container.
 // https://docs.docker.com/engine/api/v1.41/#tag/Container/operation/ContainerRename
 // GET "/containers/:id/rename"
-func ContainerRename(cr *routes.ContextRouter, c *gin.Context) {
+func ContainerRename(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
@@ -457,7 +207,7 @@ func ContainerRename(cr *routes.ContextRouter, c *gin.Context) {
 
 // getContainerInfo will return a gin.H containing the details of the
 // given container.
-func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail bool) gin.H {
+func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail bool) gin.H {
 	errstr := ""
 	netws, err := cr.DB.GetNetworksByIDs(tainr.Networks)
 	if err != nil {
@@ -489,7 +239,7 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 		},
 	}
 	if detail {
-		updateContainerStatus(cr, tainr)
+		common.UpdateContainerStatus(cr, tainr)
 		res["State"] = gin.H{
 			"Health": gin.H{
 				"Status": tainr.StatusString(),
@@ -525,7 +275,7 @@ func getContainerInfo(cr *routes.ContextRouter, tainr *types.Container, detail b
 
 // getNetworkSettingsPorts will return the available ports of the container
 // as a gin.H json structure to be used in container details.
-func getNetworkSettingsPorts(cr *routes.ContextRouter, tainr *types.Container) gin.H {
+func getNetworkSettingsPorts(cr *common.ContextRouter, tainr *types.Container) gin.H {
 	ports := getAvailablePorts(cr, tainr)
 	res := gin.H{}
 	if tainr.HostIP == "" {
@@ -551,7 +301,7 @@ func getNetworkSettingsPorts(cr *routes.ContextRouter, tainr *types.Container) g
 
 // getContainerPorts will return the available ports of the container as
 // a gin.H json structure to be used in container list.
-func getContainerPorts(cr *routes.ContextRouter, tainr *types.Container) []map[string]interface{} {
+func getContainerPorts(cr *common.ContextRouter, tainr *types.Container) []map[string]interface{} {
 	ports := getAvailablePorts(cr, tainr)
 	res := []map[string]interface{}{}
 	if tainr.HostIP == "" {
@@ -580,7 +330,7 @@ func getContainerPorts(cr *routes.ContextRouter, tainr *types.Container) []map[s
 
 // getAvailablePorts will return all ports that are currently available on
 // the running container.
-func getAvailablePorts(cr *routes.ContextRouter, tainr *types.Container) map[int][]int {
+func getAvailablePorts(cr *common.ContextRouter, tainr *types.Container) map[int][]int {
 	ports := map[int][]int{}
 	add := func(prts map[int]int) {
 		for src, dst := range prts {

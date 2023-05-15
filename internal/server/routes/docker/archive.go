@@ -14,14 +14,14 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes"
+	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
 // PutArchive - extract an archive of files or folders to a directory in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive
 // PUT "/containers/:id/archive"
-func PutArchive(cr *routes.ContextRouter, c *gin.Context) {
+func PutArchive(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 
 	path := c.Query("path")
@@ -66,7 +66,7 @@ func PutArchive(cr *routes.ContextRouter, c *gin.Context) {
 	}
 
 	if !tainr.Running && !tainr.Completed && !cr.Config.PreArchive {
-		if err := startContainer(cr, tainr); err != nil {
+		if err := common.StartContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -85,7 +85,7 @@ func PutArchive(cr *routes.ContextRouter, c *gin.Context) {
 // HeadArchive - get information about files in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchiveInfo
 // HEAD "/containers/:id/archive"
-func HeadArchive(cr *routes.ContextRouter, c *gin.Context) {
+func HeadArchive(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
@@ -114,7 +114,7 @@ func HeadArchive(cr *routes.ContextRouter, c *gin.Context) {
 // GetArchive - get a tar archive of a resource in the filesystem of container id.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchive
 // GET "/containers/:id/archive"
-func GetArchive(cr *routes.ContextRouter, c *gin.Context) {
+func GetArchive(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
