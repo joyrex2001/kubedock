@@ -185,6 +185,7 @@ func (co *Container) GetDeploymentName() string {
 	name = strings.ReplaceAll(name, "--", "-")
 	re = regexp.MustCompile("^[^A-Za-z0-9]+")
 	name = re.ReplaceAllString(name, "")
+	name = strings.ToLower(name)
 	return name
 }
 

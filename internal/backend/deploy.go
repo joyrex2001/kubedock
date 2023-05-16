@@ -491,7 +491,7 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        tainr.ShortID + "-vf", // TODO: replace with random stuff
+			Name:        tainr.ShortID + "-vf",
 			Namespace:   in.namespace,
 			Labels:      in.getLabels(tainr),
 			Annotations: in.getAnnotations(tainr),
@@ -511,7 +511,7 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        tainr.ShortID + "-pf", // TODO: replace with random stuff
+			Name:        tainr.ShortID + "-pf",
 			Namespace:   in.namespace,
 			Labels:      in.getLabels(tainr),
 			Annotations: in.getAnnotations(tainr),

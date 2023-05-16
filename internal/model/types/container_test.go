@@ -296,6 +296,12 @@ func TestGetDeploymentName(t *testing.T) {
 			}},
 			name: "s-pace-exploration-909-1234",
 		},
+		{ // 6
+			in: &Container{ShortID: "1234", Name: "MyContainer", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "space",
+			}},
+			name: "space-mycontainer-1234",
+		},
 	}
 	for i, tst := range tests {
 		name := tst.in.GetDeploymentName()
