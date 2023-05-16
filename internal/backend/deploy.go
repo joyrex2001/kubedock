@@ -58,7 +58,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 
 	meta := metav1.ObjectMeta{
 		Namespace:   in.namespace,
-		Name:        tainr.ShortID,
+		Name:        tainr.GetDeploymentName(),
 		Labels:      in.getLabels(tainr),
 		Annotations: in.getAnnotations(tainr),
 	}
@@ -426,7 +426,7 @@ func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplate
 
 	vfiles := tainr.GetVolumeFiles()
 	if len(vfiles) > 0 {
-		_, err := in.createConfigMapFromFiles(tainr, vfiles)
+		cm, err := in.createConfigMapFromFiles(tainr, vfiles)
 		if err != nil {
 			return err
 		}
@@ -434,7 +434,7 @@ func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplate
 			Name: "vfiles",
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: tainr.ShortID,
+					Name: cm.ObjectMeta.Name,
 				},
 			}},
 		})
@@ -449,7 +449,7 @@ func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplate
 
 	pfiles := tainr.GetPreArchiveFiles()
 	if len(pfiles) > 0 {
-		_, err := in.createConfigMapFromRaw(tainr, pfiles)
+		cm, err := in.createConfigMapFromRaw(tainr, pfiles)
 		if err != nil {
 			return err
 		}
@@ -457,7 +457,7 @@ func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplate
 			Name: "pfiles",
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: tainr.ShortID,
+					Name: cm.ObjectMeta.Name,
 				},
 			}},
 		})
@@ -491,7 +491,7 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        tainr.ShortID,
+			Name:        tainr.ShortID + "-vf", // TODO: replace with random stuff
 			Namespace:   in.namespace,
 			Labels:      in.getLabels(tainr),
 			Annotations: in.getAnnotations(tainr),
@@ -511,7 +511,7 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        tainr.ShortID,
+			Name:        tainr.ShortID + "-pf", // TODO: replace with random stuff
 			Namespace:   in.namespace,
 			Labels:      in.getLabels(tainr),
 			Annotations: in.getAnnotations(tainr),

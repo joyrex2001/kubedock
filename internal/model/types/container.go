@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -66,6 +67,9 @@ const (
 	// LabelServiceAccount is the label to be used to enforce a service account
 	// other than 'default' for the created pods.
 	LabelServiceAccount = "com.joyrex2001.kubedock.service-account"
+	// LabelNamePrefix is the label to be used to enforce a prefix for the names used
+	// for the container deployments.
+	LabelNamePrefix = "com.joyrex2001.kubedock.name-prefix"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -162,6 +166,26 @@ func (co *Container) GetServiceAccountName() string {
 		return sa
 	}
 	return "default"
+}
+
+// GetDeploymentName will return a human friendly name that can be used for the
+// the container deployments.
+func (co *Container) GetDeploymentName() string {
+	name := co.Name
+	if prefix, ok := co.Labels[LabelNamePrefix]; ok {
+		name = prefix + "-" + co.Name
+	}
+	name = strings.ReplaceAll(name, "_", "-")
+	re := regexp.MustCompile("[^A-Za-z0-9-]")
+	name = re.ReplaceAllString(name, "")
+	if len(name) > 32 {
+		name = name[:32]
+	}
+	name = name + "-" + co.ShortID
+	name = strings.ReplaceAll(name, "--", "-")
+	re = regexp.MustCompile("^[^A-Za-z0-9]+")
+	name = re.ReplaceAllString(name, "")
+	return name
 }
 
 // GetPodSecurityContext will create a security context for the Pod that implements

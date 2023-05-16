@@ -257,6 +257,54 @@ func TestGetServiceAccountName(t *testing.T) {
 	}
 }
 
+func TestGetDeploymentName(t *testing.T) {
+	tests := []struct {
+		in   *Container
+		name string
+	}{
+		{ // 0
+			in:   &Container{ShortID: "1234", Name: "", Labels: map[string]string{}},
+			name: "1234",
+		},
+		{ // 1
+			in: &Container{ShortID: "1234", Name: "", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "space",
+			}},
+			name: "space-1234",
+		},
+		{ // 2
+			in: &Container{ShortID: "1234", Name: "", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "s.pace",
+			}},
+			name: "space-1234",
+		},
+		{ // 3
+			in: &Container{ShortID: "1234", Name: "exploration", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "s.pace",
+			}},
+			name: "space-exploration-1234",
+		},
+		{ // 4
+			in: &Container{ShortID: "1234", Name: "exploration/909", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "s.pace",
+			}},
+			name: "space-exploration909-1234",
+		},
+		{ // 5
+			in: &Container{ShortID: "1234", Name: "exploration_909", Labels: map[string]string{
+				"com.joyrex2001.kubedock.name-prefix": "s_pace",
+			}},
+			name: "s-pace-exploration-909-1234",
+		},
+	}
+	for i, tst := range tests {
+		name := tst.in.GetDeploymentName()
+		if name != tst.name {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.name, name)
+		}
+	}
+}
+
 func TestGetRunasUser(t *testing.T) {
 	tests := []struct {
 		in         *Container
