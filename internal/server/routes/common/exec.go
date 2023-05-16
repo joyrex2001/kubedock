@@ -1,4 +1,4 @@
-package docker
+package common
 
 import (
 	"encoding/json"
@@ -10,20 +10,21 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 )
 
 // ContainerExec - create an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/exec/operation/ContainerExecLibpod
 // POST "/containers/:id/exec"
-func ContainerExec(cr *common.ContextRouter, c *gin.Context) {
+// POST "/libpod/containers/:id/exec"
+func ContainerExec(cr *ContextRouter, c *gin.Context) {
 	in := &ContainerExecRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	if in.Env != nil {
+	if in.Env != nil && len(in.Env) > 0 {
 		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("env variables not supported"))
 		return
 	}
@@ -63,8 +64,10 @@ func ContainerExec(cr *common.ContextRouter, c *gin.Context) {
 
 // ExecStart - start an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ExecStart
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/exec/operation/ExecStartLibpod
 // POST "/exec/:id/start"
-func ExecStart(cr *common.ContextRouter, c *gin.Context) {
+// POST "/libpod/exec/:id/start"
+func ExecStart(cr *ContextRouter, c *gin.Context) {
 	req := &ExecStartRequest{}
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -115,8 +118,10 @@ func ExecStart(cr *common.ContextRouter, c *gin.Context) {
 
 // ExecInfo - return low-level information about an exec instance.
 // https://docs.docker.com/engine/api/v1.41/#operation/ExecInspect
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/exec/operation/ExecInspectLibpod
 // GET "/exec/:id/json"
-func ExecInfo(cr *common.ContextRouter, c *gin.Context) {
+// GET "/libpod/exec/:id/json"
+func ExecInfo(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	exec, err := cr.DB.GetExec(id)
 	if err != nil {

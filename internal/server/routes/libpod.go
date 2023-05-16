@@ -38,6 +38,10 @@ func RegisterLibpodRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.GET("/libpod/containers/:id/logs", wrap(common.ContainerLogs))
 	router.POST("/libpod/containers/:id/rename", wrap(common.ContainerRename))
 
+	router.POST("/libpod/containers/:id/exec", wrap(common.ContainerExec))
+	router.POST("/libpod/exec/:id/start", wrap(common.ExecStart))
+	router.GET("/libpod/exec/:id/json", wrap(common.ExecInfo))
+
 	// not supported podman api at the moment
 	router.GET("/libpod/info", httputil.NotImplemented)
 	router.POST("/libpod/images/build", httputil.NotImplemented)

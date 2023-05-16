@@ -25,7 +25,6 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/containers/create", wrap(docker.ContainerCreate))
 	router.POST("/containers/:id/start", wrap(common.ContainerStart))
 	router.POST("/containers/:id/attach", wrap(common.ContainerAttach))
-	router.POST("/containers/:id/exec", wrap(docker.ContainerExec))
 	router.POST("/containers/:id/stop", wrap(common.ContainerStop))
 	router.POST("/containers/:id/restart", wrap(common.ContainerRestart))
 	router.POST("/containers/:id/kill", wrap(common.ContainerKill))
@@ -40,8 +39,9 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.PUT("/containers/:id/archive", wrap(docker.PutArchive))
 	router.POST("/containers/:id/rename", wrap(docker.ContainerRename))
 
-	router.POST("/exec/:id/start", wrap(docker.ExecStart))
-	router.GET("/exec/:id/json", wrap(docker.ExecInfo))
+	router.POST("/containers/:id/exec", wrap(common.ContainerExec))
+	router.POST("/exec/:id/start", wrap(common.ExecStart))
+	router.GET("/exec/:id/json", wrap(common.ExecInfo))
 
 	router.POST("/networks/create", wrap(docker.NetworksCreate))
 	router.POST("/networks/:id/connect", wrap(docker.NetworksConnect))
