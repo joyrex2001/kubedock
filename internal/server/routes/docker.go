@@ -29,15 +29,16 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/containers/:id/restart", wrap(common.ContainerRestart))
 	router.POST("/containers/:id/kill", wrap(common.ContainerKill))
 	router.POST("/containers/:id/wait", wrap(docker.ContainerWait))
+	router.POST("/containers/:id/rename", wrap(docker.ContainerRename))
 	router.POST("/containers/:id/resize", wrap(common.ContainerResize))
 	router.DELETE("/containers/:id", wrap(common.ContainerDelete))
 	router.GET("/containers/json", wrap(docker.ContainerList))
 	router.GET("/containers/:id/json", wrap(docker.ContainerInfo))
 	router.GET("/containers/:id/logs", wrap(common.ContainerLogs))
-	router.HEAD("/containers/:id/archive", wrap(docker.HeadArchive))
-	router.GET("/containers/:id/archive", wrap(docker.GetArchive))
-	router.PUT("/containers/:id/archive", wrap(docker.PutArchive))
-	router.POST("/containers/:id/rename", wrap(docker.ContainerRename))
+
+	router.HEAD("/containers/:id/archive", wrap(common.HeadArchive))
+	router.GET("/containers/:id/archive", wrap(common.GetArchive))
+	router.PUT("/containers/:id/archive", wrap(common.PutArchive))
 
 	router.POST("/containers/:id/exec", wrap(common.ContainerExec))
 	router.POST("/exec/:id/start", wrap(common.ExecStart))
@@ -53,7 +54,7 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 
 	router.POST("/images/create", wrap(docker.ImageCreate))
 	router.GET("/images/json", wrap(common.ImageList))
-	router.GET("/images/:image/*json", wrap(docker.ImageJSON))
+	router.GET("/images/:image/*json", wrap(common.ImageJSON))
 
 	// not supported docker api at the moment
 	router.GET("/containers/:id/top", httputil.NotImplemented)

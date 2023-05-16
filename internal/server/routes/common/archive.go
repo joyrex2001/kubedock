@@ -1,4 +1,4 @@
-package docker
+package common
 
 import (
 	"encoding/base64"
@@ -14,14 +14,15 @@ import (
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
-	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
 )
 
 // PutArchive - extract an archive of files or folders to a directory in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/PutContainerArchive
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/PutContainerArchiveLibpod
 // PUT "/containers/:id/archive"
-func PutArchive(cr *common.ContextRouter, c *gin.Context) {
+// PUT "/libpod/containers/:id/archive"
+func PutArchive(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 
 	path := c.Query("path")
@@ -66,7 +67,7 @@ func PutArchive(cr *common.ContextRouter, c *gin.Context) {
 	}
 
 	if !tainr.Running && !tainr.Completed && !cr.Config.PreArchive {
-		if err := common.StartContainer(cr, tainr); err != nil {
+		if err := StartContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -85,7 +86,8 @@ func PutArchive(cr *common.ContextRouter, c *gin.Context) {
 // HeadArchive - get information about files in a container.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchiveInfo
 // HEAD "/containers/:id/archive"
-func HeadArchive(cr *common.ContextRouter, c *gin.Context) {
+// HEAD "/libpod/containers/:id/archive"
+func HeadArchive(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
@@ -105,7 +107,7 @@ func HeadArchive(cr *common.ContextRouter, c *gin.Context) {
 		return
 	}
 
-	stat, _ := json.Marshal(gin.H{"name": path, "mode": mode})
+	stat, _ := json.Marshal(gin.H{"name": path, "linkTarget": path, "mode": mode})
 
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString(stat))
@@ -114,7 +116,8 @@ func HeadArchive(cr *common.ContextRouter, c *gin.Context) {
 // GetArchive - get a tar archive of a resource in the filesystem of container id.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerArchive
 // GET "/containers/:id/archive"
-func GetArchive(cr *common.ContextRouter, c *gin.Context) {
+// GET "/libpod/containers/:id/archive"
+func GetArchive(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
@@ -134,7 +137,7 @@ func GetArchive(cr *common.ContextRouter, c *gin.Context) {
 		return
 	}
 
-	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": "", "mtime": "2021-01-01T20:00:00Z"})
+	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": path, "mtime": "2021-01-01T20:00:00Z"})
 
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("Content-Type", "application/x-tar")
