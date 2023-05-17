@@ -59,6 +59,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		User:         in.User,
 		Cmd:          in.Command,
 		Env:          in.Env,
+		Binds:        []string{},
 		ExposedPorts: map[string]interface{}{},
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
@@ -83,6 +84,10 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	}
 
 	addNetworkAliases(tainr, in.Network)
+
+	for _, mount := range in.Mounts {
+		tainr.Binds = append(tainr.Binds, mount.Source+":"+mount.Destination)
+	}
 
 	netw, err := cr.DB.GetNetworkByName("bridge")
 	if err != nil {

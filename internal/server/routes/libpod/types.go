@@ -12,6 +12,7 @@ type ContainerCreateRequest struct {
 	User         string                      `json:"User"`
 	PortMappings []PortMapping               `json:"portmappings"`
 	Network      map[string]NetworksProperty `json:"Networks"`
+	Mounts       []Mount                     `json:"mounts"`
 }
 
 // PortMapping describes how to map a port into the container.
@@ -26,4 +27,11 @@ type PortMapping struct {
 // NetworksProperty describes the container networks.
 type NetworksProperty struct {
 	Aliases []string `json:"aliases"`
+}
+
+// Mount describes how volumes should be mounted.
+type Mount struct {
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+	Type        string `json:"type"`
 }
