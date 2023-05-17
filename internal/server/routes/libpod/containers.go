@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -201,6 +202,10 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 		"Image": tainr.Image,
 		"NetworkSettings": gin.H{
 			"Networks": netdtl,
+			"Ports":    getNetworkSettingsPorts(cr, tainr),
+		},
+		"HostConfig": gin.H{
+			"PortBindings": getNetworkSettingsPorts(cr, tainr),
 		},
 		"Names": getContainerNames(tainr),
 	}
@@ -251,4 +256,71 @@ func getContainerNames(tainr *types.Container) []string {
 		}
 	}
 	return names
+}
+
+// getNetworkSettingsPorts will return the available ports of the container
+// as a gin.H json structure to be used in container details.
+func getNetworkSettingsPorts(cr *common.ContextRouter, tainr *types.Container) gin.H {
+	ports := getAvailablePorts(cr, tainr)
+	res := gin.H{}
+	if tainr.HostIP == "" {
+		return res
+	}
+	for dst, prts := range ports {
+		pp := []map[string]string{}
+		done := map[int]int{}
+		for _, src := range prts {
+			if _, ok := done[src]; ok {
+				continue
+			}
+			pp = append(pp, map[string]string{
+				"HostIp":   tainr.HostIP,
+				"HostPort": fmt.Sprintf("%d", src),
+			})
+			done[src] = 1
+		}
+		res[fmt.Sprintf("%d/tcp", dst)] = pp
+	}
+	return res
+}
+
+// getAvailablePorts will return all ports that are currently available on
+// the running container.
+func getAvailablePorts(cr *common.ContextRouter, tainr *types.Container) map[int][]int {
+	ports := map[int][]int{}
+	add := func(prts map[int]int) {
+		for src, dst := range prts {
+			if src < 0 {
+				continue
+			}
+			if _, ok := ports[dst]; !ok {
+				ports[dst] = []int{}
+			}
+			ports[dst] = append(ports[dst], src)
+		}
+	}
+	if cr.Config.PortForward || cr.Config.ReverseProxy {
+		add(tainr.HostPorts)
+		add(tainr.MappedPorts)
+	} else {
+		add(tainr.GetServicePorts())
+	}
+	return ports
+}
+
+// addNetworkAliases will add the networkaliases as defined in the provided
+// NetworksProperty to the container.
+func addNetworkAliases(tainr *types.Container, networks map[string]NetworksProperty) {
+	aliases := []string{}
+	done := map[string]string{tainr.ShortID: tainr.ShortID}
+	for _, netwp := range networks {
+		for _, a := range netwp.Aliases {
+			if _, ok := done[a]; !ok {
+				alias := strings.ToLower(a)
+				aliases = append(aliases, alias)
+				done[alias] = alias
+			}
+		}
+	}
+	tainr.NetworkAliases = aliases
 }
