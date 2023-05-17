@@ -15,6 +15,8 @@ const (
 	DockerVersion = "1.25"
 	// DockerAPIVersion is the api version as advertised when calling /version
 	DockerAPIVersion = "1.25"
+	// LibpodAPIVersion is the api version as advertised in libpod rest calls
+	LibpodAPIVersion = "4.2.0"
 )
 
 var (

@@ -1,12 +1,25 @@
 package routes
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 
+	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 	"github.com/joyrex2001/kubedock/internal/server/routes/common"
 	"github.com/joyrex2001/kubedock/internal/server/routes/libpod"
 )
+
+// LibpodHeadersMiddleware is a gin-gonic middleware that will add http headers
+// that are relevant for libpod endpoints.`
+func LibpodHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.Contains(c.Request.URL.Path, "/libpod/") {
+			c.Writer.Header().Set("Libpod-API-Version", config.LibpodAPIVersion)
+		}
+	}
+}
 
 // RegisterLibpodRoutes will add all suported podman routes.
 func RegisterLibpodRoutes(router *gin.Engine, cr *common.ContextRouter) {
@@ -15,6 +28,8 @@ func RegisterLibpodRoutes(router *gin.Engine, cr *common.ContextRouter) {
 			fn(cr, c)
 		}
 	}
+
+	router.Use(LibpodHeadersMiddleware())
 
 	router.GET("/libpod/version", wrap(libpod.Version))
 	router.GET("/libpod/_ping", wrap(libpod.Ping))
