@@ -99,7 +99,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 			Template: podtm,
 		},
 	}
-	job.Spec.Template.Spec.RestartPolicy = "OnFailure"
+	job.Spec.Template.Spec.RestartPolicy = "Never"
 	if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
 		return DeployFailed, err
 	}
