@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -189,24 +190,30 @@ func (in *instance) CreateReverseProxies(tainr *types.Container) {
 // reverseProxy will create reverse proxies to given container for
 // given ports.
 func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
+	var wg sync.WaitGroup
 	for src, dst := range ports {
 		if src < 0 {
 			continue
 		}
-		klog.Infof("reverse proxy for %d to %d", src, dst)
-		stop := make(chan struct{}, 1)
-		tainr.AddStopChannel(stop)
-		err := reverseproxy.Proxy(reverseproxy.Request{
-			LocalPort:  src,
-			RemotePort: dst,
-			RemoteIP:   tainr.HostIP,
-			StopCh:     stop,
-			MaxRetry:   30,
-		})
-		if err != nil {
-			klog.Errorf("error setting up reverse-proxy: %s", err)
-		}
+		wg.Add(1)
+		go func(src, dst int) {
+			defer wg.Done()
+			klog.Infof("reverse proxy for %d to %d", src, dst)
+			stop := make(chan struct{}, 1)
+			tainr.AddStopChannel(stop)
+			err := reverseproxy.Proxy(reverseproxy.Request{
+				LocalPort:  src,
+				RemotePort: dst,
+				RemoteIP:   tainr.HostIP,
+				StopCh:     stop,
+				MaxRetry:   30,
+			})
+			if err != nil {
+				klog.Errorf("error setting up reverse-proxy for %d to %d: %s", src, dst, err)
+			}
+		}(src, dst)
 	}
+	wg.Wait()
 }
 
 // GetPodIP will return the ip of the given container.
