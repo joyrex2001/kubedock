@@ -49,9 +49,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
 		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
 	}
-	if _, ok := in.Labels[types.LabelDeployAsJob]; !ok && cr.Config.DeployAsJob {
-		in.Labels[types.LabelDeployAsJob] = "true"
-	}
 	if in.HostConfig.Memory != 0 {
 		in.Labels[types.LabelRequestMemory] = fmt.Sprintf("%d", in.HostConfig.Memory)
 	}

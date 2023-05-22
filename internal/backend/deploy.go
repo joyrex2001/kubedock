@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,30 +93,15 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
-	if tainr.RunAsJob() {
-		job := &batchv1.Job{
-			ObjectMeta: meta,
-			Spec: batchv1.JobSpec{
-				Template: podtm,
-			},
-		}
-		job.Spec.Template.Spec.RestartPolicy = "OnFailure"
-		if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
-			return DeployFailed, err
-		}
-	} else {
-		dep := &appsv1.Deployment{
-			ObjectMeta: meta,
-			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{
-					MatchLabels: in.getPodMatchLabels(tainr),
-				},
-				Template: podtm,
-			},
-		}
-		if _, err := in.cli.AppsV1().Deployments(in.namespace).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
-			return DeployFailed, err
-		}
+	job := &batchv1.Job{
+		ObjectMeta: meta,
+		Spec: batchv1.JobSpec{
+			Template: podtm,
+		},
+	}
+	job.Spec.Template.Spec.RestartPolicy = "OnFailure"
+	if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
+		return DeployFailed, err
 	}
 
 	if tainr.HasVolumes() {

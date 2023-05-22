@@ -84,11 +84,6 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Infof("copying archives without starting containers enabled")
 	}
 
-	djob := viper.GetBool("deploy-as-job")
-	if djob {
-		klog.Infof("use k8s jobs for container deployments enabled")
-	}
-
 	reqcpu := viper.GetString("kubernetes.request-cpu")
 	if reqcpu != "" {
 		klog.Infof("default cpu request: %s", reqcpu)
@@ -121,7 +116,6 @@ func (s *Server) getGinEngine() *gin.Engine {
 		PortForward:    pfwrd,
 		ReverseProxy:   revprox,
 		PreArchive:     prea,
-		DeployAsJob:    djob,
 	})
 	if err != nil {
 		klog.Errorf("error setting up context: %s", err)

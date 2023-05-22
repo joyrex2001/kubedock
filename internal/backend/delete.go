@@ -26,10 +26,6 @@ func (in *instance) DeleteAll() error {
 		klog.Errorf("error deleting jobs: %s", err)
 		ok = false
 	}
-	if err := in.deleteDeployments("kubedock=true"); err != nil {
-		klog.Errorf("error deleting deployments: %s", err)
-		ok = false
-	}
 	if err := in.deletePods("kubedock=true"); err != nil {
 		klog.Errorf("error deleting pods: %s", err)
 		ok = false
@@ -55,10 +51,6 @@ func (in *instance) DeleteWithKubedockID(id string) error {
 		klog.Errorf("error deleting jobs: %s", err)
 		ok = false
 	}
-	if err := in.deleteDeployments("kubedock.id=" + id); err != nil {
-		klog.Errorf("error deleting deployments: %s", err)
-		ok = false
-	}
 	if !ok {
 		return fmt.Errorf("failed deleting container %s", id)
 	}
@@ -78,10 +70,6 @@ func (in *instance) DeleteContainer(tainr *types.Container) error {
 	}
 	if err := in.deleteJobs("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting jobs: %s", err)
-		ok = false
-	}
-	if err := in.deleteDeployments("kubedock.containerid=" + tainr.ShortID); err != nil {
-		klog.Errorf("error deleting deployments: %s", err)
 		ok = false
 	}
 	if !ok {
@@ -108,7 +96,7 @@ func (in *instance) DeleteOlderThan(keepmax time.Duration) error {
 // DeleteContainersOlderThan will delete containers than are orchestrated
 // by kubedock and are older than the given keepmax duration.
 func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
-	deps, err := in.cli.AppsV1().Deployments(in.namespace).List(context.TODO(), metav1.ListOptions{
+	deps, err := in.cli.BatchV1().Jobs(in.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "kubedock=true",
 	})
 	if err != nil {
@@ -116,14 +104,17 @@ func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
 	}
 	for _, dep := range deps.Items {
 		if in.isOlderThan(dep.ObjectMeta, keepmax) {
-			klog.V(3).Infof("deleting deployment: %s", dep.Name)
+			klog.V(3).Infof("deleting job: %s", dep.Name)
 			if err := in.deleteServices("kubedock.containerid=" + dep.Name); err != nil {
 				klog.Errorf("error deleting services: %s", err)
 			}
 			if err := in.deleteConfigMaps("kubedock.containerid=" + dep.Name); err != nil {
 				klog.Errorf("error deleting configmaps: %s", err)
 			}
-			if err := in.cli.AppsV1().Deployments(dep.Namespace).Delete(context.TODO(), dep.Name, metav1.DeleteOptions{}); err != nil {
+			background := metav1.DeletePropagationBackground
+			if err := in.cli.BatchV1().Jobs(dep.Namespace).Delete(context.TODO(), dep.Name, metav1.DeleteOptions{
+				PropagationPolicy: &background,
+			}); err != nil {
 				return err
 			}
 		}
@@ -183,7 +174,10 @@ func (in *instance) DeleteJobsOlderThan(keepmax time.Duration) error {
 	for _, job := range svcs.Items {
 		if in.isOlderThan(job.ObjectMeta, keepmax) {
 			klog.V(3).Infof("deleting service: %s", job.Name)
-			if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{}); err != nil {
+			background := metav1.DeletePropagationBackground
+			if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{
+				PropagationPolicy: &background,
+			}); err != nil {
 				return err
 			}
 		}
@@ -263,28 +257,12 @@ func (in *instance) deleteJobs(selector string) error {
 		return err
 	}
 	for _, job := range deps.Items {
-		if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{}); err != nil {
+		background := metav1.DeletePropagationBackground
+		if err := in.cli.BatchV1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{PropagationPolicy: &background}); err != nil {
 			return err
 		}
 		if err := in.deletePods("kubedock.containerid=" + job.Name); err != nil {
 			klog.Errorf("error deleting pods: %s", err)
-		}
-	}
-	return nil
-}
-
-// deleteDeployments will delete k8s deployments resources which match the
-// given label selector.
-func (in *instance) deleteDeployments(selector string) error {
-	deps, err := in.cli.AppsV1().Deployments(in.namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: selector,
-	})
-	if err != nil {
-		return err
-	}
-	for _, svc := range deps.Items {
-		if err := in.cli.AppsV1().Deployments(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
-			return err
 		}
 	}
 	return nil

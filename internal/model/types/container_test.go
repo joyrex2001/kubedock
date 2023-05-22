@@ -375,48 +375,6 @@ func TestMapPort(t *testing.T) {
 	}
 }
 
-func TestShouldCreateJob(t *testing.T) {
-	tests := []struct {
-		in  *Container
-		out bool
-	}{
-		{ // 0
-			in:  &Container{Labels: map[string]string{}},
-			out: false,
-		},
-		{ // 1
-			in: &Container{Labels: map[string]string{
-				"com.joyrex2001.kubedock.deploy-as-job": "false",
-			}},
-			out: false,
-		},
-		{ // 2
-			in: &Container{Labels: map[string]string{
-				"com.joyrex2001.kubedock.deploy-as-job": "true",
-			}},
-			out: true,
-		},
-		{ // 3
-			in: &Container{Labels: map[string]string{
-				"com.joyrex2001.kubedock.deploy-as-job": "bogus",
-			}},
-			out: false,
-		},
-		{ // 4
-			in: &Container{Labels: map[string]string{
-				"com.joyrex2001.kubedock.deploy-as-job": "1",
-			}},
-			out: true,
-		},
-	}
-	for i, tst := range tests {
-		res := tst.in.RunAsJob()
-		if res != tst.out {
-			t.Errorf("failed job test %d - expected %t, but got %t", i, tst.out, res)
-		}
-	}
-}
-
 func TestGetTCPPorts(t *testing.T) {
 	tests := []struct {
 		in  *Container

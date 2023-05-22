@@ -13,7 +13,7 @@ export DOCKER_HOST=tcp://127.0.0.1:2475
 mvn test
 ```
 
-The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Deployments, Jobs, Services and Configmaps. If namespace locking is used, the service also requires permissions to create Leases in the namespace.
+The default configuration for kubedock is to orchestrate in the namespace that has been set in the current context. This can be overruled with -n argument (or via the `NAMESPACE` environment variable). The service requires permissions to create Jobs, Services and Configmaps. If namespace locking is used, the service also requires permissions to create Leases in the namespace.
 
 To see a complete list of available options: `kubedock --help`.
 
@@ -23,11 +23,11 @@ When kubedock is started with `kubedock server` it will start an API server on p
 
 ## Containers
 
-Container API calls are translated towards kubernetes Deployment (or Job) resources. When a container is started, it will create a kubernetes Service within the cluster and maps the ports to that of the container (note that only tcp is supported). This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutual exlusive with `--port-forward`.
+Container API calls are translated towards kubernetes Job resources. When a container is started, it will create a kubernetes Service within the cluster and maps the ports to that of the container (note that only tcp is supported). This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutual exlusive with `--port-forward`.
 
 Starting a container is a blocking call that will wait until it results in a running Pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
 
-By default, all containers will be orchestrated using kubernetes Deployment resources. However, in some cases it could make more sense to deploy the container as a Job instead. The deployment resource type can be forced by adding a `com.joyrex2001.kubedock.deploy-as-job` label that contains `true` on the container that should be orchestrated as a Job instead. This can also be set globally with the `--deploy-as-job` argument, which will result in all containers being deployes as Jobs. The restart policy for Jobs is fixed to `OnFailure`. If a pod has been given a specific name, this will be visible in the deployed resource. If the label `com.joyrex2001.kubedock.name-prefix` has been set, each container will add this as a prefix to the name.
+By default, all containers will be orchestrated using kubernetes Job resources. The restart policy for the created Jobs is fixed to `OnFailure`. If a pod has been given a specific name, this will be visible in the deployed resource. If the label `com.joyrex2001.kubedock.name-prefix` has been set, each container will add this as a prefix to the name.
 
 The containers will be started with the `default` service account. This can be changed with the `--service-acount`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
 
@@ -57,11 +57,11 @@ By default containers are started without any resource request configuration. Th
 
 ## Resources cleanup
 
-Kubedock will dynamically create deployments and services in the configured namespace. If kubedock is requested to delete a container, it will remove the deployment and related services. Kubedock will also delete all the resources (Services and Deployments) it created in the running instance before exiting (identified with the `kubedock.id` label).
+Kubedock will dynamically create jobs and services in the configured namespace. If kubedock is requested to delete a container, it will remove the job and related services. Kubedock will also delete all the resources (Services and Jobs) it created in the running instance before exiting (identified with the `kubedock.id` label).
 
 ### Automatic reaping
 
-If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused deployments, configmaps and services lingering around, kubedock will automatically delete these resources. If these resorces are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
+If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused jobs, configmaps and services lingering around, kubedock will automatically delete these resources. If these resorces are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
 
 ### Forced cleaning
 
@@ -69,7 +69,7 @@ The reaping of resources can also be enforced at startup. When kubedock is start
 
 ## Service Account RBAC
 
-As a reference, the below role can be used to manage the permissions of the service account that is used to run kubedock in a cluster. The uncommented rules are the minimal permissions. Depending on use of `--deploy-as-job`, `--pre-archive` and `--lock`, the additional (commented) rules are required as well.
+As a reference, the below role can be used to manage the permissions of the service account that is used to run kubedock in a cluster. The uncommented rules are the minimal permissions. Depending on use of `--pre-archive` and `--lock`, the additional (commented) rules are required as well.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -78,8 +78,8 @@ metadata:
   name: testcontainers
   namespace: jenkins
 rules:
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
@@ -93,13 +93,7 @@ rules:
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["list"]
-  - apiGroups: ["batch"]
-    resources: ["jobs"]
-    verbs: ["list"]
 ## optional permissions (depending on kubedock use)
-# - apiGroups: ["batch"]
-#   resources: ["jobs"]
-#   verbs: ["create", "get", "list", "delete"]
 # - apiGroups: [""]
 #   resources: ["configmaps"]
 #   verbs: ["create", "get", "list", "delete"]

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +22,7 @@ func TestDeleteContainerKubedockID(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -36,7 +35,7 @@ func TestDeleteContainerKubedockID(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -50,7 +49,7 @@ func TestDeleteContainerKubedockID(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -67,7 +66,7 @@ func TestDeleteContainerKubedockID(t *testing.T) {
 		if err := tst.kub.DeleteWithKubedockID("z80"); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		deps, _ := tst.kub.cli.AppsV1().Deployments("default").List(context.TODO(), metav1.ListOptions{})
+		deps, _ := tst.kub.cli.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
 		cnt := len(deps.Items)
 		if cnt != tst.ins {
 			t.Errorf("failed delete instances test %d - expected %d remaining deployments but got %d", i, tst.ins, cnt)
@@ -84,7 +83,7 @@ func TestDeleteContainers(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -97,7 +96,7 @@ func TestDeleteContainers(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -111,7 +110,7 @@ func TestDeleteContainers(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -128,7 +127,7 @@ func TestDeleteContainers(t *testing.T) {
 		if err := tst.kub.DeleteContainer(tst.in); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		deps, _ := tst.kub.cli.AppsV1().Deployments("default").List(context.TODO(), metav1.ListOptions{})
+		deps, _ := tst.kub.cli.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
 		cnt := len(deps.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
@@ -145,7 +144,7 @@ func TestDeleteContainerKubedock(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -158,7 +157,7 @@ func TestDeleteContainerKubedock(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -172,7 +171,7 @@ func TestDeleteContainerKubedock(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "tb303",
 						Namespace: "default",
@@ -189,7 +188,7 @@ func TestDeleteContainerKubedock(t *testing.T) {
 		if err := tst.kub.DeleteAll(); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		deps, _ := tst.kub.cli.AppsV1().Deployments("default").List(context.TODO(), metav1.ListOptions{})
+		deps, _ := tst.kub.cli.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
 		cnt := len(deps.Items)
 		if cnt != tst.all {
 			t.Errorf("failed delete all test %d - expected %d remaining deployments but got %d", i, tst.all, cnt)
@@ -251,7 +250,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
@@ -263,7 +262,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "f1spirit",
 						Namespace: "default",
@@ -276,7 +275,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
+				cli: fake.NewSimpleClientset(&batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:              "f1spirit",
 						Namespace:         "default",
@@ -291,7 +290,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 
 	for i, tst := range tests {
 		tst.kub.DeleteContainersOlderThan(100 * time.Millisecond)
-		deps, _ := tst.kub.cli.AppsV1().Deployments("default").List(context.TODO(), metav1.ListOptions{})
+		deps, _ := tst.kub.cli.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
 		cnt := len(deps.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)

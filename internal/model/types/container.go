@@ -61,9 +61,6 @@ const (
 	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
 	// LabelPullPolicy is the label to be used to configure the pull policy
 	LabelPullPolicy = "com.joyrex2001.kubedock.pull-policy"
-	// LabelDeployAsJob is the label to be used to force creating a Job rather
-	// then a Deployment.
-	LabelDeployAsJob = "com.joyrex2001.kubedock.deploy-as-job"
 	// LabelServiceAccount is the label to be used to enforce a service account
 	// other than 'default' for the created pods.
 	LabelServiceAccount = "com.joyrex2001.kubedock.service-account"
@@ -106,13 +103,6 @@ func (co *Container) GetImagePullPolicy() (corev1.PullPolicy, error) {
 		return ps["default"], fmt.Errorf("invalid pull policy: %s", p)
 	}
 	return ps["default"], nil
-}
-
-// RunAsJob will check if the job hint label is present, and if it contains
-// true. If so, a Job should be created, rather than a Deployment.
-func (co *Container) RunAsJob() bool {
-	res, _ := strconv.ParseBool(co.Labels[LabelDeployAsJob])
-	return res
 }
 
 // GetResourceRequirements will return a k8s request/limits configuration
