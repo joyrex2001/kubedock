@@ -127,6 +127,39 @@ func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 	}
 }
 
+// ContainerDelete - remove a container.
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerDeleteLibpod
+// DELETE "/libpod/containers/:id"
+func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
+	id := c.Param("id")
+	tainr, err := cr.DB.GetContainer(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	tainr.SignalDetach()
+	tainr.SignalStop()
+
+	if !tainr.Stopped && !tainr.Killed {
+		if err := cr.Backend.DeleteContainer(tainr); err != nil {
+			klog.Warningf("error while deleting k8s container: %s", err)
+		}
+		cr.Events.Publish(tainr.ID, events.Container, events.Die)
+	}
+
+	if err := cr.DB.DeleteContainer(tainr); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"cause":    err,
+			"message":  "",
+			"response": http.StatusNotFound,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, []gin.H{})
+}
+
 // ContainerExists - Check if container exists.
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerInspectLibpod
 // GET "/libpod/containers/:id/exists"

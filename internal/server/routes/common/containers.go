@@ -172,37 +172,6 @@ func ContainerKill(cr *ContextRouter, c *gin.Context) {
 	c.Writer.WriteHeader(http.StatusNoContent)
 }
 
-// ContainerDelete - remove a container.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerDelete
-// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerDeleteLibpod
-// DELETE "/containers/:id"
-// DELETE "/libpod/containers/:id"
-func ContainerDelete(cr *ContextRouter, c *gin.Context) {
-	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
-	if err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	tainr.SignalDetach()
-	tainr.SignalStop()
-
-	if !tainr.Stopped && !tainr.Killed {
-		if err := cr.Backend.DeleteContainer(tainr); err != nil {
-			klog.Warningf("error while deleting k8s container: %s", err)
-		}
-		cr.Events.Publish(tainr.ID, events.Container, events.Die)
-	}
-
-	if err := cr.DB.DeleteContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	c.Writer.WriteHeader(http.StatusNoContent)
-}
-
 // ContainerAttach - attach to a container to read its output or send input.
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerAttach
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerAttachLibpod

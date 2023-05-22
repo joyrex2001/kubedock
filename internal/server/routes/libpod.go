@@ -45,7 +45,7 @@ func RegisterLibpodRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/libpod/containers/:id/wait", wrap(libpod.ContainerWait))
 	router.POST("/libpod/containers/:id/rename", wrap(common.ContainerRename))
 	router.POST("/libpod/containers/:id/resize", wrap(common.ContainerResize))
-	router.DELETE("/libpod/containers/:id", wrap(common.ContainerDelete))
+	router.DELETE("/libpod/containers/:id", wrap(libpod.ContainerDelete))
 	router.GET("/libpod/containers/json", wrap(libpod.ContainerList))
 	router.GET("/libpod/containers/:id/json", wrap(libpod.ContainerInfo))
 	router.GET("/libpod/containers/:id/logs", wrap(common.ContainerLogs))

@@ -31,7 +31,7 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/containers/:id/wait", wrap(docker.ContainerWait))
 	router.POST("/containers/:id/rename", wrap(docker.ContainerRename))
 	router.POST("/containers/:id/resize", wrap(common.ContainerResize))
-	router.DELETE("/containers/:id", wrap(common.ContainerDelete))
+	router.DELETE("/containers/:id", wrap(docker.ContainerDelete))
 	router.GET("/containers/json", wrap(docker.ContainerList))
 	router.GET("/containers/:id/json", wrap(docker.ContainerInfo))
 	router.GET("/containers/:id/logs", wrap(common.ContainerLogs))
