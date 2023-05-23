@@ -172,7 +172,7 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		klog.Info("exit signal recieved, removing deployments, configmaps and services")
+		klog.Info("exit signal recieved, removing pods, configmaps and services")
 		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
 			klog.Fatalf("error pruning resources: %s", err)
 		}

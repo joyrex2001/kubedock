@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -41,6 +40,16 @@ const (
 // StartContainer will start given container object in kubernetes and
 // waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
+	state, err := in.startContainer(tainr)
+	if state == DeployFailed {
+		if err := in.cli.CoreV1().Pods(in.namespace).Delete(context.TODO(), tainr.GetPodName(), metav1.DeleteOptions{}); err != nil {
+			klog.Infof("error deleting failed pod: %s", err)
+		}
+	}
+	return state, err
+}
+
+func (in *instance) startContainer(tainr *types.Container) (DeployState, error) {
 	reqlimits, err := tainr.GetResourceRequirements()
 	if err != nil {
 		return DeployFailed, err
@@ -56,16 +65,12 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
-	meta := metav1.ObjectMeta{
-		Namespace:   in.namespace,
-		Name:        tainr.GetDeploymentName(),
-		Labels:      in.getLabels(tainr),
-		Annotations: in.getAnnotations(tainr),
-	}
-
-	podtm := corev1.PodTemplateSpec{
+	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: in.getLabels(tainr),
+			Namespace:   in.namespace,
+			Name:        tainr.GetPodName(),
+			Labels:      in.getLabels(tainr),
+			Annotations: in.getAnnotations(tainr),
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -84,23 +89,16 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 	}
 
 	for _, ps := range in.imagePullSecrets {
-		podtm.Spec.ImagePullSecrets = append(podtm.Spec.ImagePullSecrets, corev1.LocalObjectReference{Name: ps})
+		pod.Spec.ImagePullSecrets = append(pod.Spec.ImagePullSecrets, corev1.LocalObjectReference{Name: ps})
 	}
 
 	if tainr.HasVolumes() {
-		if err := in.addVolumes(tainr, &podtm); err != nil {
+		if err := in.addVolumes(tainr, pod); err != nil {
 			return DeployFailed, err
 		}
 	}
 
-	job := &batchv1.Job{
-		ObjectMeta: meta,
-		Spec: batchv1.JobSpec{
-			Template: podtm,
-		},
-	}
-	job.Spec.Template.Spec.RestartPolicy = "Never"
-	if _, err := in.cli.BatchV1().Jobs(in.namespace).Create(context.TODO(), job, metav1.CreateOptions{}); err != nil {
+	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
 		return DeployFailed, err
 	}
 
@@ -139,12 +137,9 @@ func (in *instance) CreatePortForwards(tainr *types.Container) {
 
 // portForward will create port-forwards for all mapped ports.
 func (in *instance) portForward(tainr *types.Container, ports map[int]int) error {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
-	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no matching pod found")
 	}
 	for src, dst := range ports {
 		if src < 0 {
@@ -154,7 +149,7 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		tainr.AddStopChannel(stop)
 		go portforward.ToPod(portforward.Request{
 			RestConfig: in.cfg,
-			Pod:        pods[0],
+			Pod:        *pod,
 			LocalPort:  src,
 			PodPort:    dst,
 			StopCh:     stop,
@@ -202,11 +197,11 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 
 // GetPodIP will return the ip of the given container.
 func (in *instance) GetPodIP(tainr *types.Container) (string, error) {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
-	return pods[0].Status.PodIP, nil
+	return pod.Status.PodIP, nil
 }
 
 // createServices will create k8s service objects for each provided
@@ -333,30 +328,28 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployStat
 
 // GetContainerStatus will return the state of the deployed container.
 func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, error) {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return DeployFailed, err
 	}
-	for _, pod := range pods {
-		if pod.Status.Phase == corev1.PodRunning {
-			return DeployRunning, nil
+	for _, status := range pod.Status.ContainerStatuses {
+		term := status.State.Terminated
+		ters := status.LastTerminationState.Terminated
+		if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
+			return DeployCompleted, nil
 		}
-		if pod.Status.Phase == corev1.PodFailed {
+		if status.RestartCount > 0 {
 			return DeployFailed, fmt.Errorf("failed to start container")
 		}
-		for _, status := range pod.Status.ContainerStatuses {
-			term := status.State.Terminated
-			ters := status.LastTerminationState.Terminated
-			if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
-				return DeployCompleted, nil
-			}
-			if status.RestartCount > 0 {
-				return DeployFailed, fmt.Errorf("failed to start container")
-			}
-			if status.State.Waiting != nil && status.State.Waiting.Reason == "ImagePullBackOff" {
-				return DeployFailed, fmt.Errorf("failed to start container; error pulling image")
-			}
+		if status.State.Waiting != nil && status.State.Waiting.Reason == "ImagePullBackOff" {
+			return DeployFailed, fmt.Errorf("failed to start container; error pulling image")
 		}
+		if status.State.Running != nil {
+			return DeployRunning, nil
+		}
+	}
+	if pod.Status.Phase == corev1.PodFailed {
+		return DeployFailed, fmt.Errorf("failed to start container")
 	}
 	return DeployPending, nil
 }
@@ -365,21 +358,19 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 // deployment to be ready.
 func (in *instance) waitInitContainerRunning(tainr *types.Container, name string, wait int) error {
 	for max := 0; max < wait; max++ {
-		pods, err := in.getPods(tainr)
+		pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
-		for _, pod := range pods {
-			if pod.Status.Phase == corev1.PodFailed {
-				return fmt.Errorf("failed to start container")
+		if pod.Status.Phase == corev1.PodFailed {
+			return fmt.Errorf("failed to start container")
+		}
+		for _, status := range pod.Status.InitContainerStatuses {
+			if status.Name != name {
+				continue
 			}
-			for _, status := range pod.Status.InitContainerStatuses {
-				if status.Name != name {
-					continue
-				}
-				if status.State.Running != nil {
-					return nil
-				}
+			if status.State.Running != nil {
+				return nil
 			}
 		}
 		time.Sleep(time.Second)
@@ -392,13 +383,13 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 // to copy data before the container is started. If files are inclueded,
 // rather than folders, it will create a configmap, and mounts the files
 // from this created configmap.
-func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplateSpec) error {
+func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
 	pulpol, err := tainr.GetImagePullPolicy()
 	if err != nil {
 		return err
 	}
 
-	podtm.Spec.InitContainers = []corev1.Container{{
+	pod.Spec.InitContainers = []corev1.Container{{
 		Name:            "setup",
 		Image:           in.initImage,
 		ImagePullPolicy: pulpol,
@@ -461,9 +452,9 @@ func (in *instance) addVolumes(tainr *types.Container, podtm *corev1.PodTemplate
 		}
 	}
 
-	podtm.Spec.Volumes = volumes
-	podtm.Spec.Containers[0].VolumeMounts = mounts
-	podtm.Spec.InitContainers[0].VolumeMounts = mounts
+	pod.Spec.Volumes = volumes
+	pod.Spec.Containers[0].VolumeMounts = mounts
+	pod.Spec.InitContainers[0].VolumeMounts = mounts
 
 	return nil
 }
@@ -520,7 +511,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 		return err
 	}
 
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -538,7 +529,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 		if err := exec.RemoteCmd(exec.Request{
 			Client:     in.cli,
 			RestConfig: in.cfg,
-			Pod:        pods[0],
+			Pod:        *pod,
 			Container:  "setup",
 			Cmd:        []string{"tar", "-xf", "-", "-C", dst},
 			Stdin:      reader,
@@ -557,14 +548,14 @@ func (in *instance) fileID(file string) string {
 
 // signalDone will signal the prepare init container to exit.
 func (in *instance) signalDone(tainr *types.Container) error {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
-		Pod:        pods[0],
+		Pod:        *pod,
 		Container:  "setup",
 		Cmd:        []string{"touch", "/tmp/done"},
 		Stderr:     os.Stderr,

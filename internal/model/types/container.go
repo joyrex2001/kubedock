@@ -158,12 +158,14 @@ func (co *Container) GetServiceAccountName() string {
 	return "default"
 }
 
-// GetDeploymentName will return a human friendly name that can be used for the
+// GetPodName will return a human friendly name that can be used for the
 // the container deployments.
-func (co *Container) GetDeploymentName() string {
+func (co *Container) GetPodName() string {
 	name := co.Name
 	if prefix, ok := co.Labels[LabelNamePrefix]; ok {
 		name = prefix + "-" + co.Name
+	} else {
+		name = "kubedock-" + co.Name
 	}
 	name = strings.ReplaceAll(name, "_", "-")
 	re := regexp.MustCompile("[^A-Za-z0-9-]")

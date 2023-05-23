@@ -2,10 +2,10 @@ package backend
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/ioproxy"
@@ -20,12 +20,12 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 		TailLines: &tail,
 	}
 
-	name, err := in.getFirstPodName(tainr)
+	_, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	req := in.cli.CoreV1().Pods(in.namespace).GetLogs(name, &options)
+	req := in.cli.CoreV1().Pods(in.namespace).GetLogs(tainr.GetPodName(), &options)
 	stream, err := req.Stream(context.TODO())
 	if err != nil {
 		return err
@@ -74,24 +74,4 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	}
 
 	return nil
-}
-
-// getFirstPodName returns the pod name of the first pod that matches
-// the container deployment.
-func (in *instance) getFirstPodName(tainr *types.Container) (string, error) {
-	pods, err := in.getPods(tainr)
-	if err != nil {
-		return "", err
-	}
-
-	names := []string{}
-	for _, p := range pods {
-		names = append(names, p.Name)
-	}
-
-	if len(names) == 0 {
-		return "", fmt.Errorf("no running pods for %s", tainr.ShortID)
-	}
-
-	return names[0], nil
 }

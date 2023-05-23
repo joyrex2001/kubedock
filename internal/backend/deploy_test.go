@@ -309,33 +309,14 @@ func TestWaitReadyState(t *testing.T) {
 		{
 			kub: &instance{
 				namespace: "default",
-				cli: fake.NewSimpleClientset(&appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tb303",
-						Namespace: "default",
-					},
-				}),
-			},
-			in:    &types.Container{Name: "f1spirit", ShortID: "tb303"},
-			state: DeployFailed,
-			out:   true,
-		},
-		{
-			kub: &instance{
-				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "kubedock-f1spirit-tr909",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock.containerid": "tr909"},
 					},
 					Status: corev1.PodStatus{
 						Phase: corev1.PodFailed,
-					},
-				}, &appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tr909",
-						Namespace: "default",
 					},
 				}),
 			},
@@ -348,7 +329,7 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "kubedock-f1spirit-tr808",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock.containerid": "tr808"},
 					},
@@ -356,11 +337,6 @@ func TestWaitReadyState(t *testing.T) {
 						ContainerStatuses: []corev1.ContainerStatus{
 							{RestartCount: 1},
 						},
-					},
-				}, &appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tr808",
-						Namespace: "default",
 					},
 				}),
 			},
@@ -373,7 +349,7 @@ func TestWaitReadyState(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "kubedock-f1spirit-tr909",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock.containerid": "tr909"},
 					},
@@ -381,11 +357,6 @@ func TestWaitReadyState(t *testing.T) {
 						ContainerStatuses: []corev1.ContainerStatus{
 							{LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
 						},
-					},
-				}, &appsv1.Deployment{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tr909",
-						Namespace: "default",
 					},
 				}),
 			},
@@ -418,7 +389,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "f1spirit",
+						Name:      "kubedock-f1spirit-tr808",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock.containerid": "rc752"},
 					},
@@ -438,7 +409,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tb303",
+						Name:      "kubedock-f1spirit-tb303",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock.containerid": "tb303"},
 					},
@@ -458,7 +429,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tr606",
+						Name:      "kubedock-f1spirit-tr606",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock": "tr606"},
 					},
@@ -476,7 +447,7 @@ func TestWaitInitContainerRunning(t *testing.T) {
 				namespace: "default",
 				cli: fake.NewSimpleClientset(&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tr606",
+						Name:      "kubedock-f1spirit-tr606",
 						Namespace: "default",
 						Labels:    map[string]string{"kubedock": "tr606"},
 					},
@@ -516,14 +487,14 @@ func TestAddVolumes(t *testing.T) {
 	}
 
 	for i, tst := range tests {
-		podtm := &corev1.PodTemplateSpec{
+		pod := &corev1.Pod{
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{{}},
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
-		kub.addVolumes(tst.in, podtm)
-		count := len(podtm.Spec.Volumes)
+		kub.addVolumes(tst.in, pod)
+		count := len(pod.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d volume, but got %d", i, tst.count, count)
 		}

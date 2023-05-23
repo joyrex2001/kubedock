@@ -3,12 +3,13 @@ package backend
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"context"
 	"io"
 	"io/fs"
 	"path"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -17,12 +18,9 @@ import (
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
 func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, target string) error {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
-	}
-	if len(pods) == 0 {
-		return fmt.Errorf("no matching pod found")
 	}
 
 	if target != "/" && strings.HasSuffix(string(target[len(target)-1]), "/") {
@@ -40,7 +38,7 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, targ
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
-		Pod:        pods[0],
+		Pod:        *pod,
 		Container:  "main",
 		Cmd:        []string{"tar", "-xf", "-", "-C", target},
 		Stdin:      reader,
@@ -51,12 +49,9 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, targ
 // CopyFromContainer will copy given path from the container as return it as a
 // tar archive. Note that this requires tar to be present on the container.
 func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]byte, error) {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return nil, err
-	}
-	if len(pods) == 0 {
-		return nil, fmt.Errorf("no matching pod found")
 	}
 
 	var b bytes.Buffer
@@ -65,7 +60,7 @@ func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]
 	err = exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
-		Pod:        pods[0],
+		Pod:        *pod,
 		Container:  "main",
 		Cmd:        []string{"tar", "-cf", "-", "-C", path.Dir(target), path.Base(target)},
 		Stdout:     writer,
@@ -80,12 +75,9 @@ func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]
 // GetFileModeInContainer will return the file mode (directory or file) of a given path
 // inside the container.
 func (in *instance) GetFileModeInContainer(tainr *types.Container, target string) (fs.FileMode, error) {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return 0, err
-	}
-	if len(pods) == 0 {
-		return 0, fmt.Errorf("no matching pod found")
 	}
 
 	var b bytes.Buffer
@@ -98,7 +90,7 @@ func (in *instance) GetFileModeInContainer(tainr *types.Container, target string
 	err = exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
-		Pod:        pods[0],
+		Pod:        *pod,
 		Container:  "main",
 		Cmd:        []string{"sh", "-c", "if [ -d \"" + target + "\" ]; then echo folder; else echo file; fi"},
 		Stdout:     writer,

@@ -4,8 +4,6 @@ import (
 	"io"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -50,66 +48,5 @@ func TestGetLogs(t *testing.T) {
 		}
 		r.Close()
 		w.Close()
-	}
-}
-
-func TestGetFirstPodName(t *testing.T) {
-	tests := []struct {
-		in  *types.Container
-		kub *instance
-		out string
-		suc bool
-	}{
-		{
-			kub: &instance{
-				namespace: "default",
-				cli:       fake.NewSimpleClientset(),
-			},
-			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
-			out: "",
-			suc: false,
-		},
-		{
-			kub: &instance{
-				namespace: "default",
-				cli: fake.NewSimpleClientset(&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tb303",
-						Namespace: "default",
-					},
-				}),
-			},
-			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
-			out: "",
-			suc: false,
-		},
-		{
-			kub: &instance{
-				namespace: "default",
-				cli: fake.NewSimpleClientset(&corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "tb303",
-						Namespace: "default",
-						Labels:    map[string]string{"kubedock.containerid": "tb303"},
-					},
-				}),
-			},
-			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
-			out: "tb303",
-			suc: true,
-		},
-	}
-
-	for i, tst := range tests {
-		res, err := tst.kub.getFirstPodName(tst.in)
-		if !tst.suc && err == nil {
-			t.Errorf("failed test %d - expected error", i)
-		}
-		if tst.suc && err != nil {
-			t.Errorf("failed test %d - unexpected error %s", i, err)
-		}
-		if tst.suc && tst.out != res {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
-		}
 	}
 }

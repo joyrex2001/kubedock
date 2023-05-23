@@ -257,14 +257,14 @@ func TestGetServiceAccountName(t *testing.T) {
 	}
 }
 
-func TestGetDeploymentName(t *testing.T) {
+func TestGetPodName(t *testing.T) {
 	tests := []struct {
 		in   *Container
 		name string
 	}{
 		{ // 0
 			in:   &Container{ShortID: "1234", Name: "", Labels: map[string]string{}},
-			name: "1234",
+			name: "kubedock-1234",
 		},
 		{ // 1
 			in: &Container{ShortID: "1234", Name: "", Labels: map[string]string{
@@ -304,7 +304,7 @@ func TestGetDeploymentName(t *testing.T) {
 		},
 	}
 	for i, tst := range tests {
-		name := tst.in.GetDeploymentName()
+		name := tst.in.GetPodName()
 		if name != tst.name {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.name, name)
 		}

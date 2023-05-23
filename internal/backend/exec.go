@@ -1,10 +1,12 @@
 package backend
 
 import (
-	"fmt"
+	"context"
 	"io"
 	"strconv"
 	"strings"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
@@ -13,18 +15,15 @@ import (
 
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, out io.Writer) (int, error) {
-	pods, err := in.getPods(tainr)
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return 0, err
-	}
-	if len(pods) == 0 {
-		return 0, fmt.Errorf("no matching pod found")
 	}
 
 	req := exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
-		Pod:        pods[0],
+		Pod:        *pod,
 		Container:  "main",
 		Cmd:        ex.Cmd,
 	}
