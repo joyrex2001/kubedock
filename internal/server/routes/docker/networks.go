@@ -164,7 +164,7 @@ func NetworksDisconnect(cr *common.ContextRouter, c *gin.Context) {
 		return
 	}
 	id := c.Param("id")
-	_, err := cr.DB.GetNetworkByNameOrID(id)
+	netw, err := cr.DB.GetNetworkByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -174,7 +174,11 @@ func NetworksDisconnect(cr *common.ContextRouter, c *gin.Context) {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}
-	if err := tainr.DisconnectNetwork(id); err != nil {
+	if netw.IsPredefined() {
+		httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("can not disconnect from predefined network"))
+		return
+	}
+	if err := tainr.DisconnectNetwork(netw.ID); err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
 	}

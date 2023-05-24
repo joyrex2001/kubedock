@@ -418,9 +418,6 @@ func (co *Container) ConnectNetwork(id string) {
 
 // DisconnectNetwork will detach a network from the container.
 func (co *Container) DisconnectNetwork(id string) error {
-	if id == "bridge" {
-		return fmt.Errorf("can't delete bridge network")
-	}
 	if _, ok := co.Networks[id]; !ok {
 		return fmt.Errorf("container is not connected to network %s", id)
 	}
