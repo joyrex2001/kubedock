@@ -27,7 +27,7 @@ Container API calls are translated towards kubernetes pods. When a container is 
 
 Starting a container is a blocking call that will wait until it results in a running pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
 
-By default, all containers will be orchestrated using kubernetes pods. If a pod has been given a specific name, this will be visible in the deployed resource. If the label `com.joyrex2001.kubedock.name-prefix` has been set, each container will add this as a prefix to the name.
+By default, all containers will be orchestrated using kubernetes pods. If a container has been given a specific name, this will be visible in the name of the pod. If the label `com.joyrex2001.kubedock.name-prefix` has been set, this will be added as a prefix to the name.
 
 The containers will be started with the `default` service account. This can be changed with the `--service-acount`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
 
@@ -49,7 +49,7 @@ Kubedock implements the images API by tracking which images are requested. It is
 
 ## Namespace locking
 
-If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattend (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a Lease called `kubedock-lock` in the namespace in which it tracks the current ownership.
+If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattend (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a lease called `kubedock-lock` in the namespace in which it tracks the current ownership.
 
 ## Resource requests and limits
 
@@ -75,8 +75,8 @@ As a reference, the below role can be used to manage the permissions of the serv
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: testcontainers
-  namespace: jenkins
+  name: kubedock
+  namespace: cicd
 rules:
   - apiGroups: [""]
     resources: ["pods"]
