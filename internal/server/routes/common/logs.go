@@ -57,7 +57,7 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	tainr.AddStopChannel(stop)
 
 	if err := cr.Backend.GetLogs(tainr, follow, 100, stop, out); err != nil {
-		klog.Errorf("error retrieving logs: %s", err)
+		klog.V(3).Infof("error retrieving logs: %s", err)
 		return
 	}
 }
