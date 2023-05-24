@@ -133,7 +133,9 @@ func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 			return
 		case <-ticker.C:
 			tainr, err := cr.DB.GetContainer(id)
-			common.UpdateContainerStatus(cr, tainr)
+			if err == nil {
+				common.UpdateContainerStatus(cr, tainr)
+			}
 			if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
 				c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
 				return
