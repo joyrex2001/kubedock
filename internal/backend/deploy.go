@@ -85,6 +85,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 			}},
 			ServiceAccountName: tainr.GetServiceAccountName(),
 			SecurityContext:    &seccontext,
+			RestartPolicy:      corev1.RestartPolicyNever,
 		},
 	}
 
