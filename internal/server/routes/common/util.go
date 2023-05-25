@@ -1,7 +1,6 @@
 package common
 
 import (
-	"os"
 	"time"
 
 	"k8s.io/klog"
@@ -15,12 +14,6 @@ import (
 func StartContainer(cr *ContextRouter, tainr *types.Container) error {
 	state, err := cr.Backend.StartContainer(tainr)
 	if err != nil {
-		if klog.V(2) {
-			klog.Infof("container %s log output:", tainr.ShortID)
-			stop := make(chan struct{}, 1)
-			_ = cr.Backend.GetLogs(tainr, false, 100, stop, os.Stderr)
-			close(stop)
-		}
 		return err
 	}
 

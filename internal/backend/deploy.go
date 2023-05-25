@@ -42,9 +42,13 @@ const (
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
 	state, err := in.startContainer(tainr)
 	if state == DeployFailed {
-		if err := in.cli.CoreV1().Pods(in.namespace).Delete(context.TODO(), tainr.GetPodName(), metav1.DeleteOptions{}); err != nil {
-			klog.Infof("error deleting failed pod: %s", err)
+		if klog.V(2) {
+			klog.Infof("container %s log output:", tainr.ShortID)
+			stop := make(chan struct{}, 1)
+			_ = in.GetLogs(tainr, false, 100, stop, os.Stderr)
+			close(stop)
 		}
+		_ = in.cli.CoreV1().Pods(in.namespace).Delete(context.TODO(), tainr.GetPodName(), metav1.DeleteOptions{})
 	}
 	return state, err
 }
