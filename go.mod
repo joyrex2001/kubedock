@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/containers/image/v5 v5.25.0
-	github.com/gin-gonic/gin v1.9.0
+	github.com/gin-gonic/gin v1.9.1
 	github.com/hashicorp/go-memdb v1.3.4
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/spf13/cobra v1.7.0
@@ -28,7 +28,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.9.9 // indirect
-	github.com/bytedance/sonic v1.8.10 // indirect
+	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
