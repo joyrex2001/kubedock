@@ -99,7 +99,7 @@ rules:
 #   verbs: ["create", "get", "list", "delete"]
 # - apiGroups: ["coordination.k8s.io"]
 #   resources: ["leases"]
-#   verbs: ["create", "get", "list", "delete"]
+#   verbs: ["create", "get", "update"]
 ```
 
 # See also
