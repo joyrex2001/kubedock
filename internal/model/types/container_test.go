@@ -352,6 +352,11 @@ func TestGetRunasUser(t *testing.T) {
 			seccontext: corev1.PodSecurityContext{},
 			err:        true,
 		},
+		{ // 5
+			in:         &Container{},
+			seccontext: corev1.PodSecurityContext{},
+			err:        false,
+		},
 	}
 	for i, tst := range tests {
 		res, err := tst.in.GetPodSecurityContext()
