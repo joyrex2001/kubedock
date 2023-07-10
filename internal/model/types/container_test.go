@@ -318,27 +318,37 @@ func TestGetRunasUser(t *testing.T) {
 		err        bool
 	}{
 		{ // 0
-			in:         &Container{User: ""},
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "",
+			}},
 			seccontext: corev1.PodSecurityContext{},
 			err:        false,
 		},
 		{ // 1
-			in:         &Container{User: "1000"},
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "1000",
+			}},
 			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
 			err:        false,
 		},
 		{ // 2
-			in:         &Container{User: "0"},
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "0",
+			}},
 			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
 			err:        false,
 		},
 		{ // 3
-			in:         &Container{User: "9999999999999999999999999999999"},
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "9999999999999999999999999999999",
+			}},
 			seccontext: corev1.PodSecurityContext{},
 			err:        true,
 		},
 		{ // 4
-			in:         &Container{User: "abc"},
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "abc",
+			}},
 			seccontext: corev1.PodSecurityContext{},
 			err:        true,
 		},

@@ -23,7 +23,6 @@ type Container struct {
 	Name           string
 	Image          string
 	Labels         map[string]string
-	User           string
 	Entrypoint     []string
 	Cmd            []string
 	Env            []string
@@ -67,6 +66,9 @@ const (
 	// LabelNamePrefix is the label to be used to enforce a prefix for the names used
 	// for the container deployments.
 	LabelNamePrefix = "com.joyrex2001.kubedock.name-prefix"
+	// LabelRunasUser is the label to be used to enforce a specific user (uid) that
+	// runs inside the container can also be enforced w
+	LabelRunasUser = "com.joyrex2001.kubedock.runas-user"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -187,14 +189,15 @@ func (co *Container) GetPodName() string {
 func (co *Container) GetPodSecurityContext() (corev1.PodSecurityContext, error) {
 	context := corev1.PodSecurityContext{}
 
-	if co.User == "" {
+	user, ok := co.Labels[LabelRunasUser]
+	if !ok || user == "" {
 		klog.Warningf("user not set, will run as user defined in image")
 		return context, nil
 	}
 
-	parsed, err := strconv.ParseInt(co.User, 10, 64)
+	parsed, err := strconv.ParseInt(user, 10, 64)
 	if err != nil {
-		return context, fmt.Errorf("failed to parse %s to Int64", co.User)
+		return context, fmt.Errorf("failed to parse %s to Int64", user)
 	}
 
 	context.RunAsUser = &parsed

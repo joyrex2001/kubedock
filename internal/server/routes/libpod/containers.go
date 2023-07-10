@@ -35,10 +35,13 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		in.Labels = map[string]string{}
 	}
 
-	if in.User == "" && cr.Config.RunasUser != "" {
-		in.User = cr.Config.RunasUser
+	if _, ok := in.Labels[types.LabelRunasUser]; !ok && cr.Config.RunasUser != "" {
+		in.Labels[types.LabelRunasUser] = cr.Config.RunasUser
 	}
-
+	if in.User != "" {
+		// The User defined in HTTP request takes precedence over the cli and label.
+		in.Labels[types.LabelRunasUser] = in.User
+	}
 	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.Config.RequestCPU != "" {
 		in.Labels[types.LabelRequestCPU] = cr.Config.RequestCPU
 	}
@@ -54,7 +57,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		Name:         in.Name,
 		Image:        in.Image,
 		Entrypoint:   in.Entrypoint,
-		User:         in.User,
 		Cmd:          in.Command,
 		Env:          in.Env,
 		Binds:        []string{},
