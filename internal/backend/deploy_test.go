@@ -521,22 +521,25 @@ func TestContainerPorts(t *testing.T) {
 
 func TestGetLabels(t *testing.T) {
 	tests := []struct {
-		in    *types.Container
-		count int
+		in     *types.Container
+		labels map[string]string
+		count  int
 	}{
-		{in: &types.Container{}, count: 3},
-		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 4},
-		{in: &types.Container{Labels: map[string]string{"app.kubernetes.io/name": "kubedock"}}, count: 4},
-		{in: &types.Container{Labels: map[string]string{"c/": "---"}}, count: 3},
-		{in: &types.Container{Labels: map[string]string{"/": "abc"}}, count: 3},
+		{in: &types.Container{}, labels: nil, count: 3},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, labels: nil, count: 4},
+		{in: &types.Container{Labels: map[string]string{"app.kubernetes.io/name": "kubedock"}}, labels: nil, count: 4},
+		{in: &types.Container{Labels: map[string]string{"c/": "---"}}, labels: nil, count: 3},
+		{in: &types.Container{Labels: map[string]string{"/": "abc"}}, labels: nil, count: 3},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, labels: map[string]string{"computer": "msx"}, count: 4},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, labels: map[string]string{"game": "on"}, count: 5},
 	}
 
 	for i, tst := range tests {
 		kub := &instance{}
-		lbls := kub.getLabels(tst.in)
+		lbls := kub.getLabels(tst.labels, tst.in)
 		count := len(lbls)
 		if count != tst.count {
-			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
+			t.Errorf("failed test %d - expected %d labels, but got %d [%v]", i, tst.count, count, lbls)
 		}
 	}
 }
@@ -596,16 +599,19 @@ func TestGetServices(t *testing.T) {
 
 func TestGetAnnotations(t *testing.T) {
 	tests := []struct {
-		in    *types.Container
-		count int
+		in          *types.Container
+		annotations map[string]string
+		count       int
 	}{
-		{in: &types.Container{}, count: 1},
-		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, count: 2},
+		{in: &types.Container{}, annotations: nil, count: 1},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, annotations: nil, count: 2},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, annotations: map[string]string{"computer": "msx"}, count: 2},
+		{in: &types.Container{Labels: map[string]string{"computer": "msx"}}, annotations: map[string]string{"game": "on"}, count: 3},
 	}
 
 	for i, tst := range tests {
 		kub := &instance{}
-		count := len(kub.getAnnotations(tst.in))
+		count := len(kub.getAnnotations(tst.annotations, tst.in))
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
 		}

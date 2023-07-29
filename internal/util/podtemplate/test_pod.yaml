@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    example: kubedock 
+spec:
+  serviceAccountName: kubedock

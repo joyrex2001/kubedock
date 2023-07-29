@@ -229,30 +229,36 @@ func TestGetImagePullPolicy(t *testing.T) {
 
 func TestGetServiceAccountName(t *testing.T) {
 	tests := []struct {
-		in *Container
-		sa string
+		in    *Container
+		insa  string
+		outsa string
 	}{
 		{ // 0
-			in: &Container{Labels: map[string]string{}},
-			sa: "default",
+			in:    &Container{Labels: map[string]string{}},
+			outsa: "default",
 		},
 		{ // 1
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.service-account": "default",
 			}},
-			sa: "default",
+			outsa: "default",
 		},
 		{ // 2
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.service-account": "jtkirk",
 			}},
-			sa: "jtkirk",
+			outsa: "jtkirk",
+		},
+		{ // 3
+			in:    &Container{Labels: map[string]string{}},
+			insa:  "jtkirk",
+			outsa: "jtkirk",
 		},
 	}
 	for i, tst := range tests {
-		sa := tst.in.GetServiceAccountName()
-		if sa != tst.sa {
-			t.Errorf("failed test %d - expected %s, but got %s", i, tst.sa, sa)
+		sa := tst.in.GetServiceAccountName(tst.insa)
+		if sa != tst.outsa {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.outsa, sa)
 		}
 	}
 }
@@ -313,67 +319,84 @@ func TestGetPodName(t *testing.T) {
 
 func TestGetRunasUser(t *testing.T) {
 	tests := []struct {
-		in         *Container
-		seccontext corev1.PodSecurityContext
-		err        bool
+		in    *Container
+		outsc corev1.PodSecurityContext
+		insc  *corev1.PodSecurityContext
+		err   bool
 	}{
 		{ // 0
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.runas-user": "",
 			}},
-			seccontext: corev1.PodSecurityContext{},
-			err:        false,
+			outsc: corev1.PodSecurityContext{},
+			err:   false,
 		},
 		{ // 1
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.runas-user": "1000",
 			}},
-			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
-			err:        false,
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
+			err:   false,
 		},
 		{ // 2
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.runas-user": "0",
 			}},
-			seccontext: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
-			err:        false,
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
+			err:   false,
 		},
 		{ // 3
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.runas-user": "9999999999999999999999999999999",
 			}},
-			seccontext: corev1.PodSecurityContext{},
-			err:        true,
+			outsc: corev1.PodSecurityContext{},
+			err:   true,
 		},
 		{ // 4
 			in: &Container{Labels: map[string]string{
 				"com.joyrex2001.kubedock.runas-user": "abc",
 			}},
-			seccontext: corev1.PodSecurityContext{},
-			err:        true,
+			outsc: corev1.PodSecurityContext{},
+			err:   true,
 		},
 		{ // 5
-			in:         &Container{},
-			seccontext: corev1.PodSecurityContext{},
-			err:        false,
+			in:    &Container{},
+			outsc: corev1.PodSecurityContext{},
+			err:   false,
+		},
+		{ // 6
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "",
+			}},
+			insc:  &corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
+			err:   false,
+		},
+		{ // 7
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "1000",
+			}},
+			insc:  &corev1.PodSecurityContext{RunAsUser: makeIntPointer(500)},
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
+			err:   false,
 		},
 	}
 	for i, tst := range tests {
-		res, err := tst.in.GetPodSecurityContext()
+		res, err := tst.in.GetPodSecurityContext(tst.insc)
 		if err != nil && !tst.err {
 			t.Errorf("failed test %d - unexpected error: %s", i, err)
 		}
 		if err == nil && tst.err {
 			t.Errorf("failed test %d - expected error, but succeeded without error", i)
 		}
-		if res.RunAsUser == nil && tst.seccontext.RunAsUser != nil {
-			t.Errorf("failed test %d - expected %d, but got nil", i, *tst.seccontext.RunAsUser)
+		if res == nil && tst.outsc.RunAsUser != nil {
+			t.Errorf("failed test %d - expected %d, but got nil", i, *tst.outsc.RunAsUser)
 		}
-		if res.RunAsUser != nil && tst.seccontext.RunAsUser == nil {
+		if res != nil && res.RunAsUser != nil && tst.outsc.RunAsUser == nil {
 			t.Errorf("failed test %d - expected nil, but got %d", i, *res.RunAsUser)
 		}
-		if res.RunAsUser != nil && tst.seccontext.RunAsUser != nil && *res.RunAsUser != *tst.seccontext.RunAsUser {
-			t.Errorf("failed test %d - expected %d, but got %d", i, *tst.seccontext.RunAsUser, *res.RunAsUser)
+		if res != nil && res.RunAsUser != nil && tst.outsc.RunAsUser != nil && *res.RunAsUser != *tst.outsc.RunAsUser {
+			t.Errorf("failed test %d - expected %d, but got %d", i, *tst.outsc.RunAsUser, *res.RunAsUser)
 		}
 	}
 }

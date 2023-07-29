@@ -34,6 +34,7 @@ type Backend interface {
 type instance struct {
 	cli              kubernetes.Interface
 	cfg              *rest.Config
+	podTemplate      string
 	initImage        string
 	imagePullSecrets []string
 	namespace        string
@@ -55,6 +56,9 @@ type Config struct {
 	InitImage string
 	// TimeOut is the max amount of time to wait until a container started
 	TimeOut time.Duration
+	// PodTemplate refers to an optional file containig a pod resource that
+	// should be used as the base for creating pod resources.
+	PodTemplate string
 }
 
 // New will return an Backend instance.
@@ -65,6 +69,7 @@ func New(cfg Config) Backend {
 		initImage:        cfg.InitImage,
 		namespace:        cfg.Namespace,
 		imagePullSecrets: cfg.ImagePullSecrets,
+		podTemplate:      cfg.PodTemplate,
 		timeOut:          int(cfg.TimeOut.Seconds()),
 	}
 }

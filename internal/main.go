@@ -93,6 +93,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	ns := viper.GetString("kubernetes.namespace")
 	initimg := viper.GetString("kubernetes.initimage")
 	timeout := viper.GetDuration("kubernetes.timeout")
+	podtmpl := viper.GetString("kubernetes.pod-template")
 	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
 
 	optlog := ""
@@ -110,6 +111,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		Namespace:        ns,
 		InitImage:        initimg,
 		ImagePullSecrets: imgps,
+		PodTemplate:      podtmpl,
 		TimeOut:          timeout,
 	})
 	return kub, nil

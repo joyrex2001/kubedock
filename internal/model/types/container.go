@@ -153,11 +153,14 @@ func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, err
 
 // GetServiceAccountName will return the service account to be used for containers
 // that are deployed.
-func (co *Container) GetServiceAccountName() string {
+func (co *Container) GetServiceAccountName(current string) string {
+	if current == "" {
+		current = "default"
+	}
 	if sa, ok := co.Labels[LabelServiceAccount]; ok {
 		return sa
 	}
-	return "default"
+	return current
 }
 
 // GetPodName will return a human friendly name that can be used for the
@@ -186,13 +189,17 @@ func (co *Container) GetPodName() string {
 // GetPodSecurityContext will create a security context for the Pod that implements
 // the relenvant features of the Docker API. Right now this only covers the ability
 // to specify the numeric user a container should run as.
-func (co *Container) GetPodSecurityContext() (corev1.PodSecurityContext, error) {
-	context := corev1.PodSecurityContext{}
-
+func (co *Container) GetPodSecurityContext(context *corev1.PodSecurityContext) (*corev1.PodSecurityContext, error) {
 	user, ok := co.Labels[LabelRunasUser]
 	if !ok || user == "" {
-		klog.Warningf("user not set, will run as user defined in image")
+		if context == nil || context.RunAsUser == nil {
+			klog.Warningf("user not set, will run as user defined in image")
+		}
 		return context, nil
+	}
+
+	if context == nil {
+		context = &corev1.PodSecurityContext{}
 	}
 
 	parsed, err := strconv.ParseInt(user, 10, 64)

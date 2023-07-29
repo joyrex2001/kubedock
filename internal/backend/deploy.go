@@ -18,6 +18,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
+	"github.com/joyrex2001/kubedock/internal/util/podtemplate"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
 	"github.com/joyrex2001/kubedock/internal/util/reverseproxy"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
@@ -64,34 +65,36 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
-	seccontext, err := tainr.GetPodSecurityContext()
+	pod := &corev1.Pod{}
+	if in.podTemplate != "" {
+		pod, err = podtemplate.PodFromFile(in.podTemplate)
+		if err != nil {
+			return DeployFailed, fmt.Errorf("error opening podtemplate: %s", err)
+		}
+	}
+
+	pod.ObjectMeta.Name = tainr.GetPodName()
+	pod.ObjectMeta.Namespace = in.namespace
+	pod.ObjectMeta.Labels = in.getLabels(pod.ObjectMeta.Labels, tainr)
+	pod.ObjectMeta.Annotations = in.getAnnotations(pod.ObjectMeta.Annotations, tainr)
+	pod.Spec.Containers = []corev1.Container{{
+		Image:           tainr.Image,
+		Name:            "main",
+		Command:         tainr.Entrypoint,
+		Args:            tainr.Cmd,
+		Env:             tainr.GetEnvVar(),
+		Ports:           in.getContainerPorts(tainr),
+		Resources:       reqlimits,
+		ImagePullPolicy: pulpol,
+	}}
+	pod.Spec.ServiceAccountName = tainr.GetServiceAccountName(pod.Spec.ServiceAccountName)
+	pod.Spec.RestartPolicy = corev1.RestartPolicyNever
+
+	seccontext, err := tainr.GetPodSecurityContext(pod.Spec.SecurityContext)
 	if err != nil {
 		return DeployFailed, err
 	}
-
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   in.namespace,
-			Name:        tainr.GetPodName(),
-			Labels:      in.getLabels(tainr),
-			Annotations: in.getAnnotations(tainr),
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{{
-				Image:           tainr.Image,
-				Name:            "main",
-				Command:         tainr.Entrypoint,
-				Args:            tainr.Cmd,
-				Env:             tainr.GetEnvVar(),
-				Ports:           in.getContainerPorts(tainr),
-				Resources:       reqlimits,
-				ImagePullPolicy: pulpol,
-			}},
-			ServiceAccountName: tainr.GetServiceAccountName(),
-			SecurityContext:    &seccontext,
-			RestartPolicy:      corev1.RestartPolicyNever,
-		},
-	}
+	pod.Spec.SecurityContext = seccontext
 
 	for _, ps := range in.imagePullSecrets {
 		pod.Spec.ImagePullSecrets = append(pod.Spec.ImagePullSecrets, corev1.LocalObjectReference{Name: ps})
@@ -242,8 +245,8 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:   in.namespace,
 				Name:        alias,
-				Labels:      in.getLabels(tainr),
-				Annotations: in.getAnnotations(tainr),
+				Labels:      in.getLabels(nil, tainr),
+				Annotations: in.getAnnotations(nil, tainr),
 			},
 			Spec: corev1.ServiceSpec{
 				Selector: in.getPodMatchLabels(tainr),
@@ -277,8 +280,10 @@ func (in *instance) getContainerPorts(tainr *types.Container) []corev1.Container
 // getLabels will return a map of labels to be added to the container. This
 // map contains the labels that link to the container definition, as well
 // as additional labels which are used internally by kubedock.
-func (in *instance) getLabels(tainr *types.Container) map[string]string {
-	l := map[string]string{}
+func (in *instance) getLabels(labels map[string]string, tainr *types.Container) map[string]string {
+	if labels == nil {
+		labels = map[string]string{}
+	}
 	for k, v := range tainr.Labels {
 		kk := in.toKubernetesKey(k)
 		kv := in.toKubernetesValue(v)
@@ -290,25 +295,27 @@ func (in *instance) getLabels(tainr *types.Container) map[string]string {
 			klog.V(3).Infof("not adding `%s` with value `%s` as a label: incompatible value", k, v)
 			continue
 		}
-		l[kk] = kv
+		labels[kk] = kv
 	}
 	for k, v := range config.DefaultLabels {
-		l[k] = v
+		labels[k] = v
 	}
-	l["kubedock.containerid"] = tainr.ShortID
-	return l
+	labels["kubedock.containerid"] = tainr.ShortID
+	return labels
 }
 
 // getAnnotations will return a map of annotations to be added to the
 // container. This map contains the labels as specified in the container
 // definition.
-func (in *instance) getAnnotations(tainr *types.Container) map[string]string {
-	l := tainr.Labels
-	if l == nil {
-		l = map[string]string{}
+func (in *instance) getAnnotations(annotations map[string]string, tainr *types.Container) map[string]string {
+	if annotations == nil {
+		annotations = map[string]string{}
 	}
-	l["kubedock.containername"] = tainr.Name
-	return l
+	for k, v := range tainr.Labels {
+		annotations[k] = v
+	}
+	annotations["kubedock.containername"] = tainr.Name
+	return annotations
 }
 
 // getPodMatchLabels will return the map of labels that can be used to
@@ -480,8 +487,8 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        tainr.ShortID + "-vf",
 			Namespace:   in.namespace,
-			Labels:      in.getLabels(tainr),
-			Annotations: in.getAnnotations(tainr),
+			Labels:      in.getLabels(nil, tainr),
+			Annotations: in.getAnnotations(nil, tainr),
 		},
 		BinaryData: dat,
 	}
@@ -500,8 +507,8 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        tainr.ShortID + "-pf",
 			Namespace:   in.namespace,
-			Labels:      in.getLabels(tainr),
-			Annotations: in.getAnnotations(tainr),
+			Labels:      in.getLabels(nil, tainr),
+			Annotations: in.getAnnotations(nil, tainr),
 		},
 		BinaryData: dat,
 	}

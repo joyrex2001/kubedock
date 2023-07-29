@@ -55,6 +55,10 @@ If multiple kubedocks are using the namespace, it might be possible there will b
 
 By default containers are started without any resource request configuration. This can impact performance of the tests that are run in the containers. Setting resource requests (and limits) will allow better scheduling, and can improve the overall performance of the running containers. Global requests and limits can be set with `--request-cpu` and `--request-memory`, which takes regular kubernetes resource requests configurations as can be found in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). Limits are optional, and can be configured by adding it with a ,limit. If the values should be configured specifically for a container, they can be configured by adding `com.joyrex2001.kubedock.request-cpu` or `com.joyrex2001.kubedock.request-memory` labels to the container with their specific requests (and limits). The labels take precedence over the cli configuration.
 
+## Pod template
+
+The pods that are created by kubedock can be customized with additional configuration by providing a pod template with `--pod-template`. If this is provided, all pod that are created by kubedock will use the provided pod template as a base. Note that containers and volumes are ignored in these templates.
+
 ## Resources cleanup
 
 Kubedock will dynamically create pods and services in the configured namespace. If kubedock is requested to delete a container, it will remove the pod and related services. Kubedock will also delete all the resources (services and pods) it created in the running instance before exiting (identified with the `kubedock.id` label).
