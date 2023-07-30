@@ -1,6 +1,7 @@
 package podtemplate
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	corev1 "k8s.io/api/core/v1"
@@ -22,5 +23,5 @@ func PodFromFile(file string) (*corev1.Pod, error) {
 	if gvk.Kind == "Pod" {
 		return obj.(*corev1.Pod), nil
 	}
-	return nil, nil
+	return nil, fmt.Errorf("invalid podtemplate: %s", file)
 }
