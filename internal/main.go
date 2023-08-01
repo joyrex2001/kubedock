@@ -42,17 +42,16 @@ func Main() {
 		klog.Fatalf("error instantiating backend: %s", err)
 	}
 
-	// check if this instance requires locking of the namespace, if not
-	// just start the show...
-	if !viper.GetBool("lock.enabled") {
-		exitHandler(kub, func() { os.Exit(0) })
-		run(kub)
-		return
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	exitHandler(kub, cancel)
+
+	// check if this instance requires locking of the namespace, if not
+	// just start the show...
+	if !viper.GetBool("lock.enabled") {
+		run(kub, ctx)
+		return
+	}
 
 	// exclusive mode, use the k8s leader election as a locking mechanism
 	lock := &resourcelock.LeaseLock{
@@ -76,7 +75,7 @@ func Main() {
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
 				ready <- struct{}{}
-				run(kub)
+				run(kub, ctx)
 			},
 			OnStoppedLeading: func() {
 				klog.V(3).Infof("lost lock on namespace %s", viper.GetString("kubernetes.namespace"))
@@ -118,7 +117,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 }
 
 // run will start all components, based the settings initiated by cmd.
-func run(kub backend.Backend) {
+func run(kub backend.Backend, ctx context.Context) {
 	reapmax := viper.GetDuration("reaper.reapmax")
 	rpr, err := reaper.New(reaper.Config{
 		KeepMax: reapmax,
@@ -139,7 +138,7 @@ func run(kub backend.Backend) {
 	}
 
 	svr := server.New(kub)
-	if err := svr.Run(); err != nil {
+	if err := svr.Run(ctx); err != nil {
 		klog.Fatalf("error instantiating server: %s", err)
 	}
 }
@@ -174,10 +173,11 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
+		cancel()
 		klog.Info("exit signal recieved, removing pods, configmaps and services")
 		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
 			klog.Fatalf("error pruning resources: %s", err)
 		}
-		cancel()
+		os.Exit(0)
 	}()
 }

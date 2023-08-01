@@ -1,6 +1,9 @@
 package server
 
 import (
+	"context"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
@@ -23,7 +26,7 @@ func New(kub backend.Backend) *Server {
 
 // Run will initialize the http api server and configure all available
 // routers.
-func (s *Server) Run() error {
+func (s *Server) Run(ctx context.Context) error {
 	if !klog.V(2) {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -38,13 +41,24 @@ func (s *Server) Run() error {
 		if viper.GetBool("server.tls-enable") {
 			cert := viper.GetString("server.tls-cert-file")
 			key := viper.GetString("server.tls-key-file")
-			router.RunTLS(port, cert, key)
+			return router.RunTLS(port, cert, key)
 		} else {
-			router.Run(port)
+			return router.Run(port)
 		}
 	} else {
 		klog.Infof("api server started listening on %s", socket)
-		router.RunUnix(socket)
+		errch := make(chan error, 1)
+		go func() {
+			errch <- router.RunUnix(socket)
+		}()
+		select {
+		case err := <-errch:
+			return err
+		case <-ctx.Done():
+			if err := os.Remove(socket); err != nil {
+				klog.Errorf("error removing socket: %s", err)
+			}
+		}
 	}
 
 	return nil
