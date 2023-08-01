@@ -13,7 +13,7 @@ import (
 )
 
 // ContainerExec - create an exec instance.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerInspect
+// https://docs.docker.com/engine/api/v1.41/#operation/ContainerExec
 // https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/exec/operation/ContainerExecLibpod
 // POST "/containers/:id/exec"
 // POST "/libpod/containers/:id/exec"
@@ -32,6 +32,10 @@ func ContainerExec(cr *ContextRouter, c *gin.Context) {
 	if in.Stdin {
 		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("stdin not supported"))
 		return
+	}
+
+	if !in.Stdout && !in.Stderr {
+		in.Stdout = true
 	}
 
 	if in.Tty {
