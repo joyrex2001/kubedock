@@ -165,7 +165,7 @@ func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
 }
 
 // ContainerExists - Check if container exists.
-// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerInspectLibpod
+// https://docs.podman.io/en/latest/_static/api.html?version=v4.2#tag/containers/operation/ContainerExistsLibpod
 // GET "/libpod/containers/:id/exists"
 func ContainerExists(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
@@ -235,8 +235,9 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 		"Name":  tainr.Name,
 		"Image": tainr.Image,
 		"NetworkSettings": gin.H{
-			"Networks": netdtl,
-			"Ports":    getNetworkSettingsPorts(cr, tainr),
+			"IPAddress": "127.0.0.1",
+			"Networks":  netdtl,
+			"Ports":     getNetworkSettingsPorts(cr, tainr),
 		},
 		"HostConfig": gin.H{
 			"PortBindings": getNetworkSettingsPorts(cr, tainr),

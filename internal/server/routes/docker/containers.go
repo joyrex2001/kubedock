@@ -255,8 +255,9 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 		"Image": tainr.Image,
 		"Names": getContainerNames(tainr),
 		"NetworkSettings": gin.H{
-			"Networks": netdtl,
-			"Ports":    getNetworkSettingsPorts(cr, tainr),
+			"IPAddress": "127.0.0.1",
+			"Networks":  netdtl,
+			"Ports":     getNetworkSettingsPorts(cr, tainr),
 		},
 		"HostConfig": gin.H{
 			"NetworkMode": "bridge",
