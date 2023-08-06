@@ -7,7 +7,7 @@ import (
 	"github.com/containers/image/v5/image"
 	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
-	"github.com/opencontainers/image-spec/specs-go/v1"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // InspectConfig will return an Image object with the configuration
@@ -26,12 +26,12 @@ func InspectConfig(name string) (*v1.Image, error) {
 
 	img, err := image.FromUnparsedImage(ctx, sys, image.UnparsedInstance(src, nil))
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing manifest for image: %s", err)
+		return nil, fmt.Errorf("Error parsing manifest for image: %w", err)
 	}
 
 	config, err := img.OCIConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading OCI-formatted configuration data: %s", err)
+		return nil, fmt.Errorf("Error reading OCI-formatted configuration data: %w", err)
 	}
 	return config, err
 }

@@ -69,7 +69,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 	if in.podTemplate != "" {
 		pod, err = podtemplate.PodFromFile(in.podTemplate)
 		if err != nil {
-			return DeployFailed, fmt.Errorf("error opening podtemplate: %s", err)
+			return DeployFailed, fmt.Errorf("error opening podtemplate: %w", err)
 		}
 	}
 

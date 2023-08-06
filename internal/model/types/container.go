@@ -233,7 +233,7 @@ func (co *Container) AddHostPort(src string, dst string) error {
 	if src != "" && src != "0" {
 		sp, err = strconv.Atoi(src)
 		if err != nil {
-			return fmt.Errorf("could not parse exposed port %s: %s", dst, err)
+			return fmt.Errorf("could not parse exposed port %s: %w", dst, err)
 		}
 	} else {
 		sp = -dp
@@ -308,7 +308,7 @@ func (co *Container) getTCPPort(p string) (int, error) {
 	}
 	pp, err := strconv.Atoi(f[0])
 	if err != nil {
-		return 0, fmt.Errorf("could not parse exposed port %s: %s", p, err)
+		return 0, fmt.Errorf("could not parse exposed port %s: %w", p, err)
 	}
 	if len(f) == 2 && f[1] != "tcp" {
 		return 0, fmt.Errorf("unsupported protocol %s for port: %d - only tcp is supported", f[1], pp)
