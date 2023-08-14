@@ -41,7 +41,8 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.PUT("/containers/:id/archive", wrap(common.PutArchive))
 
 	router.POST("/containers/:id/exec", wrap(common.ContainerExec))
-	router.POST("/exec/:id/start", wrap(common.ExecStart))
+	router.POST("/exec/:id/start", wrap(docker.ExecStart))
+	router.POST("/exec/:id/resize", wrap(common.ExecResize))
 	router.GET("/exec/:id/json", wrap(common.ExecInfo))
 
 	router.POST("/networks/create", wrap(docker.NetworksCreate))

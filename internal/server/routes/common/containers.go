@@ -188,6 +188,7 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	stdin, _ := strconv.ParseBool(c.Query("stdin"))
 	if stdin {
 		c.Writer.WriteHeader(http.StatusNotImplemented)
+		return
 	}
 	stdout, _ := strconv.ParseBool(c.Query("stdout"))
 	stderr, _ := strconv.ParseBool(c.Query("stderr"))

@@ -14,7 +14,7 @@ import (
 )
 
 // ExecContainer will execute given exec object in kubernetes.
-func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, out io.Writer) (int, error) {
+func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, stdin io.Reader, stdout io.Writer) (int, error) {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return 0, err
@@ -26,17 +26,26 @@ func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, out io
 		Pod:        *pod,
 		Container:  "main",
 		Cmd:        ex.Cmd,
+		TTY:        ex.TTY,
 	}
 
-	if ex.Stdout {
-		iop := ioproxy.New(out, ioproxy.Stdout)
-		req.Stdout = iop
-		defer iop.Flush()
+	if ex.Stdin {
+		req.Stdin = stdin
 	}
-	if ex.Stderr {
-		iop := ioproxy.New(out, ioproxy.Stderr)
-		req.Stderr = iop
-		defer iop.Flush()
+	if ex.TTY {
+		req.Stdout = stdout
+		req.Stderr = stdout
+	} else {
+		if ex.Stdout {
+			iop := ioproxy.New(stdout, ioproxy.Stdout)
+			req.Stdout = iop
+			defer iop.Flush()
+		}
+		if ex.Stderr {
+			iop := ioproxy.New(stdout, ioproxy.Stderr)
+			req.Stderr = iop
+			defer iop.Flush()
+		}
 	}
 
 	err = exec.RemoteCmd(req)

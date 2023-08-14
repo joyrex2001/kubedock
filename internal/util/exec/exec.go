@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"context"
 	"io"
 
 	corev1 "k8s.io/api/core/v1"
@@ -30,6 +31,8 @@ type Request struct {
 	Stdout io.Writer
 	// Stderr contains a Writer if stderr is required (nil if ignored)
 	Stderr io.Writer
+	// TTY will enable interactive tty mode (requires stdin)
+	TTY bool
 }
 
 // RemoteCmd will execute given exec object in kubernetes.
@@ -45,7 +48,7 @@ func RemoteCmd(req Request) error {
 		Stdin:     req.Stdin != nil,
 		Stdout:    req.Stdout != nil,
 		Stderr:    req.Stderr != nil,
-		TTY:       false,
+		TTY:       req.Stdin != nil && req.TTY,
 	}, scheme.ParameterCodec)
 
 	ex, err := remotecommand.NewSPDYExecutor(req.RestConfig, "POST", r.URL())
@@ -55,7 +58,7 @@ func RemoteCmd(req Request) error {
 
 	klog.V(3).Infof("exec %s:%v", req.Pod.Name, req.Cmd)
 
-	return ex.Stream(remotecommand.StreamOptions{
+	return ex.StreamWithContext(context.Background(), remotecommand.StreamOptions{
 		Stdin:  req.Stdin,
 		Stdout: req.Stdout,
 		Stderr: req.Stderr,
