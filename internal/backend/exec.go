@@ -34,7 +34,7 @@ func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, stdin 
 	}
 	if ex.TTY {
 		req.Stdout = stdout
-		req.Stderr = stdout
+		req.Stderr = io.Discard
 	} else {
 		if ex.Stdout {
 			iop := ioproxy.New(stdout, ioproxy.Stdout)

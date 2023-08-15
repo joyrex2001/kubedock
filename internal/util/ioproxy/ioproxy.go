@@ -30,7 +30,7 @@ type IoProxy struct {
 	lock    sync.Mutex
 }
 
-// New will return a new logproxy instance.
+// New will return a new IoProxy instance.
 func New(w io.Writer, prefix StdType) *IoProxy {
 	return &IoProxy{out: w, prefix: prefix, buf: []byte{}}
 }

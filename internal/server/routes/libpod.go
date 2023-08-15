@@ -55,7 +55,7 @@ func RegisterLibpodRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.PUT("/libpod/containers/:id/archive", wrap(common.PutArchive))
 
 	router.POST("/libpod/containers/:id/exec", wrap(common.ContainerExec))
-	router.POST("/libpod/exec/:id/start", wrap(libpod.ExecStart))
+	router.POST("/libpod/exec/:id/start", wrap(common.ExecStart))
 	router.GET("/libpod/exec/:id/json", wrap(common.ExecInfo))
 	router.POST("/libpod/exec/:id/resize", wrap(common.ExecResize))
 

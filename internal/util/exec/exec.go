@@ -15,7 +15,7 @@ import (
 
 // Request is the structure used as argument for RemoteCmd
 type Request struct {
-	// Clent is the kubernetes clientset
+	// Client is the kubernetes clientset
 	Client kubernetes.Interface
 	// RestConfig is the kubernetes config
 	RestConfig *rest.Config
