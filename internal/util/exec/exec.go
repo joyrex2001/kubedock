@@ -58,7 +58,7 @@ func RemoteCmd(req Request) error {
 
 	klog.V(3).Infof("exec %s:%v", req.Pod.Name, req.Cmd)
 
-	return ex.StreamWithContext(context.Background(), remotecommand.StreamOptions{
+	return ex.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 		Stdin:  req.Stdin,
 		Stdout: req.Stdout,
 		Stderr: req.Stderr,

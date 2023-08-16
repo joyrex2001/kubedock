@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -96,11 +97,6 @@ func ExecStart(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	if req.Detach {
-		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("detached mode not supported"))
-		return
-	}
-
 	id := c.Param("id")
 	exec, err := cr.DB.GetExec(id)
 	if err != nil {
@@ -111,6 +107,22 @@ func ExecStart(cr *ContextRouter, c *gin.Context) {
 	tainr, err := cr.DB.GetContainer(exec.ContainerID)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	if req.Detach {
+		go func() {
+			code, err := cr.Backend.ExecContainer(tainr, exec, nil, io.Discard)
+			if err != nil {
+				klog.Errorf("error during exec: %s", err)
+				return
+			}
+			exec.ExitCode = code
+			if err := cr.DB.SaveExec(exec); err != nil {
+				klog.Errorf("error during exec: %s", err)
+			}
+		}()
+		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
 
