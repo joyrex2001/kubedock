@@ -42,22 +42,21 @@ func (s *Server) Run(ctx context.Context) error {
 			cert := viper.GetString("server.tls-cert-file")
 			key := viper.GetString("server.tls-key-file")
 			return router.RunTLS(port, cert, key)
-		} else {
-			return router.Run(port)
 		}
-	} else {
-		klog.Infof("api server started listening on %s", socket)
-		errch := make(chan error, 1)
-		go func() {
-			errch <- router.RunUnix(socket)
-		}()
-		select {
-		case err := <-errch:
-			return err
-		case <-ctx.Done():
-			if err := os.Remove(socket); err != nil {
-				klog.Errorf("error removing socket: %s", err)
-			}
+		return router.Run(port)
+	}
+
+	klog.Infof("api server started listening on %s", socket)
+	errch := make(chan error, 1)
+	go func() {
+		errch <- router.RunUnix(socket)
+	}()
+	select {
+	case err := <-errch:
+		return err
+	case <-ctx.Done():
+		if err := os.Remove(socket); err != nil {
+			klog.Errorf("error removing socket: %s", err)
 		}
 	}
 

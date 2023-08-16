@@ -49,7 +49,7 @@ func Main() {
 	// check if this instance requires locking of the namespace, if not
 	// just start the show...
 	if !viper.GetBool("lock.enabled") {
-		run(kub, ctx)
+		run(ctx, kub)
 		return
 	}
 
@@ -75,7 +75,7 @@ func Main() {
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
 				ready <- struct{}{}
-				run(kub, ctx)
+				run(ctx, kub)
 			},
 			OnStoppedLeading: func() {
 				klog.V(3).Infof("lost lock on namespace %s", viper.GetString("kubernetes.namespace"))
@@ -117,7 +117,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 }
 
 // run will start all components, based the settings initiated by cmd.
-func run(kub backend.Backend, ctx context.Context) {
+func run(ctx context.Context, kub backend.Backend) {
 	reapmax := viper.GetDuration("reaper.reapmax")
 	rpr, err := reaper.New(reaper.Config{
 		KeepMax: reapmax,
