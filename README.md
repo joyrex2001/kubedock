@@ -29,7 +29,7 @@ Starting a container is a blocking call that will wait until it results in a run
 
 By default, all containers will be orchestrated using kubernetes pods. If a container has been given a specific name, this will be visible in the name of the pod. If the label `com.joyrex2001.kubedock.name-prefix` has been set, this will be added as a prefix to the name.
 
-The containers will be started with the `default` service account. This can be changed with the `--service-acount`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
+The containers will be started with the `default` service account. This can be changed with the `--service-account`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
 
 ## Volumes
 
