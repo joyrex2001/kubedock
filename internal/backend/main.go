@@ -22,6 +22,7 @@ type Backend interface {
 	DeleteWithKubedockID(string) error
 	DeleteContainer(*types.Container) error
 	DeleteOlderThan(time.Duration) error
+	WatchDeleteContainer(*types.Container, time.Duration) (chan struct{}, error)
 	CopyFromContainer(tainr *types.Container, path string) ([]byte, error)
 	CopyToContainer(*types.Container, []byte, string) error
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)

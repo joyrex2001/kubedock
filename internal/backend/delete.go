@@ -6,6 +6,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -238,4 +239,37 @@ func (in *instance) deletePods(selector string) error {
 		}
 	}
 	return nil
+}
+
+// WatchDeleteContainer will return a channel which will be signalled when
+// the given container is actually deleted from kubernetes.
+func (in *instance) WatchDeleteContainer(tainr *types.Container, timeout time.Duration) (chan struct{}, error) {
+	delch := make(chan struct{}, 1)
+
+	watcher, err := in.cli.CoreV1().Pods(in.namespace).Watch(context.TODO(), metav1.ListOptions{
+		LabelSelector: "kubedock.containerid=" + tainr.ShortID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for {
+			tmr := time.NewTimer(timeout)
+			select {
+			case event := <-watcher.ResultChan():
+				if event.Type == watch.Deleted {
+					close(delch)
+					watcher.Stop()
+					return
+				}
+			case <-tmr.C:
+				close(delch)
+				watcher.Stop()
+				return
+			}
+		}
+	}()
+
+	return delch, nil
 }
