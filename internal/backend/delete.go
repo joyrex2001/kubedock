@@ -241,7 +241,7 @@ func (in *instance) deletePods(selector string) error {
 	return nil
 }
 
-// WatchDeleteContainer will return a channel which will be signalled when
+// WatchDeleteContainer will return a channel which will be closed when
 // the given container is actually deleted from kubernetes.
 func (in *instance) WatchDeleteContainer(tainr *types.Container, timeout time.Duration) (chan struct{}, error) {
 	delch := make(chan struct{}, 1)
@@ -254,8 +254,8 @@ func (in *instance) WatchDeleteContainer(tainr *types.Container, timeout time.Du
 	}
 
 	go func() {
+		tmr := time.NewTimer(timeout)
 		for {
-			tmr := time.NewTimer(timeout)
 			select {
 			case event := <-watcher.ResultChan():
 				if event.Type == watch.Deleted {
