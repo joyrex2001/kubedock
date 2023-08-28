@@ -35,13 +35,14 @@ func Info(cr *common.ContextRouter, c *gin.Context) {
 // GET "/version"
 func Version(cr *common.ContextRouter, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"Version":    config.DockerVersion,
-		"ApiVersion": config.DockerAPIVersion,
-		"GitCommit":  config.Build,
-		"BuildTime":  config.Date,
-		"GoVersion":  config.GoVersion,
-		"Os":         config.GOOS,
-		"Arch":       config.GOARCH,
+		"Version":       config.DockerVersion,
+		"ApiVersion":    config.DockerAPIVersion,
+		"MinAPIVersion": config.DockerAPIVersion,
+		"GitCommit":     config.Build,
+		"BuildTime":     config.Date,
+		"GoVersion":     config.GoVersion,
+		"Os":            config.GOOS,
+		"Arch":          config.GOARCH,
 	})
 }
 
@@ -50,6 +51,8 @@ func Version(cr *common.ContextRouter, c *gin.Context) {
 // HEAD "/_ping"
 // GET "/_ping"
 func Ping(cr *common.ContextRouter, c *gin.Context) {
+	w := c.Writer
+	w.Header().Set("API-Version", config.DockerAPIVersion)
 	c.String(http.StatusOK, "OK")
 }
 
@@ -80,6 +83,7 @@ func Events(cr *common.ContextRouter, c *gin.Context) {
 				enc.Encode(gin.H{
 					"id":     msg.ID,
 					"Type":   msg.Type,
+					"Status": msg.Action,
 					"Action": msg.Action,
 					"Actor": gin.H{
 						"ID": msg.ID,

@@ -232,8 +232,12 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 
 	if err := cr.Backend.GetLogs(tainr, true, 100, stop, out); err != nil {
 		klog.V(3).Infof("error retrieving logs: %s", err)
-		return
 	}
+
+	klog.Info("done attaching!")
+
+	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
+	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 }
 
 // ContainerResize - resize the tty for a container.

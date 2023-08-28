@@ -22,6 +22,8 @@ const (
 	Start = "start"
 	// Die defines the event action die (container)
 	Die = "die"
+	// Detach defines the event action detach (container)
+	Detach = "detach"
 	// Pull defines the event action image (container)
 	Pull = "pull"
 )

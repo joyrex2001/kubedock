@@ -13,6 +13,8 @@ const (
 	OS = "kubernetes"
 	// DockerVersion is the docker version as advertised when calling /version
 	DockerVersion = "1.25"
+	// DockerMinAPIVersion is the minimum docker version as advertised when calling /version
+	DockerMinAPIVersion = "1.25"
 	// DockerAPIVersion is the api version as advertised when calling /version
 	DockerAPIVersion = "1.25"
 	// LibpodAPIVersion is the api version as advertised in libpod rest calls
