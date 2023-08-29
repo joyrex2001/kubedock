@@ -120,3 +120,24 @@ func IsSingleFileArchive(archive *[]byte) bool {
 	}
 	return count == 1
 }
+
+// GetTarSize will return the actual size of the tar file for a byte array
+// containing padded tar data.
+func GetTarSize(dat []byte) (int, error) {
+	var err error
+
+	r := bytes.NewReader(dat)
+	tr := tar.NewReader(r)
+
+	for {
+		if _, err = tr.Next(); err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			break
+		}
+		io.Copy(io.Discard, tr)
+	}
+
+	return len(dat) - r.Len(), err
+}

@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -47,7 +47,7 @@ func PutArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	archive, err := ioutil.ReadAll(c.Request.Body)
+	archive, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -137,10 +137,16 @@ func GetArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	stat, _ := json.Marshal(gin.H{"name": path, "size": len(dat), "mode": fs.ModePerm, "linkTarget": path, "mtime": "2021-01-01T20:00:00Z"})
+	size, err := tar.GetTarSize(dat)
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	stat, _ := json.Marshal(gin.H{"name": path, "size": size, "mode": fs.ModePerm, "linkTarget": path, "mtime": "2021-01-01T20:00:00Z"})
 
 	c.Writer.WriteHeader(http.StatusOK)
 	c.Writer.Header().Set("Content-Type", "application/x-tar")
 	c.Writer.Header().Set("X-Docker-Container-Path-Stat", base64.StdEncoding.EncodeToString(stat))
-	c.Writer.Write(dat)
+	c.Writer.Write(dat[:size])
 }
