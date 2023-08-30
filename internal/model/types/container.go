@@ -50,7 +50,7 @@ type Container struct {
 // copied over to the container before it has been started.
 type PreArchive struct {
 	Path    string
-	Archive *[]byte
+	Archive []byte
 }
 
 const (
@@ -359,7 +359,7 @@ func (co *Container) GetVolumeFiles() map[string]string {
 func (co *Container) GetPreArchiveFiles() map[string][]byte {
 	files := map[string][]byte{}
 	for _, pa := range co.PreArchives {
-		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(*pa.Archive))
+		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(pa.Archive))
 		if err != nil {
 			klog.Errorf("error determining pre archive filenames: %s", err)
 			continue
@@ -368,7 +368,7 @@ func (co *Container) GetPreArchiveFiles() map[string][]byte {
 			continue
 		}
 		var dat bytes.Buffer
-		if err := tar.UnpackFile(pa.Path, fls[0], bytes.NewReader(*pa.Archive), io.Writer(&dat)); err != nil {
+		if err := tar.UnpackFile(pa.Path, fls[0], bytes.NewReader(pa.Archive), io.Writer(&dat)); err != nil {
 			klog.Errorf("error extracting %s from archive: %s", fls[0], err)
 			continue
 		}

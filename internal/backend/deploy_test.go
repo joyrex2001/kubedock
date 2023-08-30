@@ -481,9 +481,9 @@ func TestAddVolumes(t *testing.T) {
 		{in: &types.Container{Binds: []string{".:/remote:rw"}}, count: 1},
 		{in: &types.Container{Binds: []string{".:/remote:rw", "deploy_test.go:/tmp/gogo.go"}}, count: 2},
 		{in: &types.Container{Binds: []string{".:/remote:rw", "xxx:/tmp/gogo.go"}}, count: 1},
-		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: &tarSingle}}}, count: 1},
-		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: &tarMulti}}}, count: 0},
-		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: &tarMulti}, {Path: "/", Archive: &tarSingle}}}, count: 1},
+		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: tarSingle}}}, count: 1},
+		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: tarMulti}}}, count: 0},
+		{in: &types.Container{PreArchives: []types.PreArchive{{Path: "/", Archive: tarMulti}, {Path: "/", Archive: tarSingle}}}, count: 1},
 	}
 
 	for i, tst := range tests {

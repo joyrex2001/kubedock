@@ -106,8 +106,8 @@ func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 
 // IsSingleFileArchive will return true if there is only 1 file stored in the
 // given archive.
-func IsSingleFileArchive(archive *[]byte) bool {
-	tr := tar.NewReader(bytes.NewReader(*archive))
+func IsSingleFileArchive(archive []byte) bool {
+	tr := tar.NewReader(bytes.NewReader(archive))
 	count := 0
 	for count < 2 {
 		header, err := tr.Next()

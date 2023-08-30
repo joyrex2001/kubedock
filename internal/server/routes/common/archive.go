@@ -53,8 +53,8 @@ func PutArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	if !tainr.Running && !tainr.Completed && cr.Config.PreArchive && tar.IsSingleFileArchive(&archive) {
-		tainr.PreArchives = append(tainr.PreArchives, types.PreArchive{Path: path, Archive: &archive})
+	if !tainr.Running && !tainr.Completed && cr.Config.PreArchive && tar.IsSingleFileArchive(archive) {
+		tainr.PreArchives = append(tainr.PreArchives, types.PreArchive{Path: path, Archive: archive})
 		klog.V(2).Infof("adding prearchive: %v", tainr.PreArchives)
 		if err := cr.DB.SaveContainer(tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
