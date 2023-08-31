@@ -297,7 +297,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 	}
 }
 
-func TestDeletepodsOlderThan(t *testing.T) {
+func TestDeletePodsOlderThan(t *testing.T) {
 	tests := []struct {
 		cnt int
 		kub *instance
@@ -462,5 +462,49 @@ func TestDeleteConfigMapsOlderThan(t *testing.T) {
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining configmaps but got %d", i, tst.cnt, cnt)
 		}
+	}
+}
+
+func TestWatchDeleteContainer(t *testing.T) {
+	kub := &instance{
+		namespace: "default",
+		cli: fake.NewSimpleClientset(&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "f1spirit",
+				Namespace: "default",
+				Labels:    map[string]string{"kubedock.containerid": "303"},
+			},
+		}),
+	}
+
+	tainr := &types.Container{ShortID: "303"}
+	timeout := time.Millisecond * 200
+
+	start := time.Now()
+	delch, err := kub.WatchDeleteContainer(tainr, timeout)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = kub.DeleteContainer(tainr)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	<-delch
+	if time.Since(start) >= timeout {
+		t.Errorf("unexpected timeout")
+	}
+
+	start = time.Now()
+	delch, err = kub.WatchDeleteContainer(tainr, timeout)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	err = kub.DeleteContainer(tainr)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	<-delch
+	if time.Since(start) < timeout {
+		t.Errorf("expected timeout, but no timeout occurred")
 	}
 }
