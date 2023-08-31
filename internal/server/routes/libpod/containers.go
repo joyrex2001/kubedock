@@ -242,6 +242,7 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 		"HostConfig": gin.H{
 			"PortBindings": getNetworkSettingsPorts(cr, tainr),
 		},
+		"Ports": getContainerInfoPorts(cr, tainr),
 		"Names": getContainerNames(tainr),
 	}
 	common.UpdateContainerStatus(cr, tainr)
@@ -315,6 +316,32 @@ func getNetworkSettingsPorts(cr *common.ContextRouter, tainr *types.Container) g
 			done[src] = 1
 		}
 		res[fmt.Sprintf("%d/tcp", dst)] = pp
+	}
+	return res
+}
+
+// getContainerInfoPorts will return the available ports of the container
+// as a gin.H compatible json structure to be used in container list.
+func getContainerInfoPorts(cr *common.ContextRouter, tainr *types.Container) []map[string]interface{} {
+	ports := getAvailablePorts(cr, tainr)
+	res := []map[string]interface{}{}
+	if tainr.HostIP == "" {
+		return res
+	}
+	for dst, prts := range ports {
+		done := map[int]int{}
+		for _, src := range prts {
+			if _, ok := done[src]; ok {
+				continue
+			}
+			res = append(res, map[string]interface{}{
+				"host_ip":        tainr.HostIP,
+				"host_port":      src,
+				"container_port": dst,
+				"protocol":       "TCP",
+			})
+			done[src] = 1
+		}
 	}
 	return res
 }
