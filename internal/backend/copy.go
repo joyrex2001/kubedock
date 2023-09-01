@@ -17,7 +17,7 @@ import (
 )
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
-func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, target string) error {
+func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, target string) error {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -27,13 +27,7 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, targ
 		target = target[:len(target)-1]
 	}
 
-	reader, writer := io.Pipe()
-	go func() {
-		writer.Write(archive)
-		writer.Close()
-	}()
-
-	klog.Infof("copy %d bytes to %s:%s", len(archive), tainr.ShortID, target)
+	klog.Infof("copy archive to %s:%s", tainr.ShortID, target)
 
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
@@ -42,22 +36,21 @@ func (in *instance) CopyToContainer(tainr *types.Container, archive []byte, targ
 		Container:  "main",
 		Cmd:        []string{"tar", "-xf", "-", "-C", target},
 		Stdin:      reader,
-		Stderr:     writer,
 	})
 }
 
-// CopyFromContainer will copy given path from the container as return it as a
-// tar archive. Note that this requires tar to be present on the container.
-func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]byte, error) {
+// CopyFromContainer will copy given path from the container and return the
+// contents as a tar archive through the given writer. Note that this requires
+// tar to be present on the container.
+func (in *instance) CopyFromContainer(tainr *types.Container, target string, writer io.Writer) error {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var b bytes.Buffer
-	writer := bufio.NewWriter(&b)
+	klog.Infof("copy archive from %s to %s", tainr.ShortID, target)
 
-	err = exec.RemoteCmd(exec.Request{
+	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
 		Pod:        *pod,
@@ -65,11 +58,6 @@ func (in *instance) CopyFromContainer(tainr *types.Container, target string) ([]
 		Cmd:        []string{"tar", "-cf", "-", "-C", path.Dir(target), path.Base(target)},
 		Stdout:     writer,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
 }
 
 // GetFileModeInContainer will return the file mode (directory or file) of a given path

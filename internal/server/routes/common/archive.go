@@ -1,6 +1,8 @@
 package common
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -73,7 +75,13 @@ func PutArchive(cr *ContextRouter, c *gin.Context) {
 		}
 	}
 
-	if err := cr.Backend.CopyToContainer(tainr, archive, path); err != nil {
+	reader, writer := io.Pipe()
+	go func() {
+		writer.Write(archive)
+		writer.Close()
+	}()
+
+	if err := cr.Backend.CopyToContainer(tainr, reader, path); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -131,12 +139,13 @@ func GetArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	dat, err := cr.Backend.CopyFromContainer(tainr, path)
-	if err != nil {
+	var b bytes.Buffer
+	if err := cr.Backend.CopyFromContainer(tainr, path, bufio.NewWriter(&b)); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
 
+	dat := b.Bytes()
 	size, err := tar.GetTarSize(dat)
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)

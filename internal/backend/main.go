@@ -23,8 +23,8 @@ type Backend interface {
 	DeleteContainer(*types.Container) error
 	DeleteOlderThan(time.Duration) error
 	WatchDeleteContainer(*types.Container, time.Duration) (chan struct{}, error)
-	CopyFromContainer(*types.Container, string) ([]byte, error)
-	CopyToContainer(*types.Container, []byte, string) error
+	CopyFromContainer(*types.Container, string, io.Writer) error
+	CopyToContainer(*types.Container, io.Reader, string) error
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
 	ExecContainer(*types.Container, *types.Exec, io.Reader, io.Writer) (int, error)
 	GetLogs(*types.Container, bool, int, chan struct{}, io.Writer) error
