@@ -18,7 +18,7 @@ import (
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
 func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, target string) error {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, ta
 // contents as a tar archive through the given writer. Note that this requires
 // tar to be present on the container.
 func (in *instance) CopyFromContainer(tainr *types.Container, target string, writer io.Writer) error {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (in *instance) CopyFromContainer(tainr *types.Container, target string, wri
 // GetFileModeInContainer will return the file mode (directory or file) of a given path
 // inside the container.
 func (in *instance) GetFileModeInContainer(tainr *types.Container, target string) (fs.FileMode, error) {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return 0, err
 	}

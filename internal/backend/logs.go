@@ -20,7 +20,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 		TailLines: &tail,
 	}
 
-	_, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	_, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

@@ -65,7 +65,7 @@ func TestDeleteContainerKubedockID(t *testing.T) {
 		if err := tst.kub.DeleteWithKubedockID("z80"); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(pods.Items)
 		if cnt != tst.ins {
 			t.Errorf("failed delete instances test %d - expected %d remaining deployments but got %d", i, tst.ins, cnt)
@@ -126,7 +126,7 @@ func TestDeleteContainers(t *testing.T) {
 		if err := tst.kub.DeleteContainer(tst.in); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(pods.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
@@ -187,7 +187,7 @@ func TestDeleteContainerKubedock(t *testing.T) {
 		if err := tst.kub.DeleteAll(); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(pods.Items)
 		if cnt != tst.all {
 			t.Errorf("failed delete all test %d - expected %d remaining deployments but got %d", i, tst.all, cnt)
@@ -234,7 +234,7 @@ func TestDeleteServices(t *testing.T) {
 		if err := tst.kub.deleteServices("kubedock.containerid=" + tst.id); err != nil {
 			t.Errorf("failed test %d - unexpected error  %s", i, err)
 		}
-		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.TODO(), metav1.ListOptions{})
+		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(svcs.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining services but got %d", i, tst.cnt, cnt)
@@ -289,7 +289,7 @@ func TestDeleteContainersOlderThan(t *testing.T) {
 
 	for i, tst := range tests {
 		tst.kub.DeleteContainersOlderThan(100 * time.Millisecond)
-		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(pods.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
@@ -345,7 +345,7 @@ func TestDeletePodsOlderThan(t *testing.T) {
 
 	for i, tst := range tests {
 		tst.kub.DeletePodsOlderThan(100 * time.Millisecond)
-		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, _ := tst.kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(pods.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining deployments but got %d", i, tst.cnt, cnt)
@@ -401,7 +401,7 @@ func TestServiceContainersOlderThan(t *testing.T) {
 
 	for i, tst := range tests {
 		tst.kub.DeleteServicesOlderThan(100 * time.Millisecond)
-		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.TODO(), metav1.ListOptions{})
+		svcs, _ := tst.kub.cli.CoreV1().Services("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(svcs.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining services but got %d", i, tst.cnt, cnt)
@@ -457,7 +457,7 @@ func TestDeleteConfigMapsOlderThan(t *testing.T) {
 
 	for i, tst := range tests {
 		tst.kub.DeleteConfigMapsOlderThan(100 * time.Millisecond)
-		cms, _ := tst.kub.cli.CoreV1().ConfigMaps("default").List(context.TODO(), metav1.ListOptions{})
+		cms, _ := tst.kub.cli.CoreV1().ConfigMaps("default").List(context.Background(), metav1.ListOptions{})
 		cnt := len(cms.Items)
 		if cnt != tst.cnt {
 			t.Errorf("failed test %d - expected %d remaining configmaps but got %d", i, tst.cnt, cnt)

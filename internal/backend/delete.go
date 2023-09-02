@@ -93,7 +93,7 @@ func (in *instance) DeleteOlderThan(keepmax time.Duration) error {
 // DeleteContainersOlderThan will delete containers than are orchestrated
 // by kubedock and are older than the given keepmax duration.
 func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
-	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: "kubedock=true",
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
 			if err := in.deleteConfigMaps("kubedock.containerid=" + pod.Name); err != nil {
 				klog.Errorf("error deleting configmaps: %s", err)
 			}
-			if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{}); err != nil {
+			if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{}); err != nil {
 				return err
 			}
 		}
@@ -119,7 +119,7 @@ func (in *instance) DeleteContainersOlderThan(keepmax time.Duration) error {
 // DeleteServicesOlderThan will delete services than are orchestrated
 // by kubedock and are older than the given keepmax duration.
 func (in *instance) DeleteServicesOlderThan(keepmax time.Duration) error {
-	svcs, err := in.cli.CoreV1().Services(in.namespace).List(context.TODO(), metav1.ListOptions{
+	svcs, err := in.cli.CoreV1().Services(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: "kubedock=true",
 	})
 	if err != nil {
@@ -128,7 +128,7 @@ func (in *instance) DeleteServicesOlderThan(keepmax time.Duration) error {
 	for _, svc := range svcs.Items {
 		if in.isOlderThan(svc.ObjectMeta, keepmax) {
 			klog.V(3).Infof("deleting service: %s", svc.Name)
-			if err := in.cli.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
+			if err := in.cli.CoreV1().Services(svc.Namespace).Delete(context.Background(), svc.Name, metav1.DeleteOptions{}); err != nil {
 				return err
 			}
 		}
@@ -139,7 +139,7 @@ func (in *instance) DeleteServicesOlderThan(keepmax time.Duration) error {
 // DeleteConfigMapsOlderThan will delete configmaps than are orchestrated
 // by kubedock and are older than the given keepmax duration.
 func (in *instance) DeleteConfigMapsOlderThan(keepmax time.Duration) error {
-	svcs, err := in.cli.CoreV1().ConfigMaps(in.namespace).List(context.TODO(), metav1.ListOptions{
+	svcs, err := in.cli.CoreV1().ConfigMaps(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: "kubedock=true",
 	})
 	if err != nil {
@@ -148,7 +148,7 @@ func (in *instance) DeleteConfigMapsOlderThan(keepmax time.Duration) error {
 	for _, svc := range svcs.Items {
 		if in.isOlderThan(svc.ObjectMeta, keepmax) {
 			klog.V(3).Infof("deleting service: %s", svc.Name)
-			if err := in.cli.CoreV1().ConfigMaps(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
+			if err := in.cli.CoreV1().ConfigMaps(svc.Namespace).Delete(context.Background(), svc.Name, metav1.DeleteOptions{}); err != nil {
 				return err
 			}
 		}
@@ -159,7 +159,7 @@ func (in *instance) DeleteConfigMapsOlderThan(keepmax time.Duration) error {
 // DeletePodsOlderThan will delete pods than are orchestrated by kubedock
 // and are older than the given keepmax duration.
 func (in *instance) DeletePodsOlderThan(keepmax time.Duration) error {
-	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: "kubedock=true",
 	})
 	if err != nil {
@@ -169,7 +169,7 @@ func (in *instance) DeletePodsOlderThan(keepmax time.Duration) error {
 		if in.isOlderThan(pod.ObjectMeta, keepmax) {
 			klog.V(3).Infof("deleting pod: %s", pod.Name)
 			background := metav1.DeletePropagationBackground
-			if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{
+			if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{
 				PropagationPolicy: &background,
 			}); err != nil {
 				return err
@@ -193,14 +193,14 @@ func (in *instance) isOlderThan(met metav1.ObjectMeta, keepmax time.Duration) bo
 // deleteServices will delete k8s service resources which match the
 // given label selector.
 func (in *instance) deleteServices(selector string) error {
-	svcs, err := in.cli.CoreV1().Services(in.namespace).List(context.TODO(), metav1.ListOptions{
+	svcs, err := in.cli.CoreV1().Services(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: selector,
 	})
 	if err != nil {
 		return err
 	}
 	for _, svc := range svcs.Items {
-		if err := in.cli.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
+		if err := in.cli.CoreV1().Services(svc.Namespace).Delete(context.Background(), svc.Name, metav1.DeleteOptions{}); err != nil {
 			return err
 		}
 	}
@@ -210,14 +210,14 @@ func (in *instance) deleteServices(selector string) error {
 // deleteConfigMaps will delete k8s configmap resources which match the
 // given label selector.
 func (in *instance) deleteConfigMaps(selector string) error {
-	svcs, err := in.cli.CoreV1().ConfigMaps(in.namespace).List(context.TODO(), metav1.ListOptions{
+	svcs, err := in.cli.CoreV1().ConfigMaps(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: selector,
 	})
 	if err != nil {
 		return err
 	}
 	for _, svc := range svcs.Items {
-		if err := in.cli.CoreV1().ConfigMaps(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{}); err != nil {
+		if err := in.cli.CoreV1().ConfigMaps(svc.Namespace).Delete(context.Background(), svc.Name, metav1.DeleteOptions{}); err != nil {
 			return err
 		}
 	}
@@ -227,14 +227,14 @@ func (in *instance) deleteConfigMaps(selector string) error {
 // deletePods will delete k8s pod resources which match the given label
 // selector.
 func (in *instance) deletePods(selector string) error {
-	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.TODO(), metav1.ListOptions{
+	pods, err := in.cli.CoreV1().Pods(in.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: selector,
 	})
 	if err != nil {
 		return err
 	}
 	for _, pod := range pods.Items {
-		if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{}); err != nil {
+		if err := in.cli.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{}); err != nil {
 			return err
 		}
 	}
@@ -246,7 +246,7 @@ func (in *instance) deletePods(selector string) error {
 func (in *instance) WatchDeleteContainer(tainr *types.Container, timeout time.Duration) (chan struct{}, error) {
 	delch := make(chan struct{}, 1)
 
-	watcher, err := in.cli.CoreV1().Pods(in.namespace).Watch(context.TODO(), metav1.ListOptions{
+	watcher, err := in.cli.CoreV1().Pods(in.namespace).Watch(context.Background(), metav1.ListOptions{
 		LabelSelector: "kubedock.containerid=" + tainr.ShortID,
 	})
 	if err != nil {

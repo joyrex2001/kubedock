@@ -49,7 +49,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 			_ = in.GetLogs(tainr, false, 100, stop, os.Stderr)
 			close(stop)
 		}
-		_ = in.cli.CoreV1().Pods(in.namespace).Delete(context.TODO(), tainr.GetPodName(), metav1.DeleteOptions{})
+		_ = in.cli.CoreV1().Pods(in.namespace).Delete(context.Background(), tainr.GetPodName(), metav1.DeleteOptions{})
 	}
 	return state, err
 }
@@ -106,7 +106,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
-	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
+	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.Background(), pod, metav1.CreateOptions{}); err != nil {
 		return DeployFailed, err
 	}
 
@@ -145,7 +145,7 @@ func (in *instance) CreatePortForwards(tainr *types.Container) {
 
 // portForward will create port-forwards for all mapped ports.
 func (in *instance) portForward(tainr *types.Container, ports map[int]int) error {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 
 // GetPodIP will return the ip of the given container.
 func (in *instance) GetPodIP(tainr *types.Container) (string, error) {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -216,7 +216,7 @@ func (in *instance) GetPodIP(tainr *types.Container) (string, error) {
 // external name, mapped with provided hostports ports.
 func (in *instance) createServices(tainr *types.Container) error {
 	for _, svc := range in.getServices(tainr) {
-		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.TODO(), &svc, metav1.CreateOptions{}); err != nil {
+		if _, err := in.cli.CoreV1().Services(in.namespace).Create(context.Background(), &svc, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -340,7 +340,7 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployStat
 
 // GetContainerStatus will return the state of the deployed container.
 func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, error) {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return DeployFailed, err
 	}
@@ -370,7 +370,7 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 // deployment to be ready.
 func (in *instance) waitInitContainerRunning(tainr *types.Container, name string, wait int) error {
 	for max := 0; max < wait; max++ {
-		pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+		pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -492,7 +492,7 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 		},
 		BinaryData: dat,
 	}
-	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.TODO(), &cm, metav1.CreateOptions{})
+	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
 }
 
 // createConfigMapFromRaw will create a configmap with given name, and adds
@@ -512,7 +512,7 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 		},
 		BinaryData: dat,
 	}
-	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.TODO(), &cm, metav1.CreateOptions{})
+	return in.cli.CoreV1().ConfigMaps(in.namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
 }
 
 // copyVolumeFolders will copy the configured volumes of the container to
@@ -523,7 +523,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 		return err
 	}
 
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -560,7 +560,7 @@ func (in *instance) fileID(file string) string {
 
 // signalDone will signal the prepare init container to exit.
 func (in *instance) signalDone(tainr *types.Container) error {
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.TODO(), tainr.GetPodName(), metav1.GetOptions{})
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
