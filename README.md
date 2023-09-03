@@ -73,7 +73,7 @@ The reaping of resources can also be enforced at startup. When kubedock is start
 
 ## Service Account RBAC
 
-As a reference, the below role can be used to manage the permissions of the service account that is used to run kubedock in a cluster. The uncommented rules are the minimal permissions. Depending on use of `--pre-archive` and `--lock`, the additional (commented) rules are required as well.
+As a reference, the below role can be used to manage the permissions of the service account that is used to run kubedock in a cluster. The uncommented rules are the minimal permissions. Depending on use of `--lock`, the additional (commented) rule is required as well.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -96,11 +96,8 @@ rules:
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["list"]
+    verbs: ["create", "get", "list", "delete"]
 ## optional permissions (depending on kubedock use)
-# - apiGroups: [""]
-#   resources: ["configmaps"]
-#   verbs: ["create", "get", "list", "delete"]
 # - apiGroups: ["coordination.k8s.io"]
 #   resources: ["leases"]
 #   verbs: ["create", "get", "update"]
