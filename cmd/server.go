@@ -46,7 +46,7 @@ func init() {
 	serverCmd.PersistentFlags().String("image-pull-secrets", "", "Comma separated list of image pull secrets that should be used")
 	serverCmd.PersistentFlags().String("pod-template", "", "Pod file that should be used as the base for creating pods")
 	serverCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container port config from a registry")
-	serverCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating timeout")
+	serverCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating/deletion timeout")
 	serverCmd.PersistentFlags().DurationP("reapmax", "r", 60*time.Minute, "Reap all resources older than this time")
 	serverCmd.PersistentFlags().String("request-cpu", "", "Default k8s cpu resource request (optionally add ,limit)")
 	serverCmd.PersistentFlags().String("request-memory", "", "Default k8s memory resource request (optionally add ,limit)")

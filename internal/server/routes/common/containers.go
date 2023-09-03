@@ -59,7 +59,7 @@ func ContainerRestart(cr *ContextRouter, c *gin.Context) {
 		time.Sleep(time.Duration(t) * time.Second)
 	}
 
-	deleted, err := cr.Backend.WatchDeleteContainer(tainr, time.Second*60)
+	deleted, err := cr.Backend.WatchDeleteContainer(tainr)
 	if err != nil {
 		klog.Warningf("error while watching k8s container delete: %s", err)
 	}

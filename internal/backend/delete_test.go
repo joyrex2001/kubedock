@@ -475,13 +475,13 @@ func TestWatchDeleteContainer(t *testing.T) {
 				Labels:    map[string]string{"kubedock.containerid": "303"},
 			},
 		}),
+		timeOut: 1, // 1s timeout
 	}
 
 	tainr := &types.Container{ShortID: "303"}
-	timeout := time.Millisecond * 200
 
 	start := time.Now()
-	delch, err := kub.WatchDeleteContainer(tainr, timeout)
+	delch, err := kub.WatchDeleteContainer(tainr)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -490,12 +490,12 @@ func TestWatchDeleteContainer(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 	<-delch
-	if time.Since(start) >= timeout {
+	if time.Since(start) >= time.Second {
 		t.Errorf("unexpected timeout")
 	}
 
 	start = time.Now()
-	delch, err = kub.WatchDeleteContainer(tainr, timeout)
+	delch, err = kub.WatchDeleteContainer(tainr)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -504,7 +504,7 @@ func TestWatchDeleteContainer(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 	<-delch
-	if time.Since(start) < timeout {
+	if time.Since(start) < time.Second {
 		t.Errorf("expected timeout, but no timeout occurred")
 	}
 }

@@ -22,7 +22,7 @@ type Backend interface {
 	DeleteWithKubedockID(string) error
 	DeleteContainer(*types.Container) error
 	DeleteOlderThan(time.Duration) error
-	WatchDeleteContainer(*types.Container, time.Duration) (chan struct{}, error)
+	WatchDeleteContainer(*types.Container) (chan struct{}, error)
 	CopyFromContainer(*types.Container, string, io.Writer) error
 	CopyToContainer(*types.Container, io.Reader, string) error
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
@@ -56,6 +56,7 @@ type Config struct {
 	// InitImage is the image that is used as init container to prepare vols
 	InitImage string
 	// TimeOut is the max amount of time to wait until a container started
+	// or deleted.
 	TimeOut time.Duration
 	// PodTemplate refers to an optional file containig a pod resource that
 	// should be used as the base for creating pod resources.
