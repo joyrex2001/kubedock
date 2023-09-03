@@ -26,7 +26,7 @@ func (in *instance) GetLogs(tainr *types.Container, follow bool, count int, stop
 	}
 
 	req := in.cli.CoreV1().Pods(in.namespace).GetLogs(tainr.GetPodName(), &options)
-	stream, err := req.Stream(context.TODO())
+	stream, err := req.Stream(context.Background())
 	if err != nil {
 		return err
 	}
