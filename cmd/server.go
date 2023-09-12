@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -127,7 +126,7 @@ func homeDir() string {
 // kubeconfig context, and returns 'default' if none is set.
 func getContextNamespace() string {
 	res := "default"
-	ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	ns, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err == nil {
 		return strings.TrimSpace(string(ns))
 	}
