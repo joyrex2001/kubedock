@@ -1,7 +1,7 @@
 package backend
 
 import (
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"regexp"
@@ -49,7 +49,7 @@ func (in *instance) readFile(file string) ([]byte, error) {
 		return nil, err
 	}
 	defer f.Close()
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 // MapContainerTCPPorts will map random available ports to the ports

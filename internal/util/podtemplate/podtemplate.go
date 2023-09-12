@@ -2,7 +2,7 @@ package podtemplate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -12,7 +12,7 @@ import (
 // accordingly.
 func PodFromFile(file string) (*corev1.Pod, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	stream, err := ioutil.ReadFile(file)
+	stream, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
