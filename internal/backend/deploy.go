@@ -505,7 +505,7 @@ func (in *instance) addDindSidecar(tainr *types.Container, pod *corev1.Pod) erro
 
 	mount := corev1.VolumeMount{
 		Name:      "dind-socket",
-		MountPath: "/var/run/docker",
+		MountPath: "/var/run",
 	}
 	pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, mount)
 	pod.Spec.Containers[1].VolumeMounts = append(pod.Spec.Containers[1].VolumeMounts, mount)

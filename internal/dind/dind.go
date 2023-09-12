@@ -4,9 +4,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
@@ -48,30 +45,17 @@ func (d *Dind) proxy(c *gin.Context) {
 
 // Run will initialize the http api server and start the proxy.
 func (d *Dind) Run() error {
+	if !klog.V(2) {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	r := gin.Default()
 
 	r.Any("/*proxyPath", d.proxy)
-
-	d.exitHandler()
 
 	if err := r.RunUnix(d.sock); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// exitHandler will remove the created socket.
-func (d *Dind) exitHandler() {
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-	go func() {
-		if err := os.Remove(d.sock); err != nil {
-			klog.Errorf("error removing socket: %s", err)
-		}
-		os.Exit(0)
-	}()
 }
