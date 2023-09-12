@@ -159,13 +159,13 @@ func run(ctx context.Context, kub backend.Backend) {
 	if viper.GetBool("prune-start") {
 		klog.Info("pruning all existing kubedock resources from namespace")
 		if err := kub.DeleteAll(); err != nil {
-			klog.Fatalf("error pruning resources: %s", err)
+			klog.Errorf("error pruning resources: %s", err)
 		}
 	}
 
 	svr := server.New(kub)
 	if err := svr.Run(ctx); err != nil {
-		klog.Fatalf("error instantiating server: %s", err)
+		klog.Errorf("error instantiating server: %s", err)
 	}
 }
 
@@ -199,11 +199,11 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigc
-		cancel()
 		klog.Info("exit signal recieved, removing pods, configmaps and services")
 		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
-			klog.Fatalf("error pruning resources: %s", err)
+			klog.Errorf("error pruning resources: %s", err)
 		}
-		os.Exit(0)
+		cancel()
+		select {}
 	}()
 }

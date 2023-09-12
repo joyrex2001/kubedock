@@ -44,12 +44,12 @@ func (s *Server) Run(ctx context.Context) error {
 	errch := make(chan error, 1)
 
 	go func() {
-		klog.Infof("api server started listening on %s", port)
 		if tls {
 			errch <- router.RunTLS(port, cert, key)
 		} else {
 			errch <- router.Run(port)
 		}
+		klog.Infof("api server started listening on %s", port)
 	}()
 
 	if socket != "" {
