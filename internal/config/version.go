@@ -12,7 +12,7 @@ var (
 	// Date of build as injected during buildtime.
 	Date = "<undef>"
 	// Image is the current image as injected during buildtime.
-	Image = "busybox:latest"
+	Image = "joyrex2001/kubedock:latest"
 )
 
 // VersionString will return a string with details of the current version.

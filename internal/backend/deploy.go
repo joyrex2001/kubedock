@@ -106,6 +106,12 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
+	if tainr.HasDockerSockBinding() {
+		if err := in.addDindSidecar(tainr, pod); err != nil {
+			return DeployFailed, err
+		}
+	}
+
 	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.Background(), pod, metav1.CreateOptions{}); err != nil {
 		return DeployFailed, err
 	}
@@ -345,10 +351,16 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 		return DeployFailed, err
 	}
 	for _, status := range pod.Status.ContainerStatuses {
+		if status.Name != "main" {
+			continue
+		}
 		term := status.State.Terminated
 		ters := status.LastTerminationState.Terminated
 		if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
 			return DeployCompleted, nil
+		}
+		if term != nil && term.ExitCode != 0 {
+			return DeployFailed, fmt.Errorf("failed to start container")
 		}
 		if status.RestartCount > 0 {
 			return DeployFailed, fmt.Errorf("failed to start container")
@@ -467,6 +479,36 @@ func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
 	pod.Spec.Volumes = volumes
 	pod.Spec.Containers[0].VolumeMounts = mounts
 	pod.Spec.InitContainers[0].VolumeMounts = mounts
+
+	return nil
+}
+
+// addDindSidecar will add a docker-in-docker sidecar, adding a volume
+// with /var/run/docker.sock to support docker-in-docker.
+func (in *instance) addDindSidecar(tainr *types.Container, pod *corev1.Pod) error {
+	pulpol, err := tainr.GetImagePullPolicy()
+	if err != nil {
+		return err
+	}
+
+	pod.Spec.Containers = append([]corev1.Container{{
+		Name:            "dind-sidecar",
+		Image:           in.initImage,
+		ImagePullPolicy: pulpol,
+		Args:            []string{"dind", "--kubedock-url", in.kuburl},
+	}}, pod.Spec.Containers...)
+
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+		Name:         "dind-socket",
+		VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+	)
+
+	mount := corev1.VolumeMount{
+		Name:      "dind-socket",
+		MountPath: "/var/run/docker",
+	}
+	pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, mount)
+	pod.Spec.Containers[1].VolumeMounts = append(pod.Spec.Containers[1].VolumeMounts, mount)
 
 	return nil
 }

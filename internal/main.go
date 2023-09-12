@@ -21,6 +21,7 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/reaper"
 	"github.com/joyrex2001/kubedock/internal/server"
+	"github.com/joyrex2001/kubedock/internal/util/myip"
 )
 
 // Main is the main entry point for starting this service.
@@ -104,6 +105,12 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 
 	klog.Infof("kubernetes config: namespace=%s, initimage=%s, ready timeout=%s%s", ns, initimg, timeout, optlog)
 
+	kuburl, err := getKubedockURL()
+	if err != nil {
+		return nil, err
+	}
+	klog.V(3).Infof("kubedock url: %s", kuburl)
+
 	kub := backend.New(backend.Config{
 		Client:           cli,
 		RestConfig:       cfg,
@@ -111,9 +118,28 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		InitImage:        initimg,
 		ImagePullSecrets: imgps,
 		PodTemplate:      podtmpl,
+		KubedockURL:      kuburl,
 		TimeOut:          timeout,
 	})
 	return kub, nil
+}
+
+// getKubedockURL returns the uri that can be used externally to reach
+// this kubedock instance.
+func getKubedockURL() (string, error) {
+	ip, err := myip.Get()
+	if err != nil {
+		return "", err
+	}
+
+	port := strings.Split(viper.GetString("server.listen-addr")+":", ":")[1]
+	klog.Infof("api server started listening on %s", port)
+
+	proto := "http"
+	if viper.GetBool("server.tls-enable") {
+		proto = "https"
+	}
+	return fmt.Sprintf("%s://%s:%s", proto, ip, port), nil
 }
 
 // run will start all components, based the settings initiated by cmd.

@@ -347,11 +347,22 @@ func (co *Container) GetVolumeFolders() map[string]string {
 func (co *Container) GetVolumeFiles() map[string]string {
 	mounts := map[string]string{}
 	for dst, src := range co.GetVolumes() {
-		if info, err := os.Stat(src); err == nil && !info.IsDir() {
+		if info, err := os.Stat(src); err == nil && !info.IsDir() && dst != "/var/run/docker.sock" {
 			mounts[dst] = src
 		}
 	}
 	return mounts
+}
+
+// HasDockerSockBinding will check the bindings specified in the container
+// and will return true if one pf these bindings is the docker socket.
+func (co *Container) HasDockerSockBinding() bool {
+	for dst := range co.GetVolumes() {
+		if dst == "/var/run/docker.sock" {
+			return true
+		}
+	}
+	return false
 }
 
 // GetPreArchiveFiles will return all single files from the pre-archives as

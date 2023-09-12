@@ -35,32 +35,45 @@ func (s *Server) Run(ctx context.Context) error {
 	router.SetTrustedProxies(nil)
 
 	socket := viper.GetString("server.socket")
-	if socket == "" {
-		port := viper.GetString("server.listen-addr")
+	port := viper.GetString("server.listen-addr")
+
+	tls := viper.GetBool("server.tls-enable")
+	cert := viper.GetString("server.tls-cert-file")
+	key := viper.GetString("server.tls-key-file")
+
+	errch := make(chan error, 1)
+
+	go func() {
 		klog.Infof("api server started listening on %s", port)
-		if viper.GetBool("server.tls-enable") {
-			cert := viper.GetString("server.tls-cert-file")
-			key := viper.GetString("server.tls-key-file")
-			return router.RunTLS(port, cert, key)
+		if tls {
+			errch <- router.RunTLS(port, cert, key)
+		} else {
+			errch <- router.Run(port)
 		}
-		return router.Run(port)
+	}()
+
+	if socket != "" {
+		go func() {
+			errch <- router.RunUnix(socket)
+		}()
+		klog.Infof("api server started listening on %s", socket)
 	}
 
-	klog.Infof("api server started listening on %s", socket)
-	errch := make(chan error, 1)
-	go func() {
-		errch <- router.RunUnix(socket)
-	}()
+	var err error
 	select {
-	case err := <-errch:
-		return err
+	case err = <-errch:
+		break
 	case <-ctx.Done():
+		break
+	}
+
+	if socket != "" {
 		if err := os.Remove(socket); err != nil {
 			klog.Errorf("error removing socket: %s", err)
 		}
 	}
 
-	return nil
+	return err
 }
 
 // getGinEngine will return a gin.Engine router and configure the

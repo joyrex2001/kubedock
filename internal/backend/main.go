@@ -40,6 +40,7 @@ type instance struct {
 	imagePullSecrets []string
 	namespace        string
 	timeOut          int
+	kuburl           string
 }
 
 // Config is the structure to instantiate a Backend object
@@ -61,6 +62,9 @@ type Config struct {
 	// PodTemplate refers to an optional file containig a pod resource that
 	// should be used as the base for creating pod resources.
 	PodTemplate string
+	// KubedockURL contains the url of this kubedock instance, to be used in
+	// docker-in-docker instances/sidecars.
+	KubedockURL string
 }
 
 // New will return an Backend instance.
@@ -72,6 +76,7 @@ func New(cfg Config) Backend {
 		namespace:        cfg.Namespace,
 		imagePullSecrets: cfg.ImagePullSecrets,
 		podTemplate:      cfg.PodTemplate,
+		kuburl:           cfg.KubedockURL,
 		timeOut:          int(cfg.TimeOut.Seconds()),
 	}
 }

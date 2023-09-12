@@ -355,7 +355,7 @@ func TestWaitReadyState(t *testing.T) {
 					},
 					Status: corev1.PodStatus{
 						ContainerStatuses: []corev1.ContainerStatus{
-							{LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
+							{Name: "main", LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
 						},
 					},
 				}),

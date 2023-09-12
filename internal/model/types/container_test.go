@@ -603,15 +603,18 @@ func TestVolumes(t *testing.T) {
 		folders map[string]string
 		files   map[string]string
 		vol     bool
+		sock    bool
 	}{
 		{
 			in: &Container{Binds: []string{
 				"container_test.go:/tmp/container_test.go:ro",
 				"../types:/tmp/types:ro",
+				"/var/run/docker.sock:/var/run/docker.sock:rw",
 			}},
 			all: map[string]string{
 				"/tmp/container_test.go": "container_test.go",
 				"/tmp/types":             "../types",
+				"/var/run/docker.sock":   "/var/run/docker.sock",
 			},
 			files: map[string]string{
 				"/tmp/container_test.go": "container_test.go",
@@ -619,7 +622,8 @@ func TestVolumes(t *testing.T) {
 			folders: map[string]string{
 				"/tmp/types": "../types",
 			},
-			vol: true,
+			vol:  true,
+			sock: true,
 		},
 		{
 			in:      &Container{Binds: []string{}},
@@ -627,6 +631,7 @@ func TestVolumes(t *testing.T) {
 			files:   map[string]string{},
 			folders: map[string]string{},
 			vol:     false,
+			sock:    false,
 		},
 	}
 	for i, tst := range tests {
@@ -643,7 +648,10 @@ func TestVolumes(t *testing.T) {
 			t.Errorf("failed test %d folders - expected %v, but got %v", i, tst.folders, res)
 		}
 		if tst.in.HasVolumes() != tst.vol {
-			t.Errorf("failed test %d - expected %t, but got %t", i, tst.in.HasVolumes(), tst.vol)
+			t.Errorf("failed test %d volumes- expected %t, but got %t", i, tst.in.HasVolumes(), tst.vol)
+		}
+		if tst.in.HasDockerSockBinding() != tst.sock {
+			t.Errorf("failed test %d sock - expected %t, but got %t", i, tst.in.HasDockerSockBinding(), tst.sock)
 		}
 	}
 }
