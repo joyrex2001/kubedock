@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal/config"
@@ -133,6 +134,12 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 
 	if err := in.createServices(tainr); err != nil {
 		return state, err
+	}
+
+	if tainr.HasDockerSockBinding() {
+		if err := in.handleDindCompleted(tainr); err != nil {
+			return DeployFailed, err
+		}
 	}
 
 	return state, nil
@@ -509,6 +516,55 @@ func (in *instance) addDindSidecar(tainr *types.Container, pod *corev1.Pod) erro
 	}
 	pod.Spec.Containers[0].VolumeMounts = append(pod.Spec.Containers[0].VolumeMounts, mount)
 	pod.Spec.Containers[1].VolumeMounts = append(pod.Spec.Containers[1].VolumeMounts, mount)
+
+	return nil
+}
+
+// handleDindCompleted will shutdown the dind sidecar when the main
+// container is completed to get the pod in a completed state.
+func (in *instance) handleDindCompleted(tainr *types.Container) error {
+	watcher, err := in.cli.CoreV1().Pods(in.namespace).Watch(context.TODO(), metav1.ListOptions{
+		LabelSelector: "kubedock.containerid=" + tainr.ShortID,
+	})
+	if err != nil {
+		return err
+	}
+
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	shutdown := exec.Request{
+		Client:     in.cli,
+		RestConfig: in.cfg,
+		Pod:        *pod,
+		Container:  "dind-sidecar",
+		Cmd:        []string{"wget", "localhost:2475/shutdown"},
+		TTY:        false,
+		Stdout:     io.Discard,
+		Stderr:     io.Discard,
+	}
+
+	go func() {
+		for event := range watcher.ResultChan() {
+			if event.Type == watch.Modified {
+				status, err := in.GetContainerStatus(tainr)
+				if err != nil {
+					klog.Errorf("error getting container status: %s", err)
+					watcher.Stop()
+					return
+				}
+				if status != DeployPending && status != DeployRunning {
+					if status == DeployCompleted {
+						exec.RemoteCmd(shutdown)
+					}
+					watcher.Stop()
+					return
+				}
+			}
+		}
+	}()
 
 	return nil
 }
