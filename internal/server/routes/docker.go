@@ -56,6 +56,9 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/images/create", wrap(docker.ImageCreate))
 	router.GET("/images/json", wrap(common.ImageList))
 	router.GET("/images/:image/*json", wrap(common.ImageJSON))
+	router.POST("/images/prune", wrap(docker.ImagesPrune))
+
+	router.POST("/volumes/prune", wrap(docker.VolumesPrune))
 
 	// not supported docker api at the moment
 	router.GET("/containers/:id/top", httputil.NotImplemented)
@@ -72,7 +75,5 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.GET("/volumes/:id", httputil.NotImplemented)
 	router.DELETE("/volumes/:id", httputil.NotImplemented)
 	router.POST("/volumes/create", httputil.NotImplemented)
-	router.POST("/volumes/prune", httputil.NotImplemented)
-	router.POST("/images/prune", httputil.NotImplemented)
 	router.POST("/images/load", httputil.NotImplemented)
 }

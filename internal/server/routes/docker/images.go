@@ -40,3 +40,13 @@ func ImageCreate(cr *common.ContextRouter, c *gin.Context) {
 		"status": "Download complete",
 	})
 }
+
+// ImagesPrune - Delete unused images.
+// https://docs.docker.com/engine/api/v1.41/#operation/ImagePrune
+// POST "/images/prune"
+func ImagesPrune(cr *common.ContextRouter, c *gin.Context) {
+	c.JSON(http.StatusCreated, gin.H{
+		"ImagesDeleted":  []string{},
+		"SpaceReclaimed": 0,
+	})
+}
