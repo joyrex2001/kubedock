@@ -555,9 +555,7 @@ func (in *instance) handleDindCompleted(tainr *types.Container) error {
 					return
 				}
 				if status != DeployPending && status != DeployRunning {
-					if status == DeployCompleted {
-						exec.RemoteCmd(shutdown)
-					}
+					exec.RemoteCmd(shutdown)
 					watcher.Stop()
 					return
 				}
