@@ -540,8 +540,7 @@ func (in *instance) handleDindCompleted(tainr *types.Container) error {
 		RestConfig: in.cfg,
 		Pod:        *pod,
 		Container:  "dind-sidecar",
-		Cmd:        []string{"wget", "localhost:2475/shutdown"},
-		TTY:        false,
+		Cmd:        []string{"touch", "/var/run/shutdown"},
 		Stdout:     io.Discard,
 		Stderr:     io.Discard,
 	}

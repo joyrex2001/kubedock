@@ -5,7 +5,10 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 )
@@ -14,16 +17,44 @@ import (
 type Dind struct {
 	kuburl string
 	sock   string
-	port   string
 }
 
 // New will instantiate a Dind object.
-func New(sock, port, kuburl string) *Dind {
+func New(sock, kuburl string) *Dind {
 	return &Dind{
 		kuburl: kuburl,
 		sock:   sock,
-		port:   port,
 	}
+}
+
+// shutDownHandler will watch the path where the docker socket resides (in the
+// background). It will terminates the daemon (exit) when a file called 'shutdown'
+// is created/remove/touched.
+func (d *Dind) shutdownHandler() error {
+	path := filepath.Dir(d.sock)
+	shutdown := "shutdown"
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	if err := watcher.Add(path); err != nil {
+		return err
+	}
+
+	klog.Infof("watching %s/%s for activity", path, shutdown)
+
+	go func() {
+		for event := range watcher.Events {
+			if strings.HasSuffix(event.Name, shutdown) {
+				klog.Infof("exit signal received...")
+				os.Exit(0)
+			}
+		}
+	}()
+
+	return nil
 }
 
 // proxy forwards the request to the configured kubedock endpoint.
@@ -34,20 +65,13 @@ func (d *Dind) proxy(c *gin.Context) {
 		return
 	}
 
-	path := c.Param("proxyPath")
-
-	if path == "/shutdown" {
-		klog.Infof("exit signal received...")
-		os.Exit(0)
-	}
-
 	proxy := httputil.NewSingleHostReverseProxy(remote)
 	proxy.Director = func(req *http.Request) {
 		req.Header = c.Request.Header
 		req.Host = remote.Host
 		req.URL.Scheme = remote.Scheme
 		req.URL.Host = remote.Host
-		req.URL.Path = path
+		req.URL.Path = c.Param("proxyPath")
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)
@@ -59,18 +83,13 @@ func (d *Dind) Run() error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	if err := d.shutdownHandler(); err != nil {
+		return err
+	}
+
 	r := gin.Default()
 
 	r.Any("/*proxyPath", d.proxy)
-
-	if d.port != "" {
-		go func() {
-			klog.Infof("start listening on %s", d.port)
-			if err := r.Run(d.port); err != nil {
-				klog.Fatalf("failed starting webserver on port %s", d.port)
-			}
-		}()
-	}
 
 	klog.Infof("start listening on %s", d.sock)
 	if err := r.RunUnix(d.sock); err != nil {
