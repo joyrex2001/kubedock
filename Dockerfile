@@ -21,9 +21,7 @@ FROM alpine:3
 RUN apk add --no-cache ca-certificates \
     && update-ca-certificates
 
-COPY --from=kubedock /app /app
+COPY --from=kubedock /app /usr/local/bin
 
-WORKDIR /app
-
-ENTRYPOINT ["/app/kubedock"]
+ENTRYPOINT ["/usr/local/bin/kubedock"]
 CMD [ "server" ]
