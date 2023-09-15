@@ -37,6 +37,7 @@ type instance struct {
 	cfg              *rest.Config
 	podTemplate      string
 	initImage        string
+	dindImage        string
 	imagePullSecrets []string
 	namespace        string
 	timeOut          int
@@ -56,6 +57,9 @@ type Config struct {
 	ImagePullSecrets []string
 	// InitImage is the image that is used as init container to prepare vols
 	InitImage string
+	// DindImage is the image that is used as a sidecar container to
+	// support docker-in-docker
+	DindImage string
 	// TimeOut is the max amount of time to wait until a container started
 	// or deleted.
 	TimeOut time.Duration
@@ -73,6 +77,7 @@ func New(cfg Config) Backend {
 		cli:              cfg.Client,
 		cfg:              cfg.RestConfig,
 		initImage:        cfg.InitImage,
+		dindImage:        cfg.DindImage,
 		namespace:        cfg.Namespace,
 		imagePullSecrets: cfg.ImagePullSecrets,
 		podTemplate:      cfg.PodTemplate,

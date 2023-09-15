@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal"
 	"github.com/joyrex2001/kubedock/internal/config"
@@ -30,9 +29,6 @@ var serverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	klog.InitFlags(nil)
-	// pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-
 	serverCmd.PersistentFlags().String("listen-addr", ":2475", "Webserver listen address")
 	serverCmd.PersistentFlags().String("unix-socket", "", "Unix socket to listen to (instead of port)")
 	serverCmd.PersistentFlags().Bool("tls-enable", false, "Enable TLS on api server")
@@ -40,6 +36,7 @@ func init() {
 	serverCmd.PersistentFlags().String("tls-cert-file", "", "TLS certificate file")
 	serverCmd.PersistentFlags().StringP("namespace", "n", getContextNamespace(), "Namespace in which containers should be orchestrated")
 	serverCmd.PersistentFlags().String("initimage", config.Image, "Image to use as initcontainer for volume setup")
+	serverCmd.PersistentFlags().String("dindimage", config.Image, "Image to use as sidecar container for docker-in-docker support")
 	serverCmd.PersistentFlags().String("pull-policy", "ifnotpresent", "Pull policy that should be applied (ifnotpresent,never,always)")
 	serverCmd.PersistentFlags().String("service-account", "default", "Service account that should be used for deployed pods")
 	serverCmd.PersistentFlags().String("image-pull-secrets", "", "Comma separated list of image pull secrets that should be used")
@@ -65,6 +62,7 @@ func init() {
 	viper.BindPFlag("server.tls-key-file", serverCmd.PersistentFlags().Lookup("tls-key-file"))
 	viper.BindPFlag("kubernetes.namespace", serverCmd.PersistentFlags().Lookup("namespace"))
 	viper.BindPFlag("kubernetes.initimage", serverCmd.PersistentFlags().Lookup("initimage"))
+	viper.BindPFlag("kubernetes.dindimage", serverCmd.PersistentFlags().Lookup("dindimage"))
 	viper.BindPFlag("kubernetes.pull-policy", serverCmd.PersistentFlags().Lookup("pull-policy"))
 	viper.BindPFlag("kubernetes.service-account", serverCmd.PersistentFlags().Lookup("service-account"))
 	viper.BindPFlag("kubernetes.image-pull-secrets", serverCmd.PersistentFlags().Lookup("image-pull-secrets"))
@@ -89,6 +87,7 @@ func init() {
 	viper.BindEnv("server.tls-key-file", "SERVER_TLS_KEY_FILE")
 	viper.BindEnv("kubernetes.namespace", "NAMESPACE")
 	viper.BindEnv("kubernetes.initimage", "INIT_IMAGE")
+	viper.BindEnv("kubernetes.dindimage", "DIND_IMAGE")
 	viper.BindEnv("kubernetes.pull-policy", "PULL_POLICY")
 	viper.BindEnv("kubernetes.service-account", "SERVICE_ACCOUNT")
 	viper.BindEnv("kubernetes.image-pull-secrets", "IMAGE_PULL_SECRETS")

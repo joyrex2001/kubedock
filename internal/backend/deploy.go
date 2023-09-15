@@ -500,7 +500,7 @@ func (in *instance) addDindSidecar(tainr *types.Container, pod *corev1.Pod) erro
 
 	pod.Spec.Containers = append([]corev1.Container{{
 		Name:            "dind-sidecar",
-		Image:           in.initImage,
+		Image:           in.dindImage,
 		ImagePullPolicy: pulpol,
 		Command:         []string{"kubedock", "dind", "--kubedock-url", in.kuburl},
 	}}, pod.Spec.Containers...)

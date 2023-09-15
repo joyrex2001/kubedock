@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"k8s.io/klog"
 )
 
 var rootCmd = &cobra.Command{
@@ -17,4 +18,9 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func init() {
+	klog.InitFlags(nil)
+	// pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }

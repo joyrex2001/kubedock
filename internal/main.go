@@ -92,6 +92,7 @@ func Main() {
 func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, error) {
 	ns := viper.GetString("kubernetes.namespace")
 	initimg := viper.GetString("kubernetes.initimage")
+	dindimg := viper.GetString("kubernetes.dindimage")
 	timeout := viper.GetDuration("kubernetes.timeout")
 	podtmpl := viper.GetString("kubernetes.pod-template")
 	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
@@ -103,7 +104,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		imgps = strings.Split(imgpsr, ",")
 	}
 
-	klog.Infof("kubernetes config: namespace=%s, initimage=%s, ready timeout=%s%s", ns, initimg, timeout, optlog)
+	klog.Infof("kubernetes config: namespace=%s, initimage=%s, dindimage=%s, ready timeout=%s%s", ns, initimg, dindimg, timeout, optlog)
 
 	kuburl, err := getKubedockURL()
 	if err != nil {
@@ -116,6 +117,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		RestConfig:       cfg,
 		Namespace:        ns,
 		InitImage:        initimg,
+		DindImage:        dindimg,
 		ImagePullSecrets: imgps,
 		PodTemplate:      podtmpl,
 		KubedockURL:      kuburl,
