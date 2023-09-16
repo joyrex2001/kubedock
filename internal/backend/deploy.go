@@ -530,33 +530,20 @@ func (in *instance) handleDindCompleted(tainr *types.Container) error {
 		return err
 	}
 
-	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	shutdown := exec.Request{
-		Client:     in.cli,
-		RestConfig: in.cfg,
-		Pod:        *pod,
-		Container:  "dind-sidecar",
-		Cmd:        []string{"touch", "/var/run/shutdown"},
-		Stdout:     io.Discard,
-		Stderr:     io.Discard,
-	}
-
 	go func() {
+		defer watcher.Stop()
+
 		for event := range watcher.ResultChan() {
 			if event.Type == watch.Modified {
 				status, err := in.GetContainerStatus(tainr)
 				if err != nil {
 					klog.Errorf("error getting container status: %s", err)
-					watcher.Stop()
 					return
 				}
 				if status != DeployPending && status != DeployRunning {
-					exec.RemoteCmd(shutdown)
-					watcher.Stop()
+					if err := in.touchFileInContainer(tainr, "dind-sidecar", "/var/run/shutdown"); err != nil {
+						klog.Errorf("error triggering shutdown dind-sidecar: %s", err)
+					}
 					return
 				}
 			}
@@ -645,7 +632,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 		}
 	}
 
-	return in.signalDone(tainr)
+	return in.touchFileInContainer(tainr, "setup", "/tmp/done")
 }
 
 // fileID will create an unique k8s compatible id to refer to the given file.
@@ -653,18 +640,20 @@ func (in *instance) fileID(file string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(file)))
 }
 
-// signalDone will signal the prepare init container to exit.
-func (in *instance) signalDone(tainr *types.Container) error {
+// touchFileInContainer will touch a file in given container to signal
+// processes running in the container.
+func (in *instance) touchFileInContainer(tainr *types.Container, container, filename string) error {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
+
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
 		Pod:        *pod,
-		Container:  "setup",
-		Cmd:        []string{"touch", "/tmp/done"},
+		Container:  container,
+		Cmd:        []string{"touch", filename},
 		Stderr:     os.Stderr,
 	})
 }

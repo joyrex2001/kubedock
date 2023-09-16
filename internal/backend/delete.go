@@ -254,18 +254,17 @@ func (in *instance) WatchDeleteContainer(tainr *types.Container) (chan struct{},
 	}
 
 	go func() {
+		defer watcher.Stop()
+		defer close(delch)
+
 		tmr := time.NewTimer(time.Duration(in.timeOut) * time.Second)
 		for {
 			select {
 			case event := <-watcher.ResultChan():
 				if event.Type == watch.Deleted {
-					close(delch)
-					watcher.Stop()
 					return
 				}
 			case <-tmr.C:
-				close(delch)
-				watcher.Stop()
 				return
 			}
 		}
