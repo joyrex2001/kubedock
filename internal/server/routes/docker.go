@@ -29,7 +29,7 @@ func RegisterDockerRoutes(router *gin.Engine, cr *common.ContextRouter) {
 	router.POST("/containers/:id/restart", wrap(common.ContainerRestart))
 	router.POST("/containers/:id/kill", wrap(common.ContainerKill))
 	router.POST("/containers/:id/wait", wrap(docker.ContainerWait))
-	router.POST("/containers/:id/rename", wrap(docker.ContainerRename))
+	router.POST("/containers/:id/rename", wrap(common.ContainerRename))
 	router.POST("/containers/:id/resize", wrap(common.ContainerResize))
 	router.DELETE("/containers/:id", wrap(docker.ContainerDelete))
 	router.GET("/containers/json", wrap(docker.ContainerList))

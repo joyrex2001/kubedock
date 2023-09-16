@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -148,6 +149,15 @@ func (in *Database) GetContainer(id string) (*types.Container, error) {
 // GetContainerByName will return a container with given name, or an error if
 // the instance does not exist.
 func (in *Database) GetContainerByName(name string) (*types.Container, error) {
+	tainr, err := in.getContainerByName(name)
+	if err == nil || !strings.Contains(name, "-") {
+		return tainr, err
+	}
+	parts := strings.Split(name, "-")
+	return in.GetContainer(parts[len(parts)-1])
+}
+
+func (in *Database) getContainerByName(name string) (*types.Container, error) {
 	txn := in.db.Txn(false)
 	defer txn.Abort()
 	raw, err := txn.First("container", "name", name)

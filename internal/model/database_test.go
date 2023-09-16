@@ -58,6 +58,13 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("Loaded shortid container differs to saved container")
 		}
 	}
+	if conl, err := db.GetContainerByNameOrID("somepodname-" + con.ShortID); err != nil {
+		t.Errorf("Unexpected error when loading an existing container with a podname; %s", err)
+	} else {
+		if conl.ID != con.ID || conl.Image != con.Image {
+			t.Errorf("Loaded shortid container differs to saved container")
+		}
+	}
 	if cons, err := db.GetContainers(); err != nil {
 		t.Errorf("Unexpected error when loading all existing containers")
 	} else {

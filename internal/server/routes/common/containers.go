@@ -132,7 +132,7 @@ func ContainerStop(cr *ContextRouter, c *gin.Context) {
 // POST "/libpod/containers/:id/kill"
 func ContainerKill(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -185,7 +185,7 @@ func ContainerKill(cr *ContextRouter, c *gin.Context) {
 // POST "/libpod/containers/:id/attach"
 func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -247,7 +247,7 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 // POST "/libpod/containers/:id/rezise"
 func ContainerResize(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	_, err := cr.DB.GetContainer(id)
+	_, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -263,7 +263,7 @@ func ContainerResize(cr *ContextRouter, c *gin.Context) {
 // GET "/libpod/containers/:id/rename"
 func ContainerRename(cr *ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return

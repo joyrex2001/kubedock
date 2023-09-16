@@ -119,7 +119,7 @@ func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 		case <-c.Request.Context().Done():
 			return
 		case <-ticker.C:
-			tainr, err := cr.DB.GetContainer(id)
+			tainr, err := cr.DB.GetContainerByNameOrID(id)
 			if err == nil {
 				common.UpdateContainerStatus(cr, tainr)
 			}
@@ -136,7 +136,7 @@ func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 // DELETE "/libpod/containers/:id"
 func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -169,7 +169,7 @@ func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
 // GET "/libpod/containers/:id/exists"
 func ContainerExists(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	_, err := cr.DB.GetContainer(id)
+	_, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
@@ -182,7 +182,7 @@ func ContainerExists(cr *common.ContextRouter, c *gin.Context) {
 // GET "/libpod/containers/:id/json"
 func ContainerInfo(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	tainr, err := cr.DB.GetContainer(id)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
 		return
