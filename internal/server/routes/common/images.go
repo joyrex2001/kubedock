@@ -60,5 +60,8 @@ func ImageJSON(cr *ContextRouter, c *gin.Context) {
 		"ContainerConfig": gin.H{
 			"Image": img.Name,
 		},
+		"Config": gin.H{
+			"Env": []string{},
+		},
 	})
 }
