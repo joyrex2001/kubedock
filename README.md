@@ -84,7 +84,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["pods"]
-    verbs: ["create", "get", "list", "delete"]
+    verbs: ["create", "get", "list", "delete", "watch"]
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["list", "get"]
