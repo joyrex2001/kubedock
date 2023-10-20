@@ -3,9 +3,8 @@ package tar
 import (
 	"bufio"
 	"bytes"
+	"slices"
 	"testing"
-
-	"golang.org/x/exp/slices"
 )
 
 func TestPackFolder(t *testing.T) {
