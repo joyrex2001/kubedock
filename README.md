@@ -59,6 +59,10 @@ By default containers are started without any resource request configuration. Th
 
 The pods that are created by kubedock can be customized with additional configuration by providing a pod template with `--pod-template`. If this is provided, all pods that are created by kubedock will use the provided pod template as a base. Note that containers and volumes are ignored in these templates.
 
+## Kubernetes labels and annotations
+
+Labels that are added to container images are added as annotations and labels to the created kubernetes pods. Additional labels and annotations can be added with the `--annotation` and `--label` cli argument. Environment variables that start with `K8S_ANNOTATION_` and `K8S_LABEL_` will be added as a kubernetes annotation or label as well. For example `K8S_ANNOTATION_FOO` will create an annotation `foo` with the value of the environment variable. Note that annotations and labels added via environment variables or cli will not be processed by kubedock if they have a specific control function. For these occasions specific environment variables and cli arguments are present.
+
 ## Resources cleanup
 
 Kubedock will dynamically create pods and services in the configured namespace. If kubedock is requested to delete a container, it will remove the pod and related services. Kubedock will also delete all the resources (services and pods) it created in the running instance before exiting (identified with the `kubedock.id` label).

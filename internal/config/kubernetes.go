@@ -12,11 +12,15 @@ import (
 )
 
 // DefaultLabels are the labels that are added to every kubedock
-// managed resource.
+// managed k8s resource.
 var DefaultLabels = map[string]string{
 	"kubedock":    "true",
 	"kubedock.id": "",
 }
+
+// DefaultAnnotations are the annotations that are added to every
+// kubedock managed k8s resource.
+var DefaultAnnotations = map[string]string{}
 
 // InstanceID contains an unique ID to identify this running instance.
 var InstanceID = ""
@@ -26,6 +30,18 @@ var InstanceID = ""
 func init() {
 	InstanceID = stringid.TruncateID(stringid.GenerateRandomID())
 	DefaultLabels["kubedock.id"] = InstanceID
+}
+
+// AddDefaultLabel will add a label that will be added to all containers
+// started by this kubedock instance.
+func AddDefaultLabel(key, value string) {
+	DefaultLabels[key] = value
+}
+
+// AddDefaultAnnotation will add an annotation that will be added to all
+// containers started by this kubedock instance.
+func AddDefaultAnnotation(key, value string) {
+	DefaultAnnotations[key] = value
 }
 
 // GetKubernetes will return a kubernetes config object.

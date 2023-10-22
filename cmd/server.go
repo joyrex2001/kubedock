@@ -10,18 +10,23 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 
 	"github.com/joyrex2001/kubedock/internal"
 	"github.com/joyrex2001/kubedock/internal/config"
 )
 
 var cfgFile string
+var labels []string
+var annotations []string
 
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start the kubedock api server",
 	Run: func(cmd *cobra.Command, args []string) {
 		flag.Set("v", viper.GetString("verbosity"))
+		addDefaultAnnotations(annotations)
+		addDefaultLabels(labels)
 		internal.Main()
 	},
 }
@@ -105,6 +110,9 @@ func init() {
 	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true
 	serverCmd.PersistentFlags().Lookup("tls-cert-file").Hidden = true
 
+	serverCmd.PersistentFlags().StringArrayVar(&annotations, "annotation", []string{}, "annotation that need to be added to every k8s resource (key=value)")
+	serverCmd.PersistentFlags().StringArrayVar(&labels, "label", []string{}, "label that need to be added to every k8s resource (key=value)")
+
 	// kubeconfig
 	if home := homeDir(); home != "" {
 		serverCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
@@ -112,6 +120,52 @@ func init() {
 		serverCmd.PersistentFlags().String("kubeconfig", "", "absolute path to the kubeconfig file")
 	}
 	viper.BindPFlag("kubernetes.kubeconfig", serverCmd.PersistentFlags().Lookup("kubeconfig"))
+}
+
+// addDefaultLabels will add configured default labels (env or cli) to the
+// set of labels that need to be added to all containers instantiated by
+// this kubedock instance.
+func addDefaultLabels(labels []string) {
+	labels = append(getEnvVariables("K8S_LABEL_"), labels...)
+	for _, label := range labels {
+		key, value, found := strings.Cut(label, "=")
+		if !found {
+			klog.Errorf("could not label %s", label)
+			continue
+		}
+		klog.Infof("adding %s with %s", key, value)
+		config.AddDefaultLabel(key, value)
+	}
+}
+
+// addDefaultAnnotations will add configured default annotations (env or cli)
+// to the set of annotations that need to be added to all containers
+// instantiated by this kubedock instance.
+func addDefaultAnnotations(annotations []string) {
+	annotations = append(getEnvVariables("K8S_ANNOTATION_"), annotations...)
+	for _, annotation := range annotations {
+		key, value, found := strings.Cut(annotation, "=")
+		if !found {
+			klog.Errorf("could not annotation %s", annotation)
+			continue
+		}
+		klog.Infof("adding %s with %s", key, value)
+		config.AddDefaultAnnotation(key, value)
+	}
+}
+
+// getEnvVariables will return a list of values from environment
+// variables that start with the given prefix.
+func getEnvVariables(prefix string) []string {
+	var envs []string
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, prefix) {
+			key, value, _ := strings.Cut(env, "=")
+			key = strings.ToLower(strings.TrimPrefix(key, prefix))
+			envs = append(envs, key+"="+value)
+		}
+	}
+	return envs
 }
 
 // homeDir returns the current home directory of the user.

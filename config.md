@@ -35,9 +35,16 @@ The `server` command is the actual kubedock server, and is the relevant command 
 |server|--port-forward|false||Open port-forwards for all services|
 |server|--reverse-proxy|false||Reverse proxy all services via 0.0.0.0 on the kubedock host as well|
 |server|--pre-archive|false||Enable support for copying single files to containers without starting them|
+|server|--annotation||K8S_ANNOTATION_annotation|annotation that need to be added to every k8s resource (key=value)|
+|server|--label||K8S_LABEL_label|label that need to be added to every k8s resource (key=value)|
 |dind|--unix-socket|/var/run/docker.sock||Unix socket to listen to|
 |dind|--kubedock-url|||Kubedock url to proxy requests to|
 |dind|--verbosity / -v|1|VERBOSITY|Log verbosity level|
 |readme||||Display project readme|
+|readme|config|||Display configuration reference|
 |readme|licence|||Display project licence|
 |version||||Display kubedock version details|
+
+## Labels and annotations
+
+Labels that are added to container images are added as annotations and labels to the created kubernetes pods. Additional labels and annotations can be added with the `--annotation` and `--label` cli argument. Environment variables that start with `K8S_ANNOTATION_` and `K8S_LABEL_` will be added as a kubernetes annotation or label as well. For example `K8S_ANNOTATION_FOO` will create an annotation `foo` with the value of the environment variable. Note that annotations and labels added via environment variables or cli will not be processed by kubedock if they have a specific control function. For these occasions specific environment variables and cli arguments are present.

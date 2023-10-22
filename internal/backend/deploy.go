@@ -297,6 +297,9 @@ func (in *instance) getLabels(labels map[string]string, tainr *types.Container) 
 	if labels == nil {
 		labels = map[string]string{}
 	}
+	for k, v := range config.DefaultLabels {
+		labels[k] = v
+	}
 	for k, v := range tainr.Labels {
 		kk := in.toKubernetesKey(k)
 		kv := in.toKubernetesValue(v)
@@ -310,9 +313,6 @@ func (in *instance) getLabels(labels map[string]string, tainr *types.Container) 
 		}
 		labels[kk] = kv
 	}
-	for k, v := range config.DefaultLabels {
-		labels[k] = v
-	}
 	labels["kubedock.containerid"] = tainr.ShortID
 	return labels
 }
@@ -323,6 +323,9 @@ func (in *instance) getLabels(labels map[string]string, tainr *types.Container) 
 func (in *instance) getAnnotations(annotations map[string]string, tainr *types.Container) map[string]string {
 	if annotations == nil {
 		annotations = map[string]string{}
+	}
+	for k, v := range config.DefaultAnnotations {
+		annotations[k] = v
 	}
 	for k, v := range tainr.Labels {
 		annotations[k] = v
