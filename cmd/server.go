@@ -80,6 +80,7 @@ func init() {
 	viper.BindPFlag("port-forward", serverCmd.PersistentFlags().Lookup("port-forward"))
 	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
 	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
+	viper.BindPFlag("verbose", serverCmd.PersistentFlags().Lookup("verbosity"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
@@ -98,6 +99,7 @@ func init() {
 	viper.BindEnv("kubernetes.runas-user", "K8S_RUNAS_USER")
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("reaper.reapmax", "REAPER_REAPMAX")
+	viper.BindEnv("verbosity", "VERBOSITY")
 
 	serverCmd.PersistentFlags().Lookup("tls-enable").Hidden = true
 	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true

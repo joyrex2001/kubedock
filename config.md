@@ -37,7 +37,7 @@ The `server` command is the actual kubedock server, and is the relevant command 
 |server|--pre-archive|false||Enable support for copying single files to containers without starting them|
 |dind|--unix-socket|/var/run/docker.sock||Unix socket to listen to|
 |dind|--kubedock-url|||Kubedock url to proxy requests to|
-|dind|--verbosity / -v|1||Log verbosity level|
+|dind|--verbosity / -v|1|VERBOSITY|Log verbosity level|
 |readme||||Display project readme|
 |readme|licence|||Display project licence|
 |version||||Display kubedock version details|
