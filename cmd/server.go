@@ -85,7 +85,6 @@ func init() {
 	viper.BindPFlag("port-forward", serverCmd.PersistentFlags().Lookup("port-forward"))
 	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
 	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
-	viper.BindPFlag("verbose", serverCmd.PersistentFlags().Lookup("verbosity"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
