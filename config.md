@@ -30,7 +30,7 @@ The `server` command is the actual kubedock server, and is the relevant command 
 |server|--runas-user||K8S_RUNAS_USER|Numeric UID to run pods as (defaults to UID in image)|
 |server|--lock|false||Lock namespace for this instance|
 |server|--lock-timeout|15m||Max time trying to acquire namespace lock|
-|server|--verbosity / -v|1||Log verbosity level|
+|server|--verbosity / -v|1|VERBOSITY|Log verbosity level|
 |server|--prune-start / -P|false||Prune all existing kubedock resources before starting|
 |server|--port-forward|false||Open port-forwards for all services|
 |server|--reverse-proxy|false||Reverse proxy all services via 0.0.0.0 on the kubedock host as well|
