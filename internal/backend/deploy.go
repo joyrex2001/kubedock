@@ -313,6 +313,9 @@ func (in *instance) getLabels(labels map[string]string, tainr *types.Container) 
 		}
 		labels[kk] = kv
 	}
+	for k, v := range config.SystemLabels {
+		labels[k] = v
+	}
 	labels["kubedock.containerid"] = tainr.ShortID
 	return labels
 }

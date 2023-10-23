@@ -11,12 +11,16 @@ import (
 	"github.com/joyrex2001/kubedock/internal/util/stringid"
 )
 
-// DefaultLabels are the labels that are added to every kubedock
-// managed k8s resource.
-var DefaultLabels = map[string]string{
+// SystemLabels are the labels that are added to every kubedock
+// managed k8s resource and which should not be altered.
+var SystemLabels = map[string]string{
 	"kubedock":    "true",
 	"kubedock.id": "",
 }
+
+// DefaultLabels are the labels that are added to every kubedock
+// managed k8s resource.
+var DefaultLabels = map[string]string{}
 
 // DefaultAnnotations are the annotations that are added to every
 // kubedock managed k8s resource.
@@ -29,7 +33,7 @@ var InstanceID = ""
 // this speciffic instance of kubedock.
 func init() {
 	InstanceID = stringid.TruncateID(stringid.GenerateRandomID())
-	DefaultLabels["kubedock.id"] = InstanceID
+	SystemLabels["kubedock.id"] = InstanceID
 }
 
 // AddDefaultLabel will add a label that will be added to all containers
