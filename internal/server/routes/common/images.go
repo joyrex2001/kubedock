@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -54,9 +55,10 @@ func ImageJSON(cr *ContextRouter, c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"Id":      img.Name,
-		"Created": img.Created.Format("2006-01-02T15:04:05Z"),
-		"Size":    0,
+		"Id":           img.Name,
+		"Architecture": config.GOARCH,
+		"Created":      img.Created.Format("2006-01-02T15:04:05Z"),
+		"Size":         0,
 		"ContainerConfig": gin.H{
 			"Image": img.Name,
 		},
