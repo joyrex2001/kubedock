@@ -26,7 +26,7 @@ import (
 
 // Main is the main entry point for starting this service.
 func Main() {
-	klog.Info(config.VersionString())
+	klog.Infof("%s / kubedock.id=%s", config.VersionString(), config.InstanceID)
 
 	cfg, err := config.GetKubernetes()
 	if err != nil {
@@ -202,7 +202,7 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 	go func() {
 		<-sigc
 		klog.Info("exit signal recieved, removing pods, configmaps and services")
-		if err := kub.DeleteWithKubedockID(config.DefaultLabels["kubedock.id"]); err != nil {
+		if err := kub.DeleteWithKubedockID(config.InstanceID); err != nil {
 			klog.Errorf("error pruning resources: %s", err)
 		}
 		cancel()
