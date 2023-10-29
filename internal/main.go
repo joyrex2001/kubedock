@@ -51,7 +51,7 @@ func Main() {
 	// just start the show...
 	if !viper.GetBool("lock.enabled") {
 		run(ctx, kub)
-		return
+		select {}
 	}
 
 	// exclusive mode, use the k8s leader election as a locking mechanism
@@ -86,6 +86,7 @@ func Main() {
 			},
 		},
 	})
+	select {}
 }
 
 // getBackend will instantiate a the kubedock kubernetes object.
@@ -206,6 +207,6 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 			klog.Errorf("error pruning resources: %s", err)
 		}
 		cancel()
-		select {}
+		os.Exit(0)
 	}()
 }
