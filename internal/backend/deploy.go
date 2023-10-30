@@ -249,7 +249,7 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 		return svcs
 	}
 	valid := regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
-	for _, alias := range append(tainr.NetworkAliases, "kd-"+tainr.ShortID) {
+	for _, alias := range tainr.NetworkAliases {
 		if ok := valid.MatchString(alias); !ok {
 			klog.Infof("ignoring network alias %s, invalid name", alias)
 			continue
