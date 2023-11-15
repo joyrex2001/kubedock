@@ -109,6 +109,17 @@ func HeadArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
+	exists, err := cr.Backend.FileExistsInContainer(tainr, path)
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	if !exists {
+		httputil.Error(c, http.StatusNotFound, fmt.Errorf("file not found"))
+		return
+	}
+
 	mode, err := cr.Backend.GetFileModeInContainer(tainr, path)
 	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
@@ -136,6 +147,17 @@ func GetArchive(cr *ContextRouter, c *gin.Context) {
 	path := c.Query("path")
 	if path == "" {
 		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("missing required path parameter"))
+		return
+	}
+
+	exists, err := cr.Backend.FileExistsInContainer(tainr, path)
+	if err != nil {
+		httputil.Error(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	if !exists {
+		httputil.Error(c, http.StatusNotFound, fmt.Errorf("file not found"))
 		return
 	}
 
