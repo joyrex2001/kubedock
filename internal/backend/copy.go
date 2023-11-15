@@ -94,3 +94,37 @@ func (in *instance) GetFileModeInContainer(tainr *types.Container, target string
 
 	return mode, nil
 }
+
+func (in *instance) FileExistsInContainer(tainr *types.Container, target string) (bool, error) {
+	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	var b bytes.Buffer
+	writer := bufio.NewWriter(&b)
+
+	target = strings.ReplaceAll(target, "`", "")
+	target = strings.ReplaceAll(target, "$", "")
+	target = strings.ReplaceAll(target, "\"", "\\\"")
+
+	err = exec.RemoteCmd(exec.Request{
+		Client:     in.cli,
+		RestConfig: in.cfg,
+		Pod:        *pod,
+		Container:  "main",
+		Cmd:        []string{"sh", "-c", "if [ -e \"" + target + "\" ]; then echo true; else echo false; fi"},
+		Stdout:     writer,
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	exists := false
+	if strings.Contains(string(b.Bytes()), "true") {
+		exists = true
+	}
+
+	return exists, nil
+}

@@ -26,6 +26,7 @@ type Backend interface {
 	CopyFromContainer(*types.Container, string, io.Writer) error
 	CopyToContainer(*types.Container, io.Reader, string) error
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
+	FileExistsInContainer(tainr *types.Container, path string) (bool, error)
 	ExecContainer(*types.Container, *types.Exec, io.Reader, io.Writer) (int, error)
 	GetLogs(*types.Container, bool, int, chan struct{}, io.Writer) error
 	GetImageExposedPorts(string) (map[string]struct{}, error)
