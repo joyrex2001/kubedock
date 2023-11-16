@@ -4,7 +4,7 @@ LDFLAGS="-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d
 		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`"
 
 run:
-	go run main.go server -P -v 2 --port-forward
+	CGO_ENABLED=0 go run main.go server -P -v 2 --port-forward
 
 build:
 	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o kubedock
@@ -41,7 +41,7 @@ lint:
 cover:
 	CGO_ENABLED=0 go test ./... -cover -coverprofile=coverage.out
 	go tool cover -html=coverage.out
-	
+
 deps:
 	go install golang.org/x/lint/golint@latest
 	go install github.com/kisielk/errcheck@latest
