@@ -139,17 +139,15 @@ func ContainerKill(cr *ContextRouter, c *gin.Context) {
 	}
 
 	signal := strings.ToLower(c.Query("signal"))
-	if strings.Contains(signal, "int") {
-		tainr.SignalDetach()
-		if err := cr.DB.SaveContainer(tainr); err != nil {
-			httputil.Error(c, http.StatusInternalServerError, err)
-			return
-		}
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
+
+	valid := map[string]bool{
+		"kil":  true,
+		"term": true,
+		"quit": true,
+		"int":  true,
 	}
 
-	if signal != "" && !strings.Contains(signal, "kil") && !strings.Contains(signal, "term") && !strings.Contains(signal, "quit") {
+	if signal != "" && !valid[signal] {
 		klog.Infof("ignoring signal %s", signal)
 		c.Writer.WriteHeader(http.StatusNoContent)
 		return
