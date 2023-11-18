@@ -57,7 +57,7 @@ By default containers are started without any resource request configuration. Th
 
 ## Pod template
 
-The pods that are created by kubedock can be customized with additional configuration by providing a pod template with `--pod-template`. If this is provided, all pods that are created by kubedock will use the provided pod template as a base. Note that containers and volumes are ignored in these templates.
+The pods that are created by kubedock can be customized with additional configuration by providing a pod template with `--pod-template`. If this is provided, all pods that are created by kubedock will use the provided pod template as a base. If the template contains a containers definition, it will use the first entry in the list as a template for all containers kubedock adds to a pod (including sidecars and init containers). Note that volumes are ignored in these templates. Settings configured via the pod-template have the least precedence in case these can also be configured via other means (cli or labels).
 
 ## Kubernetes labels and annotations
 

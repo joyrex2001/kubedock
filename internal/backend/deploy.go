@@ -19,7 +19,6 @@ import (
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/model/types"
 	"github.com/joyrex2001/kubedock/internal/util/exec"
-	"github.com/joyrex2001/kubedock/internal/util/podtemplate"
 	"github.com/joyrex2001/kubedock/internal/util/portforward"
 	"github.com/joyrex2001/kubedock/internal/util/reverseproxy"
 	"github.com/joyrex2001/kubedock/internal/util/tar"
@@ -56,38 +55,34 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 }
 
 func (in *instance) startContainer(tainr *types.Container) (DeployState, error) {
-	reqlimits, err := tainr.GetResourceRequirements()
-	if err != nil {
-		return DeployFailed, err
-	}
-
 	pulpol, err := tainr.GetImagePullPolicy()
 	if err != nil {
 		return DeployFailed, err
 	}
 
-	pod := &corev1.Pod{}
-	if in.podTemplate != "" {
-		pod, err = podtemplate.PodFromFile(in.podTemplate)
-		if err != nil {
-			return DeployFailed, fmt.Errorf("error opening podtemplate: %w", err)
-		}
-	}
-
+	pod := in.podTemplate.DeepCopy()
 	pod.ObjectMeta.Name = tainr.GetPodName()
 	pod.ObjectMeta.Namespace = in.namespace
 	pod.ObjectMeta.Labels = in.getLabels(pod.ObjectMeta.Labels, tainr)
 	pod.ObjectMeta.Annotations = in.getAnnotations(pod.ObjectMeta.Annotations, tainr)
-	pod.Spec.Containers = []corev1.Container{{
-		Image:           tainr.Image,
-		Name:            "main",
-		Command:         tainr.Entrypoint,
-		Args:            tainr.Cmd,
-		Env:             tainr.GetEnvVar(),
-		Ports:           in.getContainerPorts(tainr),
-		Resources:       reqlimits,
-		ImagePullPolicy: pulpol,
-	}}
+
+	container := in.containerTemplate
+	container.Image = tainr.Image
+	container.Name = "main"
+	container.Command = tainr.Entrypoint
+	container.Args = tainr.Cmd
+	container.Env = tainr.GetEnvVar()
+	container.Ports = in.getContainerPorts(tainr)
+	container.ImagePullPolicy = pulpol
+
+	reqlimits, err := tainr.GetResourceRequirements(container.Resources)
+	if err != nil {
+		return DeployFailed, err
+	}
+	container.Resources = reqlimits
+
+	pod.Spec.Containers = []corev1.Container{container}
+
 	pod.Spec.ServiceAccountName = tainr.GetServiceAccountName(pod.Spec.ServiceAccountName)
 	pod.Spec.RestartPolicy = corev1.RestartPolicyNever
 
@@ -426,12 +421,12 @@ func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
 		return err
 	}
 
-	pod.Spec.InitContainers = []corev1.Container{{
-		Name:            "setup",
-		Image:           in.initImage,
-		ImagePullPolicy: pulpol,
-		Command:         []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"},
-	}}
+	container := in.containerTemplate
+	container.Name = "setup"
+	container.Image = in.initImage
+	container.ImagePullPolicy = pulpol
+	container.Command = []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"}
+	pod.Spec.InitContainers = []corev1.Container{container}
 
 	volumes := []corev1.Volume{}
 	mounts := []corev1.VolumeMount{}
@@ -504,12 +499,12 @@ func (in *instance) addDindSidecar(tainr *types.Container, pod *corev1.Pod) erro
 		return err
 	}
 
-	pod.Spec.Containers = append([]corev1.Container{{
-		Name:            "dind-sidecar",
-		Image:           in.dindImage,
-		ImagePullPolicy: pulpol,
-		Command:         []string{"kubedock", "dind", "--kubedock-url", in.kuburl},
-	}}, pod.Spec.Containers...)
+	container := in.containerTemplate
+	container.Name = "dind-sidecar"
+	container.Image = in.dindImage
+	container.ImagePullPolicy = pulpol
+	container.Command = []string{"kubedock", "dind", "--kubedock-url", in.kuburl}
+	pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
 
 	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
 		Name:         "dind-socket",

@@ -113,7 +113,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	}
 	klog.V(3).Infof("kubedock url: %s", kuburl)
 
-	kub := backend.New(backend.Config{
+	return backend.New(backend.Config{
 		Client:           cli,
 		RestConfig:       cfg,
 		Namespace:        ns,
@@ -124,7 +124,6 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		KubedockURL:      kuburl,
 		TimeOut:          timeout,
 	})
-	return kub, nil
 }
 
 // getKubedockURL returns the uri that can be used externally to reach

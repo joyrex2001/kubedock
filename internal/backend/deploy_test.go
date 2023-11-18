@@ -253,8 +253,9 @@ func TestStartContainer(t *testing.T) {
 	}{
 		{ // deployment not created
 			kub: &instance{
-				namespace: "default",
-				cli:       fake.NewSimpleClientset(),
+				namespace:   "default",
+				cli:         fake.NewSimpleClientset(),
+				podTemplate: &corev1.Pod{},
 			},
 			in:    &types.Container{ID: "rc752", ShortID: "tr808", Name: "f1spirit"},
 			state: DeployFailed,
@@ -269,6 +270,7 @@ func TestStartContainer(t *testing.T) {
 						Namespace: "default",
 					},
 				}),
+				podTemplate: &corev1.Pod{},
 			},
 			in:    &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
 			state: DeployFailed,

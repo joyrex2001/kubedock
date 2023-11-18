@@ -16,6 +16,25 @@ func TestPodFromFile(t *testing.T) {
 		t.Error("invalid serviceAccountName")
 	}
 
+	container := ContainerFromPod(pod)
+	if container.Resources.Requests != nil {
+		t.Error("unexpected resources in container template")
+	}
+
+	pod, err = PodFromFile("test/test_container.yaml")
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	container = ContainerFromPod(pod)
+	if container.Resources.Requests == nil {
+		t.Error("expected resources in container template")
+	} else {
+		reqmem := container.Resources.Requests.Memory().String()
+		if reqmem != "64Mi" {
+			t.Errorf("unexpected value for request.memory %s, expected 64Mi", reqmem)
+		}
+	}
+
 	pod, err = PodFromFile("test/notfound.yaml")
 	if pod != nil {
 		t.Error("unexpected pod object")

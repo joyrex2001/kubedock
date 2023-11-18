@@ -25,3 +25,15 @@ func PodFromFile(file string) (*corev1.Pod, error) {
 	}
 	return nil, fmt.Errorf("invalid podtemplate: %s", file)
 }
+
+// ContainerFromPod will return a corev1.Container that is based on the first
+// configured container in the given pod, which can be used as a template
+// for to be created containers. If no containers are present in the pod,
+// it will return an empty corev1.Container object instead.
+func ContainerFromPod(pod *corev1.Pod) corev1.Container {
+	container := corev1.Container{}
+	if len(pod.Spec.Containers) > 0 {
+		container = pod.Spec.Containers[0]
+	}
+	return container
+}

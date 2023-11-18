@@ -12,7 +12,7 @@ import (
 )
 
 func TestCleanContainers(t *testing.T) {
-	kub := backend.New(backend.Config{
+	kub, _ := backend.New(backend.Config{
 		Client:    fake.NewSimpleClientset(),
 		Namespace: viper.GetString("kubernetes.namespace"),
 		InitImage: viper.GetString("kubernetes.initimage"),

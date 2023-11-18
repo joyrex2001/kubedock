@@ -110,11 +110,15 @@ func (co *Container) GetImagePullPolicy() (corev1.PullPolicy, error) {
 // GetResourceRequirements will return a k8s request/limits configuration
 // based on the LabelRequestCPU and LabelRequestMemory labels set on the
 // container.
-func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, error) {
-	req := corev1.ResourceRequirements{
-		Requests: corev1.ResourceList{},
-		Limits:   corev1.ResourceList{},
+func (co *Container) GetResourceRequirements(req corev1.ResourceRequirements) (corev1.ResourceRequirements, error) {
+	if req.Requests == nil {
+		req.Requests = corev1.ResourceList{}
 	}
+
+	if req.Limits == nil {
+		req.Limits = corev1.ResourceList{}
+	}
+
 	for typ, labl := range map[string]string{"cpu": LabelRequestCPU, "memory": LabelRequestMemory} {
 		rls, ok := co.Labels[labl]
 		if !ok {
@@ -148,6 +152,7 @@ func (co *Container) GetResourceRequirements() (corev1.ResourceRequirements, err
 			req.Limits[corev1.ResourceName(typ)] = lt
 		}
 	}
+
 	return req, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func TestNew(t *testing.T) {
@@ -56,10 +57,13 @@ func TestGetEnvVar(t *testing.T) {
 }
 
 func TestGetResourceRequirements(t *testing.T) {
+	mem64, _ := resource.ParseQuantity("64Mi")
+
 	tests := []struct {
-		in     *Container
-		reqlim map[string]string
-		err    bool
+		in        *Container
+		resources corev1.ResourceRequirements
+		reqlim    map[string]string
+		err       bool
 	}{
 		{ // 0
 			in:     &Container{Labels: map[string]string{}},
@@ -157,9 +161,33 @@ func TestGetResourceRequirements(t *testing.T) {
 			reqlim: map[string]string{"reqmem": "209715200"},
 			err:    false,
 		},
+		{ // 14
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "209715200",
+			}},
+			reqlim: map[string]string{"reqmem": "209715200", "limmem": mem64.String()},
+			resources: corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					"memory": mem64,
+				},
+			},
+			err: false,
+		},
+		{ // 15
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-memory": "209715200",
+			}},
+			reqlim: map[string]string{"reqmem": "209715200"},
+			resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"memory": mem64,
+				},
+			},
+			err: false,
+		},
 	}
 	for i, tst := range tests {
-		res, err := tst.in.GetResourceRequirements()
+		res, err := tst.in.GetResourceRequirements(tst.resources)
 		if err != nil && !tst.err {
 			t.Errorf("failed test %d - unexpected error: %s", i, err)
 		}

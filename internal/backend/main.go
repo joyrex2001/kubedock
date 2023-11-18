@@ -1,14 +1,17 @@
 package backend
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
+	"github.com/joyrex2001/kubedock/internal/util/podtemplate"
 )
 
 // Backend is the interface to orchestrate and manage kubernetes objects.
@@ -34,15 +37,16 @@ type Backend interface {
 
 // instance is the internal representation of the Backend object.
 type instance struct {
-	cli              kubernetes.Interface
-	cfg              *rest.Config
-	podTemplate      string
-	initImage        string
-	dindImage        string
-	imagePullSecrets []string
-	namespace        string
-	timeOut          int
-	kuburl           string
+	cli               kubernetes.Interface
+	cfg               *rest.Config
+	podTemplate       *corev1.Pod
+	containerTemplate corev1.Container
+	initImage         string
+	dindImage         string
+	imagePullSecrets  []string
+	namespace         string
+	timeOut           int
+	kuburl            string
 }
 
 // Config is the structure to instantiate a Backend object
@@ -73,16 +77,26 @@ type Config struct {
 }
 
 // New will return an Backend instance.
-func New(cfg Config) Backend {
-	return &instance{
-		cli:              cfg.Client,
-		cfg:              cfg.RestConfig,
-		initImage:        cfg.InitImage,
-		dindImage:        cfg.DindImage,
-		namespace:        cfg.Namespace,
-		imagePullSecrets: cfg.ImagePullSecrets,
-		podTemplate:      cfg.PodTemplate,
-		kuburl:           cfg.KubedockURL,
-		timeOut:          int(cfg.TimeOut.Seconds()),
+func New(cfg Config) (Backend, error) {
+	pod := &corev1.Pod{}
+	if cfg.PodTemplate != "" {
+		var err error
+		pod, err = podtemplate.PodFromFile(cfg.PodTemplate)
+		if err != nil {
+			return nil, fmt.Errorf("error opening podtemplate: %w", err)
+		}
 	}
+
+	return &instance{
+		cli:               cfg.Client,
+		cfg:               cfg.RestConfig,
+		initImage:         cfg.InitImage,
+		dindImage:         cfg.DindImage,
+		namespace:         cfg.Namespace,
+		imagePullSecrets:  cfg.ImagePullSecrets,
+		podTemplate:       pod,
+		containerTemplate: podtemplate.ContainerFromPod(pod),
+		kuburl:            cfg.KubedockURL,
+		timeOut:           int(cfg.TimeOut.Seconds()),
+	}, nil
 }
