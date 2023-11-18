@@ -234,8 +234,6 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 		klog.V(3).Infof("error retrieving logs: %s", err)
 	}
 
-	klog.Info("done attaching!")
-
 	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
 	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 }
