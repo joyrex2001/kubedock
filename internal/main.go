@@ -135,7 +135,9 @@ func getKubedockURL() (string, error) {
 	}
 
 	port := strings.Split(viper.GetString("server.listen-addr")+":", ":")[1]
-	klog.Infof("api server started listening on %s", port)
+	if port == "" {
+		return "", fmt.Errorf("expected a port to be configured for listen-addr")
+	}
 
 	proto := "http"
 	if viper.GetBool("server.tls-enable") {
