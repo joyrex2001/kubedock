@@ -469,18 +469,18 @@ func (co *Container) Match(typ string, key string, val string) bool {
 // StateString returns a string that describes the state.
 func (co *Container) StateString() string {
 	if co.Running {
-		return "Up"
+		return "running"
 	}
 	if co.Stopped || co.Killed {
-		return "Dead"
+		return "dead"
 	}
 	if co.Failed {
-		return "Dead"
+		return "dead"
 	}
 	if co.Completed {
-		return "Exited"
+		return "exited"
 	}
-	return "Created"
+	return "created"
 }
 
 // StatusString returns a string that describes the status.
