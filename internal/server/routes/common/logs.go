@@ -19,7 +19,13 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	follow, _ := strconv.ParseBool(c.Query("follow"))
 	// TODO: implement since
 	// TODO: implement until
-	// TODO: implement tail
+
+	tail := c.Query("tail")
+	var count *int64 = nil
+	if tail, _ := strconv.ParseInt(tail, 10, 32); tail > 0 {
+		count = &tail
+	}
+
 	tainr, err := cr.DB.GetContainer(id)
 	if err != nil {
 		httputil.Error(c, http.StatusNotFound, err)
@@ -37,7 +43,7 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 
 	if !follow {
 		stop := make(chan struct{}, 1)
-		if err := cr.Backend.GetLogs(tainr, follow, 100, stop, w); err != nil {
+		if err := cr.Backend.GetLogs(tainr, follow, count, stop, w); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
@@ -56,7 +62,7 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	stop := make(chan struct{}, 1)
 	tainr.AddStopChannel(stop)
 
-	if err := cr.Backend.GetLogs(tainr, follow, 100, stop, out); err != nil {
+	if err := cr.Backend.GetLogs(tainr, follow, count, stop, out); err != nil {
 		klog.V(3).Infof("error retrieving logs: %s", err)
 		return
 	}
