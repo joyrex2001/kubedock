@@ -46,7 +46,8 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		if klog.V(2) {
 			klog.Infof("container %s log output:", tainr.ShortID)
 			stop := make(chan struct{}, 1)
-			_ = in.GetLogs(tainr, false, 100, stop, os.Stderr)
+			count := int64(100)
+			_ = in.GetLogs(tainr, false, &count, stop, os.Stderr)
 			close(stop)
 		}
 		_ = in.cli.CoreV1().Pods(in.namespace).Delete(context.Background(), tainr.GetPodName(), metav1.DeleteOptions{})
