@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -229,7 +230,8 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	tainr.AddAttachChannel(stop)
 
 	count := int64(100)
-	if err := cr.Backend.GetLogs(tainr, true, &count, stop, out); err != nil {
+	logOpts := backend.LogOptions{Follow: true, TailLines: &count}
+	if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
 		klog.V(3).Infof("error retrieving logs: %s", err)
 	}
 
