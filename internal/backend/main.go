@@ -31,7 +31,7 @@ type Backend interface {
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
 	FileExistsInContainer(tainr *types.Container, path string) (bool, error)
 	ExecContainer(*types.Container, *types.Exec, io.Reader, io.Writer) (int, error)
-	GetLogs(*types.Container, bool, *int64, chan struct{}, io.Writer) error
+	GetLogs(*types.Container, *LogOptions, chan struct{}, io.Writer) error
 	GetImageExposedPorts(string) (map[string]struct{}, error)
 }
 
