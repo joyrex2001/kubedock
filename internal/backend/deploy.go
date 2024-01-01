@@ -165,14 +165,19 @@ func (in *instance) portForward(tainr *types.Container, ports map[int]int) error
 		}
 		stop := make(chan struct{}, 1)
 		tainr.AddStopChannel(stop)
-		go portforward.ToPod(portforward.Request{
-			RestConfig: in.cfg,
-			Pod:        *pod,
-			LocalPort:  src,
-			PodPort:    dst,
-			StopCh:     stop,
-			ReadyCh:    make(chan struct{}, 1),
-		})
+		go func(src, dst int) {
+			err := portforward.ToPod(portforward.Request{
+				RestConfig: in.cfg,
+				Pod:        *pod,
+				LocalPort:  src,
+				PodPort:    dst,
+				StopCh:     stop,
+				ReadyCh:    make(chan struct{}, 1),
+			})
+			if err != nil {
+				klog.Errorf("port-forward failed: %s", err)
+			}
+		}(src, dst)
 	}
 	return nil
 }

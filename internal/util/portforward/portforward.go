@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
+	"path"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
@@ -41,20 +41,32 @@ func ToPod(req Request) error {
 	logr := NewLogger()
 	klog.Infof("start port-forward %d->%d", req.LocalPort, req.PodPort)
 
-	url := getURLScheme(req)
+	url, err := getURLScheme(req)
+	if err != nil {
+		return err
+	}
+
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
 	fw, err := portforward.New(dialer, []string{fmt.Sprintf("%d:%d", req.LocalPort, req.PodPort)}, req.StopCh, req.ReadyCh, logr, logr)
 	if err != nil {
 		return err
 	}
+
 	return fw.ForwardPorts()
 }
 
 // getURLScheme will take given request and create a valid url scheme for use
 // by the portforward api.
-func getURLScheme(req Request) *url.URL {
-	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", req.Pod.Namespace, req.Pod.Name)
-	hostIP := req.RestConfig.Host
-	hostIP = strings.TrimPrefix(hostIP, "https://")
-	return &url.URL{Scheme: "https", Path: path, Host: hostIP}
+func getURLScheme(req Request) (*url.URL, error) {
+	portfw := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", req.Pod.Namespace, req.Pod.Name)
+
+	base, err := url.Parse(req.RestConfig.Host)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base URL: %w", err)
+	}
+	if base.Scheme == "" {
+		base.Scheme = "https"
+	}
+
+	return &url.URL{Scheme: base.Scheme, Host: base.Host, Path: path.Join(base.Path, portfw)}, nil
 }
