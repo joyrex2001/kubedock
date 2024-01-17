@@ -38,6 +38,7 @@ type NetworkDisconnectRequest struct {
 // HostConfig contains to be mounted files from the host system.
 type HostConfig struct {
 	Binds        []string `json:"Binds"`
+	Mounts       []Mount  `json:"Mounts"`
 	PortBindings map[string][]PortBinding
 	Memory       int `json:"Memory"`
 	NanoCpus     int `json:"NanoCpus"`
@@ -62,4 +63,12 @@ type NetworkConfig struct {
 type EndpointConfig struct {
 	Aliases   []string `json:"Aliases"`
 	NetworkID string   `json:"NetworkID"`
+}
+
+// Mount contains information about mounted volumes/bindings
+type Mount struct {
+	Type     string `json:"Type"`
+	Source   string `json:"Source"`
+	Target   string `json:"Target"`
+	ReadOnly bool   `json:"ReadOnly"`
 }

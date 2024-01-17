@@ -58,6 +58,20 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	}
 	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
 
+	mounts := []types.Mount{}
+	for _, m := range in.HostConfig.Mounts {
+		if m.Type != "bind" {
+			klog.Infof("mount '%s:%s' with type '%s' not supported, ignoring", m.Source, m.Target, m.Type)
+			continue
+		}
+		mounts = append(mounts, types.Mount{
+			Type:     m.Type,
+			Source:   m.Source,
+			Target:   m.Target,
+			ReadOnly: m.ReadOnly,
+		})
+	}
+
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,
@@ -68,6 +82,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
 		Binds:        in.HostConfig.Binds,
+		Mounts:       mounts,
 		PreArchives:  []types.PreArchive{},
 	}
 
@@ -226,6 +241,15 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 			"IPAddress": "127.0.0.1",
 		}
 	}
+	mounts := []gin.H{}
+	for _, m := range tainr.Mounts {
+		mounts = append(mounts, gin.H{
+			"Source":   m.Source,
+			"Target":   m.Target,
+			"Type":     m.Type,
+			"ReadOnly": m.ReadOnly,
+		})
+	}
 	res := gin.H{
 		"Id":    tainr.ID,
 		"Name":  "/" + tainr.Name,
@@ -242,6 +266,7 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 				"Type":   "json-file",
 				"Config": gin.H{},
 			},
+			"Mounts": mounts,
 		},
 	}
 	if detail {

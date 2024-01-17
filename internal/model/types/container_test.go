@@ -634,15 +634,24 @@ func TestVolumes(t *testing.T) {
 		sock    bool
 	}{
 		{
-			in: &Container{Binds: []string{
-				"container_test.go:/tmp/container_test.go:ro",
-				"../types:/tmp/types:ro",
-				"/var/run/docker.sock:/var/run/docker.sock:rw",
-			}},
+			in: &Container{
+				Binds: []string{
+					"container_test.go:/tmp/container_test.go:ro",
+					"../types:/tmp/types:ro",
+					"/var/run/docker.sock:/var/run/docker.sock:rw",
+				},
+				Mounts: []Mount{{
+					Source:   "/abc",
+					Target:   "def",
+					ReadOnly: false,
+					Type:     "bind",
+				}},
+			},
 			all: map[string]string{
 				"/tmp/container_test.go": "container_test.go",
 				"/tmp/types":             "../types",
 				"/var/run/docker.sock":   "/var/run/docker.sock",
+				"def":                    "/abc",
 			},
 			files: map[string]string{
 				"/tmp/container_test.go": "container_test.go",

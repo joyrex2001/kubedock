@@ -27,6 +27,7 @@ type Container struct {
 	Cmd            []string
 	Env            []string
 	Binds          []string
+	Mounts         []Mount
 	PreArchives    []PreArchive
 	HostIP         string
 	ExposedPorts   map[string]interface{}
@@ -51,6 +52,14 @@ type Container struct {
 type PreArchive struct {
 	Path    string
 	Archive []byte
+}
+
+// Mount contains the details of a mounted volume/binding.
+type Mount struct {
+	Type     string
+	Source   string
+	Target   string
+	ReadOnly bool
 }
 
 const (
@@ -329,6 +338,9 @@ func (co *Container) GetVolumes() map[string]string {
 	for _, bind := range co.Binds {
 		f := strings.Split(bind, ":")
 		mounts[f[1]] = f[0]
+	}
+	for _, mount := range co.Mounts {
+		mounts[mount.Target] = mount.Source
 	}
 	return mounts
 }
