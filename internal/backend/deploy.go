@@ -88,6 +88,14 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 	pod.Spec.ServiceAccountName = tainr.GetServiceAccountName(pod.Spec.ServiceAccountName)
 	pod.Spec.RestartPolicy = corev1.RestartPolicyNever
 
+	ads, err := tainr.GetActiveDeadlineSeconds()
+	if err != nil {
+		return DeployFailed, err
+	}
+	if ads != nil {
+		pod.Spec.ActiveDeadlineSeconds = ads
+	}
+
 	seccontext, err := tainr.GetPodSecurityContext(pod.Spec.SecurityContext)
 	if err != nil {
 		return DeployFailed, err

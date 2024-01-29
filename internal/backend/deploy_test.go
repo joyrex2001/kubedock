@@ -3,13 +3,16 @@ package backend
 import (
 	"reflect"
 	"sort"
+	"strconv"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/utils/ptr"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
@@ -288,6 +291,65 @@ func TestStartContainer(t *testing.T) {
 		}
 		if state != tst.state {
 			t.Errorf("failed test %d - expected state %d, but got state %d", i, tst.state, state)
+		}
+	}
+}
+
+func TestStartContainerAddsActiveDeadlineSeconds(t *testing.T) {
+	// need to force the pod status or StartContainer will return state=DeployFailed
+	pt := &corev1.Pod{Status: corev1.PodStatus{
+		ContainerStatuses: []corev1.ContainerStatus{
+			{Name: "main", State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
+		}}}
+	tests := []struct {
+		kub *instance
+		in  *types.Container
+		ads *int64
+	}{
+		{
+			kub: &instance{
+				namespace:   "default",
+				cli:         fake.NewSimpleClientset(),
+				podTemplate: pt,
+				timeOut:     10,
+			},
+			in: &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit", Labels: map[string]string{
+				"com.joyrex2001.kubedock.active-deadline-seconds": "42",
+			}},
+			ads: ptr.To(int64(42)),
+		},
+		{
+			kub: &instance{
+				namespace:   "default",
+				cli:         fake.NewSimpleClientset(),
+				podTemplate: pt,
+				timeOut:     10,
+			},
+			in:  &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit"},
+			ads: nil,
+		},
+	}
+	ptrToString := func(v *int64) string {
+		if v == nil {
+			return "nil"
+		}
+		return strconv.FormatInt(*v, 10)
+	}
+	for i, tst := range tests {
+		state, err := tst.kub.StartContainer(tst.in)
+		if err != nil {
+			t.Errorf("failed test %d - unexpected return value %s", i, err)
+		}
+		if state != DeployCompleted {
+			t.Errorf("failed test %d - unexpected state %d", i, state)
+		}
+		o, err := tst.kub.cli.(*fake.Clientset).Tracker().Get(schema.GroupVersionResource{Version: "v1", Resource: "pods"}, "default", "kubedock-f1spirit-tb303")
+		if err != nil {
+			t.Errorf("failed test %d - unexpected return value %s", i, err)
+		}
+		pod := o.(*corev1.Pod)
+		if !reflect.DeepEqual(tst.ads, pod.Spec.ActiveDeadlineSeconds) {
+			t.Errorf("failed test %d - expected %s but got %s", i, ptrToString(tst.ads), ptrToString(pod.Spec.ActiveDeadlineSeconds))
 		}
 	}
 }
