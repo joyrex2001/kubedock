@@ -78,6 +78,8 @@ const (
 	// LabelRunasUser is the label to be used to enforce a specific user (uid) that
 	// runs inside the container can also be enforced w
 	LabelRunasUser = "com.joyrex2001.kubedock.runas-user"
+	// LabelActiveDeadlineSeconds is the label to be used to specify active deadline in seconds
+	LabelActiveDeadlineSeconds = "com.joyrex2001.kubedock.active-deadline-seconds"
 )
 
 // GetEnvVar will return the environment variables of the container
@@ -175,6 +177,19 @@ func (co *Container) GetServiceAccountName(current string) string {
 		return sa
 	}
 	return current
+}
+
+// GetActiveDeadlineSeconds will return the active deadline seconds to be used for containers
+// that are deployed.
+func (co *Container) GetActiveDeadlineSeconds() (*int64, error) {
+	if ads, ok := co.Labels[LabelActiveDeadlineSeconds]; ok {
+		parsed, err := strconv.ParseInt(ads, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s to Int64", ads)
+		}
+		return &parsed, nil
+	}
+	return nil, nil
 }
 
 // GetPodName will return a human friendly name that can be used for the

@@ -3,11 +3,13 @@ package types
 import (
 	"reflect"
 	"sort"
+	"strconv"
 	"testing"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/utils/ptr"
 )
 
 func TestNew(t *testing.T) {
@@ -783,4 +785,50 @@ func TestMatch(t *testing.T) {
 
 func makeIntPointer(x int64) *int64 {
 	return &x
+}
+
+func TestGetActiveDeadlineSeconds(t *testing.T) {
+	tests := []struct {
+		in       *Container
+		deadline *int64
+		err      bool
+	}{
+		{ // 0
+			in:       &Container{Labels: map[string]string{}},
+			deadline: nil,
+			err:      false,
+		},
+		{ // 1
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.active-deadline-seconds": "42",
+			}},
+			deadline: ptr.To(int64(42)),
+			err:      false,
+		},
+		{ // 2
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.active-deadline-seconds": "foo",
+			}},
+			deadline: nil,
+			err:      true,
+		},
+	}
+	ptrToString := func(v *int64) string {
+		if v == nil {
+			return "nil"
+		}
+		return strconv.FormatInt(*v, 10)
+	}
+	for i, tst := range tests {
+		res, err := tst.in.GetActiveDeadlineSeconds()
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded without error", i)
+		}
+		if !reflect.DeepEqual(tst.deadline, res) {
+			t.Errorf("failed test %d - expected %s, but got %s", i, ptrToString(tst.deadline), ptrToString(res))
+		}
+	}
 }

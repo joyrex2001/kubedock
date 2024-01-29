@@ -55,6 +55,10 @@ If multiple kubedocks are using the namespace, it might be possible there will b
 
 By default containers are started without any resource request configuration. This can impact performance of the tests that are run in the containers. Setting resource requests (and limits) will allow better scheduling, and can improve the overall performance of the running containers. Global requests and limits can be set with `--request-cpu` and `--request-memory`, which takes regular kubernetes resource requests configurations as can be found in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). Limits are optional, and can be configured by adding it with a ,limit. If the values should be configured specifically for a container, they can be configured by adding `com.joyrex2001.kubedock.request-cpu` or `com.joyrex2001.kubedock.request-memory` labels to the container with their specific requests (and limits). The labels take precedence over the cli configuration.
 
+## Active deadline seconds
+
+Sometimes you may want to specify an `activeDeadlineSeconds` for the pods run by Kubedock; this is useful in multi-tenant environments if you want the pods to use resources in the `terminating` quota (if `activeDeadlineSeconds` is not set, pods will use `notterminating` quota). You can set the default value using `--active-deadline-seconds`; pod-specific values can be configured by adding `com.joyrex2001.kubedock.active-deadline-seconds` label.
+
 ## Pod template
 
 The pods that are created by kubedock can be customized with additional configuration by providing a pod template with `--pod-template`. If this is provided, all pods that are created by kubedock will use the provided pod template as a base. If the template contains a containers definition, it will use the first entry in the list as a template for all containers kubedock adds to a pod (including sidecars and init containers). Note that volumes are ignored in these templates. Settings configured via the pod-template have the least precedence in case these can also be configured via other means (cli or labels).

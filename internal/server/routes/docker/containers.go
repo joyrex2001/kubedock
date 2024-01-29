@@ -50,6 +50,9 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
 		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
 	}
+	if _, ok := in.Labels[types.LabelActiveDeadlineSeconds]; !ok && cr.Config.ActiveDeadlineSeconds >= 0 {
+		in.Labels[types.LabelActiveDeadlineSeconds] = fmt.Sprintf("%d", cr.Config.ActiveDeadlineSeconds)
+	}
 	if in.HostConfig.Memory != 0 {
 		in.Labels[types.LabelRequestMemory] = fmt.Sprintf("%d", in.HostConfig.Memory)
 	}

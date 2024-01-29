@@ -130,18 +130,21 @@ func (s *Server) getGinEngine() *gin.Engine {
 	sa := viper.GetString("kubernetes.service-account")
 	klog.Infof("service account used in deployments: %s", sa)
 
+	ads := viper.GetInt64("kubernetes.active-deadline-seconds")
+
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
 	cr, err := common.NewContextRouter(s.kub, common.Config{
-		Inspector:      insp,
-		RequestCPU:     reqcpu,
-		RequestMemory:  reqmem,
-		ServiceAccount: sa,
-		RunasUser:      runasuid,
-		PullPolicy:     pulpol,
-		PortForward:    pfwrd,
-		ReverseProxy:   revprox,
-		PreArchive:     prea,
+		Inspector:             insp,
+		RequestCPU:            reqcpu,
+		RequestMemory:         reqmem,
+		ServiceAccount:        sa,
+		RunasUser:             runasuid,
+		PullPolicy:            pulpol,
+		PortForward:           pfwrd,
+		ReverseProxy:          revprox,
+		PreArchive:            prea,
+		ActiveDeadlineSeconds: ads,
 	})
 	if err != nil {
 		klog.Errorf("error setting up context: %s", err)
