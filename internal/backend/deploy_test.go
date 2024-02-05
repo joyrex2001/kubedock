@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/utils/ptr"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
 )
@@ -247,6 +246,10 @@ var tarMulti = []byte{
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 }
 
+func makeIntPointer(x int64) *int64 {
+	return &x
+}
+
 func TestStartContainer(t *testing.T) {
 	tests := []struct {
 		kub   *instance
@@ -316,7 +319,7 @@ func TestStartContainerAddsActiveDeadlineSeconds(t *testing.T) {
 			in: &types.Container{ID: "rc752", ShortID: "tb303", Name: "f1spirit", Labels: map[string]string{
 				"com.joyrex2001.kubedock.active-deadline-seconds": "42",
 			}},
-			ads: ptr.To(int64(42)),
+			ads: makeIntPointer(42),
 		},
 		{
 			kub: &instance{
