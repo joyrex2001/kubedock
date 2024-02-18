@@ -8,7 +8,7 @@ type ContainerCreateRequest struct {
 	Labels       map[string]string           `json:"Labels"`
 	Entrypoint   []string                    `json:"Entrypoint"`
 	Command      []string                    `json:"Command"`
-	Env          []string                    `json:"Env"`
+	Env          map[string]string           `json:"Env"`
 	User         string                      `json:"User"`
 	PortMappings []PortMapping               `json:"portmappings"`
 	Network      map[string]NetworksProperty `json:"Networks"`

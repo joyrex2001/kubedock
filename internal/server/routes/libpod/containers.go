@@ -53,12 +53,17 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	}
 	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
 
+	env := []string{}
+	for k, v := range in.Env {
+		env = append(env, k+"="+v)
+	}
+
 	tainr := &types.Container{
 		Name:         in.Name,
 		Image:        in.Image,
 		Entrypoint:   in.Entrypoint,
 		Cmd:          in.Command,
-		Env:          in.Env,
+		Env:          env,
 		Binds:        []string{},
 		ExposedPorts: map[string]interface{}{},
 		ImagePorts:   map[string]interface{}{},
