@@ -290,12 +290,13 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 			"Error":      errstr,
 		}
 		res["Config"] = gin.H{
-			"Image":    tainr.Image,
-			"Labels":   tainr.Labels,
-			"Env":      tainr.Env,
-			"Cmd":      tainr.Cmd,
-			"Hostname": "localhost",
-			"Tty":      false,
+			"Image":        tainr.Image,
+			"Labels":       tainr.Labels,
+			"Env":          tainr.Env,
+			"Cmd":          tainr.Cmd,
+			"Hostname":     "localhost",
+			"ExposedPorts": getNetworkSettingsPorts(cr, tainr),
+			"Tty":          false,
 		}
 		res["Created"] = tainr.Created.Format("2006-01-02T15:04:05Z")
 	} else {
