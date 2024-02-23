@@ -253,11 +253,12 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 			"ReadOnly": m.ReadOnly,
 		})
 	}
+	names := getContainerNames(tainr)
 	res := gin.H{
 		"Id":    tainr.ID,
-		"Name":  "/" + tainr.Name,
+		"Name":  names[0],
 		"Image": tainr.Image,
-		"Names": getContainerNames(tainr),
+		"Names": names,
 		"NetworkSettings": gin.H{
 			"IPAddress": "127.0.0.1",
 			"Networks":  netdtl,
