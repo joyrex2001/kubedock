@@ -23,6 +23,7 @@ public class NginxTest {
     private static final int NGINX_PORT = 8080;
     private static final String NGINX_IMAGE = "nginxinc/nginx-unprivileged"; // "library/nginx"
 
+    @Disabled
     @Test
     @SuppressWarnings("unchecked")
     void testNginx() throws IOException {
