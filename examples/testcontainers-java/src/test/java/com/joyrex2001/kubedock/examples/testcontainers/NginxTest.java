@@ -1,5 +1,6 @@
 package com.joyrex2001.kubedock.examples.testcontainers;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.testcontainers.containers.BindMode;
