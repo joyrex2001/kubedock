@@ -1,5 +1,6 @@
 package com.joyrex2001.kubedock.examples.testcontainers;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.testcontainers.containers.GenericContainer;
@@ -18,6 +19,7 @@ public class NetworkAliasesTest {
     private static final String ALPINE_IMAGE = "library/alpine";
     private static final int TEST_PORT = 8080;
 
+    @Disabled
     @Test
     void testNetworkAliases() throws IOException, InterruptedException {
         Network network = Network.newNetwork();

@@ -24,7 +24,6 @@ public class NginxTest {
     private static final int NGINX_PORT = 8080;
     private static final String NGINX_IMAGE = "nginxinc/nginx-unprivileged"; // "library/nginx"
 
-    @Disabled
     @Test
     @SuppressWarnings("unchecked")
     void testNginx() throws IOException {
@@ -41,8 +40,8 @@ public class NginxTest {
 
         nginx.start();
 
-        URL serviceUrl = URI.create(String.format("http://%s:%d/", 
-                                        nginx.getContainerIpAddress(), 
+        URL serviceUrl = URI.create(String.format("http://%s:%d/",
+                                        nginx.getContainerIpAddress(),
                                         nginx.getMappedPort(NGINX_PORT))).toURL();
 
         assertThat(Util.readFromUrl(serviceUrl))
