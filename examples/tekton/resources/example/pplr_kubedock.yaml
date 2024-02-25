@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: kubedock-example
+spec:
+  params:
+    - name: git-url
+      value: "https://github.com/joyrex2001/kubedock.git"
+    - name: git-revision
+      value: "master"
+    - name: context-dir
+      value: "examples/testcontainers-java"
+  pipelineRef:
+    name: kubedock-example
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
