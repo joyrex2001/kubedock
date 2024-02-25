@@ -5,7 +5,7 @@ metadata:
 spec:
   params:
     - name: git-url
-      value: "https://github.com/appiepollo14/kubedock.git"
+      value: "https://github.com/joyrex2001/kubedock.git"
     - name: git-revision
       value: "master"
     - name: context-dir
