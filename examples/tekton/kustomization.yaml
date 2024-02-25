@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
 - ./resources/mvn-test.yaml
 - ./resources/pipeline.yaml
+- ./resources/git-clone.yaml

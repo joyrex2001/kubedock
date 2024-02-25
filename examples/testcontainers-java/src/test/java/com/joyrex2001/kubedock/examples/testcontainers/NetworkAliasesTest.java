@@ -1,17 +1,13 @@
 package com.joyrex2001.kubedock.examples.testcontainers;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
-import java.lang.InterruptedException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 public class NetworkAliasesTest {
@@ -19,7 +15,6 @@ public class NetworkAliasesTest {
     private static final String ALPINE_IMAGE = "library/alpine";
     private static final int TEST_PORT = 8080;
 
-    @Disabled
     @Test
     void testNetworkAliases() throws IOException, InterruptedException {
         Network network = Network.newNetwork();
@@ -38,7 +33,7 @@ public class NetworkAliasesTest {
 
         foo.start();
         bar.start();
-    
+
         String response = bar.execInContainer("wget", "-O", "-", "http://foo:8080").getStdout();
         assertThat(response).contains("yay");
 
