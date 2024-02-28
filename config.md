@@ -6,7 +6,7 @@ The kubedock binary has the following commands available:
 * `readme` Display project readme
 * `version`  Display kubedock version details
 
-The `server` command is the actual kubedock server, and is the relevant command to be used to start kubedock. The table below shows all possible commands and possible arguments. Some commands are also configureable via environment variables, as shown in the environment variable column.
+The `server` command is the actual kubedock server, and is the command to start kubedock. The table below shows all possible commands and possible arguments. Some commands are also configurable via environment variables, as shown in the environment variable column.
 
 |command|argument|default|environment variable|description|
 |---|---|---|---|---|
@@ -48,4 +48,4 @@ The `server` command is the actual kubedock server, and is the relevant command 
 
 ## Labels and annotations
 
-Labels that are added to container images are added as annotations and labels to the created kubernetes pods. Additional labels and annotations can be added with the `--annotation` and `--label` cli argument. Environment variables that start with `K8S_ANNOTATION_` and `K8S_LABEL_` will be added as a kubernetes annotation or label as well. For example `K8S_ANNOTATION_FOO` will create an annotation `foo` with the value of the environment variable. Note that annotations and labels added via environment variables or cli will not be processed by kubedock if they have a specific control function. For these occasions specific environment variables and cli arguments are present.
+Labels added to container images are added as annotations and labels to the created kubernetes pods. Additional labels and annotations can be added with the `--annotation` and `--label` cli argument. Environment variables that start with `K8S_ANNOTATION_` and `K8S_LABEL_` will be added as a kubernetes annotation or label as well. For example `K8S_ANNOTATION_FOO` will create an annotation `foo` with the value of the environment variable. Note that annotations and labels added via environment variables or cli will not be processed by kubedock if they have a specific control function. For these occasions specific environment variables and cli arguments are present.

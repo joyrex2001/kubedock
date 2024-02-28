@@ -1,6 +1,6 @@
 # Kubedock
 
-Kubedock is a minimal implementation of the docker api that will orchestrate containers on a kubernetes cluster, rather than running containers locally. The main driver for this project is to run tests that require docker-containers inside a container, without the requirement of running docker-in-docker within resource heavy containers. Containers that are orchestrated by kubedock are considered short-lived and emphemeral and not intended to run production services. An example use case is running [testcontainers-java](https://www.testcontainers.org) enabled unit-tests in a tekton pipeline. In this use case, running kubedock in a sidecar can help orchestrating containers inside the kubernetes cluster instead of within the task container itself.
+Kubedock is a minimal implementation of the docker api that will orchestrate containers on a kubernetes cluster, rather than running containers locally. The main driver for this project is to run tests that require docker-containers inside a container, without the requirement of running docker-in-docker within resource heavy containers. Containers that are orchestrated by kubedock are considered short-lived and ephemeral and not intended to run production services. An example use case is running [testcontainers-java](https://www.testcontainers.org) enabled unit-tests in a tekton pipeline. In this use case, running kubedock in a sidecar can help orchestrating containers inside the kubernetes cluster instead of within the task container itself.
 
 ## Quick start
 
@@ -23,7 +23,7 @@ When kubedock is started with `kubedock server` it will start an API server on p
 
 ## Containers
 
-Container API calls are translated towards kubernetes pods. When a container is started, it will create a kubernetes service within the cluster and maps the ports to that of the container (note that only tcp is supported). This will make it accessable for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutual exlusive with `--port-forward`.
+Container API calls are translated towards kubernetes pods. When a container is started, it will create a kubernetes service within the cluster and maps the ports to that of the container (note that only tcp is supported). This will make it accessible for use within the cluster (e.g. within a containerized pipeline within that same cluster). It is also possible to create port-forwards for the ports that should be exposed with the `--port-forward` argument. These are however not very performant, nor stable and are intended for local debugging. If the ports should be exposed on localhost as well, but port-forwarding is not required, they can be made available via the built-in reverse-proxy. This can be enabled with the `--reverse-proxy` argument and is mutually exclusive with `--port-forward`.
 
 Starting a container is a blocking call that will wait until it results in a running pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
 
@@ -33,15 +33,15 @@ The containers will be started with the `default` service account. This can be c
 
 ## Volumes
 
-Volumes are implemented by copying over the source content towards the container by means of an init-container that is started before the actual container is started. By default the kubedock image with the same version as the running kubedock is used as the init container. However, this can be any image that has tar available and can be configured with the `--initimage` argument.
+Volumes are implemented by copying the source content to the container by means of an init-container that is started before the actual container is started. By default the kubedock image with the same version as the running kubedock is used as the init container. However, this can be any image that has tar available and can be configured with the `--initimage` argument.
 
-Volumes are one-way copies and emphemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket). Volumes that point to a single file will be converted to a configmap (and is implicitly read-only always).
+Volumes are one-way copies and ephemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket). Volumes that point to a single file will be converted to a configmap (and is implicitly read-only always).
 
-Copying data from a running container back towards the client is supported either, but only works if the container running has tar available. Also be aware that copying data towards a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead. Alternatively kubedock can be started with `--pre-archive`, which will convert copy statements of single files to configmaps when the container is started yet. This will implicitly make the target file read-only, and may not work in all use-cases (hence it's not the default).
+Copying data from a running container back to the client is supported as well, but only works if the running container has tar available. Also be aware that copying data to a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead. Alternatively kubedock can be started with `--pre-archive`, which will convert copy statements of single files to configmaps when the container is started yet. This will implicitly make the target file read-only, and may not work in all use-cases (hence it's not the default).
 
 ## Networking
 
-Kubedock flattens all networking, which basicly means that everything will run in the same namespace. This should be sufficient for most use-cases. Network aliases are supported. When a network alias is present, it will create a service exposing all ports that have been exposed by the container. If no ports are configured, kubedock is able to fetch ports that are exposed in the container image. To do this, kubedock should be started with the `--inspector` argument.
+Kubedock flattens all networking, which basically means that everything will run in the same namespace. This should be sufficient for most use-cases. Network aliases are supported. When a network alias is present, it will create a service exposing all ports that have been exposed by the container. If no ports are configured, kubedock is able to fetch ports that are exposed in the container image. To do this, kubedock should be started with the `--inspector` argument.
 
 ## Images
 
@@ -49,7 +49,7 @@ Kubedock implements the images API by tracking which images are requested. It is
 
 ## Namespace locking
 
-If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattend (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a lease called `kubedock-lock` in the namespace in which it tracks the current ownership.
+If multiple kubedocks are using the namespace, it might be possible there will be collisions in network aliases. Since networks are flattened (see Networking), all network aliases will result in a Service with the name of the given network alias. To ensure tests don't fail because of these name collisions, kubedock can lock the namespace while it's running. When enabling this with the `--lock` argument, kubedock will create a lease called `kubedock-lock` in the namespace in which it tracks the current ownership.
 
 ## Resource requests and limits
 
@@ -73,11 +73,11 @@ Kubedock will dynamically create pods and services in the configured namespace. 
 
 ### Automatic reaping
 
-If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused pods, configmaps and services lingering around, kubedock will automatically delete these resources. If these resorces are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
+If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused pods, configmaps and services lingering around, kubedock will automatically delete these resources. If these resources are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
 
 ### Forced cleaning
 
-The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the label `kubedock=true`, before starting the API server. This includes resources that are created by other instances of kubedock. 
+The reaping of resources can also be enforced at startup. When kubedock is started with the `--prune-start` argument, it will delete all resources that have the label `kubedock=true`, before starting the API server. This includes resources that are created by other instances of kubedock.
 
 ## Docker-in-docker support
 
