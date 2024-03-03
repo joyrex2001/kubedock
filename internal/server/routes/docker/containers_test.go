@@ -90,6 +90,81 @@ func TestGetNetworkSettingsPorts(t *testing.T) {
 	}
 }
 
+func TestGetConfigExposedPorts(t *testing.T) {
+	tests := []struct {
+		tainr  *types.Container
+		endp   EndpointConfig
+		out    gin.H
+		portfw bool
+	}{
+		{
+			tainr: &types.Container{
+				HostIP:      "",
+				MappedPorts: map[int]int{303: 101},
+			},
+			out:    gin.H{},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:      "127.0.0.1",
+				MappedPorts: map[int]int{303: 101},
+			},
+			out:    gin.H{"101/tcp": gin.H{}},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:    "127.0.0.1",
+				HostPorts: map[int]int{303: 101},
+			},
+			out:    gin.H{"101/tcp": gin.H{}},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:      "127.0.0.1",
+				MappedPorts: map[int]int{303: 101},
+				HostPorts:   map[int]int{303: 101},
+			},
+			out:    gin.H{"101/tcp": gin.H{}},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:      "127.0.0.1",
+				MappedPorts: map[int]int{-303: 303},
+			},
+			out:    gin.H{},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:      "127.0.0.1",
+				MappedPorts: map[int]int{303: 101},
+				HostPorts:   map[int]int{202: 101},
+			},
+			out:    gin.H{"101/tcp": gin.H{}},
+			portfw: true,
+		},
+		{
+			tainr: &types.Container{
+				HostIP:      "127.0.0.1",
+				MappedPorts: map[int]int{303: 101},
+			},
+			out:    gin.H{"101/tcp": gin.H{}},
+			portfw: false,
+		},
+	}
+	for i, tst := range tests {
+		cr := &common.ContextRouter{Config: common.Config{PortForward: tst.portfw}}
+		res := getConfigExposedPorts(cr, tst.tainr)
+		if !reflect.DeepEqual(res, tst.out) {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
+		}
+	}
+}
+
 func TestGetContainerPorts(t *testing.T) {
 	tests := []struct {
 		tainr *types.Container
