@@ -39,7 +39,7 @@ func TestGetLogs(t *testing.T) {
 		// },
 	}
 
-	count := int64(100)
+	count := uint64(100)
 	logOpts := LogOptions{TailLines: &count}
 	for i, tst := range tests {
 		r, w := io.Pipe()
