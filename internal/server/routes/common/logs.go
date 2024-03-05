@@ -36,7 +36,7 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 
 	follow, _ := strconv.ParseBool(c.Query("follow"))
-	tailLines, _ := parseInt64(c.Query("tail"))
+	tailLines, _ := parseUint64(c.Query("tail"))
 	sinceTime, _ := parseUnix(c.Query("since"))
 	timestamps, _ := strconv.ParseBool(c.Query("timestamps"))
 
@@ -74,9 +74,9 @@ func ContainerLogs(cr *ContextRouter, c *gin.Context) {
 	}
 }
 
-// Parses the input expecting an int64 number as a string.
-func parseInt64(input string) (*int64, error) {
-	num, err := strconv.ParseInt(input, 10, 32)
+// Parses the input expecting an uint64 number as a string.
+func parseUint64(input string) (*uint64, error) {
+	num, err := strconv.ParseUint(input, 10, 32)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,7 @@ type LogOptions struct {
 	// Add timestamps to every log line
 	Timestamps bool
 	// Number of lines to show from the end of the logs
-	TailLines *int64
+	TailLines *uint64
 }
 
 // GetLogs will write the logs for given container to given writer.
@@ -91,10 +91,16 @@ func newPodLogOptions(opts *LogOptions) v1.PodLogOptions {
 		sinceTime = &t
 	}
 
+	var tailLines *int64 = nil
+	if opts.TailLines != nil {
+		l := int64(*opts.TailLines)
+		tailLines = &l
+	}
+
 	return v1.PodLogOptions{
 		Container:  "main",
 		Follow:     opts.Follow,
-		TailLines:  opts.TailLines,
+		TailLines:  tailLines,
 		SinceTime:  sinceTime,
 		Timestamps: opts.Timestamps,
 	}
