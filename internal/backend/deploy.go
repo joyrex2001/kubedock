@@ -46,7 +46,7 @@ func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) 
 		if klog.V(2) {
 			klog.Infof("container %s log output:", tainr.ShortID)
 			stop := make(chan struct{}, 1)
-			count := int64(100)
+			count := uint64(100)
 			logOpts := LogOptions{TailLines: &count}
 			_ = in.GetLogs(tainr, &logOpts, stop, os.Stderr)
 			close(stop)

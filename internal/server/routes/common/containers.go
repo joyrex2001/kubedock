@@ -229,7 +229,7 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
 
-	count := int64(100)
+	count := uint64(100)
 	logOpts := backend.LogOptions{Follow: true, TailLines: &count}
 	if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
 		klog.V(3).Infof("error retrieving logs: %s", err)
