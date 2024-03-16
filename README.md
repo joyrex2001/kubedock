@@ -81,7 +81,7 @@ The reaping of resources can also be enforced at startup. When kubedock is start
 
 ## Docker-in-docker support
 
-Kubedock detects if a docker-socket is bound, and will add a kubedock-sidecar providing this docker-socket to support docker-in-docker use-cases. The sidecar that will be deployed for these containers, will proxy all api calls to the main kubedock.
+Kubedock detects if a docker-socket is bound, and will add a kubedock-sidecar providing this docker-socket to support docker-in-docker use-cases. The sidecar that will be deployed for these containers, will proxy all api calls to the main kubedock. This behavior can be disabled with `--disable-dind`.
 
 ## Service Account RBAC
 

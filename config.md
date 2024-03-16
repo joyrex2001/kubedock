@@ -18,6 +18,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--namespace / -n|<current namespace>|NAMESPACE|Namespace in which containers should be orchestrated|
 |server|--initimage|joyrex2001/kubedock:version|INIT_IMAGE|Image to use as initcontainer for volume setup|
 |server|--dindimage|joyrex2001/kubedock:version|DIND_IMAGE|Image to use as sidecar container for docker-in-docker support|
+|server|--disable-dind|false|DISABLE_DIND|Disable docker-in-docker support|
 |server|--pull-policy|ifnotpresent|PULL_POLICY|Pull policy that should be applied (ifnotpresent,never,always)|
 |server|--service-account|default|SERVICE_ACCOUNT|Service account that should be used for deployed pods|
 |server|--image-pull-secrets||IMAGE_PULL_SECRETS|Comma separated list of image pull secrets that should be used|

@@ -43,6 +43,7 @@ type instance struct {
 	containerTemplate corev1.Container
 	initImage         string
 	dindImage         string
+	disableDind       bool
 	imagePullSecrets  []string
 	namespace         string
 	timeOut           int
@@ -65,6 +66,8 @@ type Config struct {
 	// DindImage is the image that is used as a sidecar container to
 	// support docker-in-docker
 	DindImage string
+	// DisableDind will disable docker-in-docker support when set to true
+	DisableDind bool
 	// TimeOut is the max amount of time to wait until a container started
 	// or deleted.
 	TimeOut time.Duration
@@ -92,6 +95,7 @@ func New(cfg Config) (Backend, error) {
 		cfg:               cfg.RestConfig,
 		initImage:         cfg.InitImage,
 		dindImage:         cfg.DindImage,
+		disableDind:       cfg.DisableDind,
 		namespace:         cfg.Namespace,
 		imagePullSecrets:  cfg.ImagePullSecrets,
 		podTemplate:       pod,

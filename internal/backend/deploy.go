@@ -112,7 +112,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
-	if tainr.HasDockerSockBinding() {
+	if tainr.HasDockerSockBinding() && !in.disableDind {
 		if err := in.addDindSidecar(tainr, pod); err != nil {
 			return DeployFailed, err
 		}
