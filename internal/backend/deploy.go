@@ -355,7 +355,7 @@ func (in *instance) getPodMatchLabels(tainr *types.Container) map[string]string 
 	}
 }
 
-// waitReadyState will wait for the deploymemt to be ready.
+// waitReadyState will wait for the deployment to be ready.
 func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployState, error) {
 	for max := 0; max < wait; max++ {
 		status, err := in.GetContainerStatus(tainr)

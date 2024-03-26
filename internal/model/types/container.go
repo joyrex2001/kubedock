@@ -193,7 +193,7 @@ func (co *Container) GetActiveDeadlineSeconds() (*int64, error) {
 }
 
 // GetPodName will return a human friendly name that can be used for the
-// the container deployments.
+// container deployments.
 func (co *Container) GetPodName() string {
 	name := co.Name
 	if prefix, ok := co.Labels[LabelNamePrefix]; ok {
@@ -216,7 +216,7 @@ func (co *Container) GetPodName() string {
 }
 
 // GetPodSecurityContext will create a security context for the Pod that implements
-// the relenvant features of the Docker API. Right now this only covers the ability
+// the relevant features of the Docker API. Right now this only covers the ability
 // to specify the numeric user a container should run as.
 func (co *Container) GetPodSecurityContext(context *corev1.PodSecurityContext) (*corev1.PodSecurityContext, error) {
 	user, ok := co.Labels[LabelRunasUser]

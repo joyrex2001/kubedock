@@ -89,7 +89,7 @@ func Main() {
 	select {}
 }
 
-// getBackend will instantiate a the kubedock kubernetes object.
+// getBackend will instantiate the kubedock kubernetes object.
 func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, error) {
 	ns := viper.GetString("kubernetes.namespace")
 	initimg := viper.GetString("kubernetes.initimage")
