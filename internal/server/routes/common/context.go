@@ -37,6 +37,8 @@ type Config struct {
 	ServiceAccount string
 	// ActiveDeadlineSeconds contains the active deadline seconds to be used for running containers
 	ActiveDeadlineSeconds int64
+	// NamePrefix contains a prefix for the names used for the container deployments (optional).
+	NamePrefix string
 }
 
 // ContextRouter is the object that contains shared context for the kubedock API endpoints.

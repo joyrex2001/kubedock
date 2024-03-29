@@ -130,6 +130,9 @@ func (s *Server) getGinEngine() *gin.Engine {
 	sa := viper.GetString("kubernetes.service-account")
 	klog.Infof("service account used in deployments: %s", sa)
 
+	podprfx := viper.GetString("kubernetes.pod-name-prefix")
+	klog.Infof("pod name prefix: %s", podprfx)
+
 	ads := viper.GetInt64("kubernetes.active-deadline-seconds")
 
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
@@ -144,6 +147,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		PortForward:           pfwrd,
 		ReverseProxy:          revprox,
 		PreArchive:            prea,
+		NamePrefix:            podprfx,
 		ActiveDeadlineSeconds: ads,
 	})
 	if err != nil {

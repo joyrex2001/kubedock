@@ -41,6 +41,9 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		// The User defined in HTTP request takes precedence over the cli and label.
 		in.Labels[types.LabelRunasUser] = in.User
 	}
+	if _, ok := in.Labels[types.LabelNamePrefix]; !ok && cr.Config.NamePrefix != "" {
+		in.Labels[types.LabelNamePrefix] = cr.Config.NamePrefix
+	}
 	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.Config.RequestCPU != "" {
 		in.Labels[types.LabelRequestCPU] = cr.Config.RequestCPU
 	}

@@ -27,7 +27,7 @@ Container API calls are translated towards kubernetes pods. When a container is 
 
 Starting a container is a blocking call that will wait until it results in a running pod. By default it will wait for maximum 1 minute, but this is configurable with the `--timeout` argument. The logs API calls will always return the complete history of logs, and doesn't differentiate between stdout/stderr. All log output is send as stdout. Executions in the containers are supported.
 
-By default, all containers will be orchestrated using kubernetes pods. If a container has been given a specific name, this will be visible in the name of the pod. If the label `com.joyrex2001.kubedock.name-prefix` has been set, this will be added as a prefix to the name.
+By default, all containers will be orchestrated using kubernetes pods. If a container has been given a specific name, this will be visible in the name of the pod. If the label `com.joyrex2001.kubedock.name-prefix` has been set, this will be added as a prefix to the name. This can also be set with the environment variable `POD_NAME_PREFIX` or with the `--pod-name-prefix` argument.
 
 The containers will be started with the `default` service account. This can be changed with the `--service-account`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
 

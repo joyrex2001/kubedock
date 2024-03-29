@@ -23,6 +23,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--service-account|default|SERVICE_ACCOUNT|Service account that should be used for deployed pods|
 |server|--image-pull-secrets||IMAGE_PULL_SECRETS|Comma separated list of image pull secrets that should be used|
 |server|--pod-template||POD_TEMPLATE|Pod file that should be used as the base for creating pods|
+|server|--pod-name-prefix||POD_NAME_PREFIX|The prefix of the name to be used in the created pods|
 |server|--inspector / -i|false||Enable image inspect to fetch container port config from a registry|
 |server|--timeout / -t|1m|TIME_OUT|Container creating/deletion timeout|
 |server|--reapmax / -r|60m|REAPER_REAPMAX|Reap all resources older than this time|
