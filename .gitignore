@@ -10,3 +10,4 @@ _archive
 dist/
 target/
 *.iml
+node_modules/
