@@ -425,6 +425,11 @@ func (co *Container) HasVolumes() bool {
 	return len(co.Binds) > 0
 }
 
+// HasPreArchives will return true if the container has pre archives configured.
+func (co *Container) HasPreArchives() bool {
+	return len(co.PreArchives) > 0
+}
+
 // AddStopChannel will add channels that should be notified when
 // SignalStop is called.
 func (co *Container) AddStopChannel(stop chan struct{}) {

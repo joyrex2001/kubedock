@@ -560,6 +560,7 @@ func TestAddVolumes(t *testing.T) {
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
+		kub.addPreArchives(tst.in, pod)
 		kub.addVolumes(tst.in, pod)
 		count := len(pod.Spec.Volumes)
 		if count != tst.count {

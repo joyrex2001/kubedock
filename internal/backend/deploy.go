@@ -36,6 +36,8 @@ const (
 	DeployRunning
 	// DeployCompleted represents a completed deployment
 	DeployCompleted
+    // Setup Init Container Name
+    SetupInitContainerName = "setup"
 )
 
 // StartContainer will start given container object in kubernetes and
@@ -111,6 +113,12 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 			return DeployFailed, err
 		}
 	}
+
+    if tainr.HasPreArchives() {
+        if err := in.addPreArchives(tainr, pod); err != nil {
+            return DeployFailed, err
+        }
+    }
 
 	if tainr.HasDockerSockBinding() && !in.disableDind {
 		if err := in.addDindSidecar(tainr, pod); err != nil {
@@ -425,26 +433,86 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 	return fmt.Errorf("timeout starting container")
 }
 
-// addVolumes will add an init-container "setup" and creates volumes and
-// volume mounts in both the init container and "main" container in order
-// to copy data before the container is started. If files are inclueded,
-// rather than folders, it will create a configmap, and mounts the files
-// from this created configmap.
-func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
+func (in *instance) createInitContainer(tainr *types.Container) (*corev1.Container, error) {
 	pulpol, err := tainr.GetImagePullPolicy()
 	if err != nil {
-		return err
+		return nil, err
 	}
-
 	container := in.containerTemplate
-	container.Name = "setup"
+	container.Name = SetupInitContainerName
 	container.Image = in.initImage
 	container.ImagePullPolicy = pulpol
 	container.Command = []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"}
-	pod.Spec.InitContainers = []corev1.Container{container}
+    return &container, nil
+}
 
-	volumes := []corev1.Volume{}
-	mounts := []corev1.VolumeMount{}
+func (in *instance) addSetupInitContainer(tainr *types.Container, pod *corev1.Pod) (*corev1.Container, error) {
+    for _, initContainer := range pod.Spec.InitContainers {
+        if initContainer.Name == SetupInitContainerName {
+            return &initContainer, nil
+        }
+    }
+    return in.createInitContainer(tainr)
+}
+
+// addPreArchives will create configmaps from files, add volume and volume
+// mounts to the setup init container and main container, in order to copy data
+// before the container is started.
+func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) error {
+    initContainer, err := in.addSetupInitContainer(tainr, pod)
+    if err != nil {
+        return err
+    }
+
+	volumes := pod.Spec.Volumes
+	mounts := pod.Spec.Containers[0].VolumeMounts
+
+	pfiles := tainr.GetPreArchiveFiles()
+	if len(pfiles) > 0 {
+		cm, err := in.createConfigMapFromRaw(tainr, pfiles)
+		if err != nil {
+			return err
+		}
+		volumes = append(volumes, corev1.Volume{
+			Name: "pfiles",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: cm.ObjectMeta.Name,
+				},
+			}},
+		})
+		for dst := range pfiles {
+			mounts = append(mounts, corev1.VolumeMount{
+				Name:      "pfiles",
+				MountPath: dst,
+				SubPath:   in.fileID(dst),
+			})
+		}
+	}
+
+    initContainer.VolumeMounts = mounts
+	pod.Spec.Volumes = volumes
+	pod.Spec.Containers[0].VolumeMounts = mounts
+	pod.Spec.InitContainers = []corev1.Container{*initContainer}
+
+	return nil
+}
+
+// addVolumes will add an init-container "setup" and creates volumes and
+// volume mounts in both the init container and "main" container in order
+// to copy data before the container is started. If files are included,
+// rather than folders, it will create a configmap, and mounts the files
+// from this created configmap.
+func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
+    initContainer, err := in.addSetupInitContainer(tainr, pod)
+    if err != nil {
+        return err
+    }
+
+	pod.Spec.InitContainers = []corev1.Container{*initContainer}
+
+	volumes := pod.Spec.Volumes
+	mounts := pod.Spec.Containers[0].VolumeMounts
 
 	for dst := range tainr.GetVolumeFolders() {
 		id := in.toKubernetesName(dst)
@@ -475,33 +543,12 @@ func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
 			})
 		}
 	}
-
-	pfiles := tainr.GetPreArchiveFiles()
-	if len(pfiles) > 0 {
-		cm, err := in.createConfigMapFromRaw(tainr, pfiles)
-		if err != nil {
-			return err
-		}
-		volumes = append(volumes, corev1.Volume{
-			Name: "pfiles",
-			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: cm.ObjectMeta.Name,
-				},
-			}},
-		})
-		for dst := range pfiles {
-			mounts = append(mounts, corev1.VolumeMount{
-				Name:      "pfiles",
-				MountPath: dst,
-				SubPath:   in.fileID(dst),
-			})
-		}
-	}
-
+    
+    initContainer.VolumeMounts = mounts
 	pod.Spec.Volumes = volumes
 	pod.Spec.Containers[0].VolumeMounts = mounts
-	pod.Spec.InitContainers[0].VolumeMounts = mounts
+	pod.Spec.InitContainers = []corev1.Container{*initContainer}
+
 
 	return nil
 }
