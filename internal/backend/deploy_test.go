@@ -303,7 +303,8 @@ func TestStartContainerAddsActiveDeadlineSeconds(t *testing.T) {
 	pt := &corev1.Pod{Status: corev1.PodStatus{
 		ContainerStatuses: []corev1.ContainerStatus{
 			{Name: "main", State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{Reason: "Completed"}}},
-		}}}
+		},
+	}}
 	tests := []struct {
 		kub *instance
 		in  *types.Container
@@ -556,10 +557,10 @@ func TestAddPreArchives(t *testing.T) {
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
-        err := kub.addPreArchives(tst.in, pod)
-        if err != nil {
-            t.Errorf("expected no error but got: %v", err)
-        }
+		err := kub.addPreArchives(tst.in, pod)
+		if err != nil {
+			t.Errorf("expected no error but got: %v", err)
+		}
 		count := len(pod.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d volume, but got %d", i, tst.count, count)
@@ -585,10 +586,10 @@ func TestAddVolumes(t *testing.T) {
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
-        err := kub.addVolumes(tst.in, pod)
-        if err != nil {
-            t.Errorf("expected no error but got: %v", err)
-        }
+		err := kub.addVolumes(tst.in, pod)
+		if err != nil {
+			t.Errorf("expected no error but got: %v", err)
+		}
 		count := len(pod.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d volume, but got %d", i, tst.count, count)
@@ -601,12 +602,13 @@ func TestAddVolumesAndPreArchives(t *testing.T) {
 		in    *types.Container
 		count int
 	}{
-		{in: &types.Container{
-            Binds: []string{".:/remote:rw", "deploy_test.go:/tmp/gogo.go"},
-            PreArchives: []types.PreArchive{{Path: "/", Archive: tarMulti}, {Path: "/", Archive: tarSingle}},
-        },
-            count: 3,
-        },
+		{
+			in: &types.Container{
+				Binds:       []string{".:/remote:rw", "deploy_test.go:/tmp/gogo.go"},
+				PreArchives: []types.PreArchive{{Path: "/", Archive: tarMulti}, {Path: "/", Archive: tarSingle}},
+			},
+			count: 3,
+		},
 	}
 
 	for i, tst := range tests {
@@ -616,10 +618,10 @@ func TestAddVolumesAndPreArchives(t *testing.T) {
 			},
 		}
 		kub := &instance{cli: fake.NewSimpleClientset()}
-        err := kub.addVolumes(tst.in, pod)
-        if err != nil {
-            t.Errorf("expected no error but got: %v", err)
-        }
+		err := kub.addVolumes(tst.in, pod)
+		if err != nil {
+			t.Errorf("expected no error but got: %v", err)
+		}
 		count := len(pod.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d volume, but got %d", i, tst.count, count)
