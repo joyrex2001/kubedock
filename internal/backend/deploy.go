@@ -130,7 +130,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
-	if tainr.HasVolumes() {
+	if tainr.HasVolumes() || tainr.HasPreArchives() {
 		if err := in.copyVolumeFolders(tainr, in.timeOut); err != nil {
 			return DeployFailed, err
 		}
