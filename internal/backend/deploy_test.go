@@ -622,6 +622,12 @@ func TestAddVolumesAndPreArchives(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected no error but got: %v", err)
 		}
+
+		err = kub.addPreArchives(tst.in, pod)
+		if err != nil {
+			t.Errorf("expected no error but got: %v", err)
+		}
+
 		count := len(pod.Spec.Volumes)
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d volume, but got %d", i, tst.count, count)
