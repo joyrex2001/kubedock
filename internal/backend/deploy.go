@@ -36,7 +36,7 @@ const (
 	DeployRunning
 	// DeployCompleted represents a completed deployment
 	DeployCompleted
-	// Setup Init Container Name
+	// SetupInitContainerName in the name of the container used for setup
 	SetupInitContainerName = "setup"
 )
 
