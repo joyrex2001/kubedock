@@ -207,12 +207,22 @@ func exitHandler(kub backend.Backend, cancel context.CancelFunc) {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 	go func() {
-		<-sigc
+		c := getExitCode(<-sigc)
 		cancel()
 		klog.Info("exit signal recieved, removing pods, configmaps and services")
 		if err := kub.DeleteWithKubedockID(config.InstanceID); err != nil {
 			klog.Errorf("error pruning resources: %s", err)
 		}
-		os.Exit(0)
+		os.Exit(c)
 	}()
+}
+
+// getExitCode will map signal to a meaningfull exit code.
+func getExitCode(sig os.Signal) int {
+	c := 0
+	switch sig := sig.(type) {
+	case syscall.Signal:
+		c = 128 + int(sig)
+	}
+	return c
 }
