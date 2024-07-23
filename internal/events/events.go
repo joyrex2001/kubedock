@@ -18,6 +18,7 @@ type Events interface {
 
 // instance is the internal representation of the Events object.
 type instance struct {
+	mu        sync.Mutex
 	observers map[string]chan Message
 }
 
@@ -46,6 +47,8 @@ func (e *instance) Publish(id, typ, action string) {
 // Subscribe will subscribe to the events and will return a channel and an
 // unique identifier than can be used to unsubscribe when done.
 func (e *instance) Subscribe() (<-chan Message, string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	out := make(chan Message, 1)
 	id := stringid.GenerateRandomID()
 	e.observers[id] = out
@@ -55,6 +58,8 @@ func (e *instance) Subscribe() (<-chan Message, string) {
 
 // Unsubscribe will unsubscribe given subscriber id from the events.
 func (e *instance) Unsubscribe(id string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	klog.V(5).Infof("unsubscribing %s from events", id)
 	delete(e.observers, id)
 }
