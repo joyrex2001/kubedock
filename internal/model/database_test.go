@@ -254,8 +254,19 @@ func TestImage(t *testing.T) {
 	if err := db.DeleteImage(img1); err != nil {
 		t.Errorf("Unexpected error when deleting image img1: %s", err)
 	}
-	img1, err = db.GetImageByNameOrID("roland/tr606:9.0.9")
+	_, err = db.GetImageByNameOrID("roland/tr606:9.0.9")
 	if err == nil {
 		t.Errorf("Expected error when loading deleted image img1: %s", err)
 	}
+
+	img = &types.Image{Name: "roland/boutique/tb03:9.0.9"}
+	if err := db.SaveImage(img); err != nil {
+		t.Errorf("Unexpected error when creating image %s", err)
+	}
+
+	_, err = db.GetImageByNameOrID("roland/boutique/tb03:9.0.9")
+	if err != nil {
+		t.Errorf("Unxpected error when loading nested image: %s", err)
+	}
+
 }
