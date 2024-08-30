@@ -4,6 +4,7 @@ package docker
 // is used for the /container/create post endpoint.
 type ContainerCreateRequest struct {
 	Name          string                 `json:"name"`
+	Hostname      string                 `json:"Hostname"`
 	Image         string                 `json:"image"`
 	ExposedPorts  map[string]interface{} `json:"ExposedPorts"`
 	Labels        map[string]string      `json:"Labels"`

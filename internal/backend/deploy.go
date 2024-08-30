@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -87,6 +88,9 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 
 	pod.Spec.Containers = []corev1.Container{container}
 
+	if tainr.Hostname != "" {
+		pod.Spec.Hostname = tainr.Hostname
+	}
 	pod.Spec.ServiceAccountName = tainr.GetServiceAccountName(pod.Spec.ServiceAccountName)
 	pod.Spec.RestartPolicy = corev1.RestartPolicyNever
 
@@ -267,11 +271,21 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 		return svcs
 	}
 	valid := regexp.MustCompile("^[a-z]([-a-z0-9]*[a-z0-9])?$")
+
+	// gather all aliases, ignore duplicates, convert to lower case
+	aliases := make(map[string]bool)
+	if tainr.Hostname != "" {
+		aliases[strings.ToLower(tainr.Hostname)] = true
+	}
 	for _, alias := range tainr.NetworkAliases {
+		aliases[strings.ToLower(alias)] = true
+	}
+	for alias := range aliases {
 		if ok := valid.MatchString(alias); !ok {
 			klog.Infof("ignoring network alias %s, invalid name", alias)
 			continue
 		}
+		klog.V(4).Infof("Creating service %s", alias)
 		svc := corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace:   in.namespace,
