@@ -285,7 +285,6 @@ func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 			klog.Infof("ignoring network alias %s, invalid name", alias)
 			continue
 		}
-		// TODO remove
 		klog.Infof("Creating service %s", alias)
 		svc := corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
