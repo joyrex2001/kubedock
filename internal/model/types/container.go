@@ -21,6 +21,7 @@ type Container struct {
 	ID             string
 	ShortID        string
 	Name           string
+	Hostname       string
 	Image          string
 	Labels         map[string]string
 	Entrypoint     []string

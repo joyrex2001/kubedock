@@ -80,6 +80,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 
 	tainr := &types.Container{
 		Name:         in.Name,
+		Hostname:     in.Hostname,
 		Image:        in.Image,
 		Entrypoint:   in.Entrypoint,
 		Cmd:          in.Cmd,
