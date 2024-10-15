@@ -37,6 +37,7 @@ type Container struct {
 	MappedPorts    map[int]int
 	Networks       map[string]interface{}
 	NetworkAliases []string
+	NodeSelector   map[string]string
 	StopChannels   []chan struct{}
 	AttachChannels []chan struct{}
 	Running        bool
@@ -79,6 +80,8 @@ const (
 	// LabelRunasUser is the label to be used to enforce a specific user (uid) that
 	// runs inside the container can also be enforced w
 	LabelRunasUser = "com.joyrex2001.kubedock.runas-user"
+	// LabelNodeSelector is a comma-separated list of key-value pairs for node selection
+	LabelNodeSelector = "com.joyrex2001.kubedock.node-selector"
 	// LabelActiveDeadlineSeconds is the label to be used to specify active deadline in seconds
 	LabelActiveDeadlineSeconds = "com.joyrex2001.kubedock.active-deadline-seconds"
 )

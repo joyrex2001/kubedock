@@ -39,6 +39,8 @@ type Config struct {
 	ActiveDeadlineSeconds int64
 	// NamePrefix contains a prefix for the names used for the container deployments (optional).
 	NamePrefix string
+	// NodeSelector contains a comma-separated list of key=value pairs that is used to schedule pods to specific nodes
+	NodeSelector string
 }
 
 // ContextRouter is the object that contains shared context for the kubedock API endpoints.

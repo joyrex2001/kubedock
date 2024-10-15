@@ -118,6 +118,8 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
+	pod.Spec.NodeSelector = tainr.NodeSelector
+
 	if tainr.HasPreArchives() {
 		if err := in.addPreArchives(tainr, pod); err != nil {
 			return DeployFailed, err
