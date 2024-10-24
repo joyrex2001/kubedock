@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -42,9 +41,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		// The User defined in HTTP request takes precedence over the cli and label.
 		in.Labels[types.LabelRunasUser] = in.User
 	}
-	if _, ok := in.Labels[types.LabelNodeSelector]; !ok && cr.Config.NodeSelector != "" {
-		in.Labels[types.LabelNodeSelector] = cr.Config.NodeSelector
-	}
 	if _, ok := in.Labels[types.LabelNamePrefix]; !ok && cr.Config.NamePrefix != "" {
 		in.Labels[types.LabelNamePrefix] = cr.Config.NamePrefix
 	}
@@ -56,6 +52,9 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	}
 	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
 		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
+	}
+	if _, ok := in.Labels[types.LabelNodeSelector]; !ok && cr.Config.NodeSelector != "" {
+		in.Labels[types.LabelNodeSelector] = cr.Config.NodeSelector
 	}
 	if _, ok := in.Labels[types.LabelActiveDeadlineSeconds]; !ok && cr.Config.ActiveDeadlineSeconds >= 0 {
 		in.Labels[types.LabelActiveDeadlineSeconds] = fmt.Sprintf("%d", cr.Config.ActiveDeadlineSeconds)
@@ -96,21 +95,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		Mounts:       mounts,
 		PreArchives:  []types.PreArchive{},
 		NodeSelector: map[string]string{},
-	}
-
-	nodeSel := in.Labels[types.LabelNodeSelector]
-	// split and check for comma-separated list
-	nodeSelCommaSplits := strings.Split(nodeSel, ",")
-	if len(nodeSelCommaSplits) == 1 {
-		// not a comma-separated list, wrap in slice
-		nodeSelCommaSplits = []string{nodeSel}
-	}
-	for _, nodeSelCommaSplit := range nodeSelCommaSplits {
-		if nodeSelKey, nodeSelValue, err := splitNodeSelector(nodeSelCommaSplit); err != nil {
-			klog.Warning(err)
-		} else {
-			tainr.NodeSelector[nodeSelKey] = nodeSelValue
-		}
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
@@ -440,16 +424,4 @@ func getContainerNames(tainr *types.Container) []string {
 		}
 	}
 	return names
-}
-
-// splitNodeSelector will try to split the given string by the equals sign '='.
-// If there is an equals sign in the given string, LHS and RHS are returned.
-// Otherwise empty strings will be returned and the error will be set.
-func splitNodeSelector(nodeSel string) (string, string, error) {
-	nodeSelSplit := strings.Split(nodeSel, "=")
-	if len(nodeSelSplit) != 2 {
-		return "", "", fmt.Errorf("node-selector string in wrong format, must contain exactly one equals sign '=': '%s'", nodeSel)
-	} else {
-		return nodeSelSplit[0], nodeSelSplit[1], nil
-	}
 }

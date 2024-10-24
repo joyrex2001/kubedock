@@ -86,6 +86,12 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 	}
 	container.Resources = reqlimits
 
+	nodeSel, err := tainr.GetNodeSelector(pod.Spec.NodeSelector)
+	if err != nil {
+		return DeployFailed, err
+	}
+	pod.Spec.NodeSelector = nodeSel
+
 	pod.Spec.Containers = []corev1.Container{container}
 
 	if tainr.Hostname != "" {
@@ -117,8 +123,6 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 			return DeployFailed, err
 		}
 	}
-
-	pod.Spec.NodeSelector = tainr.NodeSelector
 
 	if tainr.HasPreArchives() {
 		if err := in.addPreArchives(tainr, pod); err != nil {

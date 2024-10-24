@@ -216,6 +216,72 @@ func TestGetResourceRequirements(t *testing.T) {
 	}
 }
 
+func TestGetNodeSelector(t *testing.T) {
+	tests := []struct {
+		in         *Container
+		inNodeSel  map[string]string
+		outNodeSel map[string]string
+		err        bool
+	}{
+		{ // 0
+			in:         &Container{Labels: map[string]string{}},
+			inNodeSel:  map[string]string{},
+			outNodeSel: map[string]string{},
+			err:        false,
+		},
+		{ // 1
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.node-selector": "a=b",
+			}},
+			inNodeSel:  map[string]string{},
+			outNodeSel: map[string]string{"a": "b"},
+			err:        false,
+		},
+		{ // 2
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.node-selector": "a=b,c=d",
+			}},
+			inNodeSel:  map[string]string{},
+			outNodeSel: map[string]string{"a": "b", "c": "d"},
+			err:        false,
+		},
+		{ // 3
+			in:         &Container{Labels: map[string]string{}},
+			inNodeSel:  map[string]string{"z": "y"},
+			outNodeSel: map[string]string{"z": "y"},
+			err:        false,
+		},
+		{ // 4
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.node-selector": "a=b",
+			}},
+			inNodeSel:  map[string]string{"z": "y"},
+			outNodeSel: map[string]string{"a": "b", "z": "y"},
+			err:        false,
+		},
+		{ // 5
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.node-selector": "format-error",
+			}},
+			inNodeSel:  map[string]string{},
+			outNodeSel: map[string]string{},
+			err:        true,
+		},
+	}
+	for i, tst := range tests {
+		res, err := tst.in.GetNodeSelector(tst.inNodeSel)
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded without error", i)
+		}
+		if !reflect.DeepEqual(res, tst.outNodeSel) {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.outNodeSel, res)
+		}
+	}
+}
+
 func TestGetImagePullPolicy(t *testing.T) {
 	tests := []struct {
 		in     *Container

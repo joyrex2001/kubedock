@@ -171,6 +171,42 @@ func (co *Container) GetResourceRequirements(req corev1.ResourceRequirements) (c
 	return req, nil
 }
 
+// GetNodeSelector will return the node selector that should be applied
+// for this container.
+func (co *Container) GetNodeSelector(nodeSelMap map[string]string) (map[string]string, error) {
+	nodeSel := co.Labels[LabelNodeSelector]
+	if nodeSel == "" {
+		return nodeSelMap, nil
+	}
+	// split and check for comma-separated list
+	nodeSelCommaSplits := strings.Split(nodeSel, ",")
+	if len(nodeSelCommaSplits) == 1 {
+		// not a comma-separated list, wrap in slice
+		nodeSelCommaSplits = []string{nodeSel}
+	}
+	for _, nodeSelCommaSplit := range nodeSelCommaSplits {
+		if nodeSelKey, nodeSelValue, err := splitNodeSelector(nodeSelCommaSplit); err != nil {
+			return nodeSelMap, err
+		} else {
+			nodeSelMap[nodeSelKey] = nodeSelValue
+		}
+	}
+	return nodeSelMap, nil
+}
+
+// splitNodeSelector will try to split the given string by the equals sign '='.
+// If there is an equals sign in the given string, LHS and RHS are returned.
+// Otherwise empty strings will be returned and the error will be set.
+func splitNodeSelector(nodeSel string) (string, string, error) {
+	nodeSelSplit := strings.Split(nodeSel, "=")
+	if len(nodeSelSplit) != 2 {
+		return "", "",
+			fmt.Errorf("node-selector in wrong format, must contain exactly one equals sign '=': '%s'", nodeSel)
+	} else {
+		return nodeSelSplit[0], nodeSelSplit[1], nil
+	}
+}
+
 // GetServiceAccountName will return the service account to be used for containers
 // that are deployed.
 func (co *Container) GetServiceAccountName(current string) string {

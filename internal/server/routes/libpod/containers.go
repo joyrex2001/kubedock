@@ -54,6 +54,9 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
 		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
 	}
+	if _, ok := in.Labels[types.LabelNodeSelector]; !ok && cr.Config.NodeSelector != "" {
+		in.Labels[types.LabelNodeSelector] = cr.Config.NodeSelector
+	}
 	if _, ok := in.Labels[types.LabelActiveDeadlineSeconds]; !ok && cr.Config.ActiveDeadlineSeconds >= 0 {
 		in.Labels[types.LabelActiveDeadlineSeconds] = fmt.Sprintf("%d", cr.Config.ActiveDeadlineSeconds)
 	}
@@ -74,6 +77,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		ExposedPorts: map[string]interface{}{},
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
+		NodeSelector: map[string]string{},
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
