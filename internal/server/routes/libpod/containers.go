@@ -77,7 +77,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		ExposedPorts: map[string]interface{}{},
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
-		NodeSelector: map[string]string{},
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {

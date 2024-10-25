@@ -37,7 +37,6 @@ type Container struct {
 	MappedPorts    map[int]int
 	Networks       map[string]interface{}
 	NetworkAliases []string
-	NodeSelector   map[string]string
 	StopChannels   []chan struct{}
 	AttachChannels []chan struct{}
 	Running        bool

@@ -94,7 +94,6 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		Binds:        in.HostConfig.Binds,
 		Mounts:       mounts,
 		PreArchives:  []types.PreArchive{},
-		NodeSelector: map[string]string{},
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
