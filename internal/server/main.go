@@ -124,6 +124,11 @@ func (s *Server) getGinEngine() *gin.Engine {
 		klog.Infof("default runas user: %s", runasuid)
 	}
 
+	nodesel := viper.GetString("kubernetes.node-selector")
+	if nodesel != "" {
+		klog.Infof("default node selector: %s", nodesel)
+	}
+
 	pulpol := viper.GetString("kubernetes.pull-policy")
 	klog.Infof("default image pull policy: %s", pulpol)
 
@@ -143,6 +148,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		RequestMemory:         reqmem,
 		ServiceAccount:        sa,
 		RunasUser:             runasuid,
+		NodeSelector:          nodesel,
 		PullPolicy:            pulpol,
 		PortForward:           pfwrd,
 		ReverseProxy:          revprox,

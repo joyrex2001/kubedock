@@ -29,6 +29,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--reapmax / -r|60m|REAPER_REAPMAX|Reap all resources older than this time|
 |server|--request-cpu||K8S_REQUEST_CPU|Default k8s cpu resource request (optionally add ,limit)|
 |server|--request-memory||K8S_REQUEST_MEMORY|Default k8s memory resource request (optionally add ,limit)|
+|server|--node-selector||K8S_NODE_SELECTOR|Default k8s node selector in the form of key1=value1[,key2=value2]|
 |server|--runas-user||K8S_RUNAS_USER|Numeric UID to run pods as (defaults to UID in image)|
 |server|--lock|false||Lock namespace for this instance|
 |server|--lock-timeout|15m||Max time trying to acquire namespace lock|
