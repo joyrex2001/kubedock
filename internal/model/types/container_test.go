@@ -267,6 +267,14 @@ func TestGetNodeSelector(t *testing.T) {
 			outNodeSel: map[string]string{},
 			err:        true,
 		},
+		{ // 6
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.node-selector": "a=b",
+			}},
+			inNodeSel:  nil,
+			outNodeSel: map[string]string{"a": "b"},
+			err:        false,
+		},
 	}
 	for i, tst := range tests {
 		res, err := tst.in.GetNodeSelector(tst.inNodeSel)

@@ -172,38 +172,38 @@ func (co *Container) GetResourceRequirements(req corev1.ResourceRequirements) (c
 
 // GetNodeSelector will return the node selector that should be applied
 // for this container.
-func (co *Container) GetNodeSelector(nodeSelMap map[string]string) (map[string]string, error) {
-	nodeSel := co.Labels[LabelNodeSelector]
-	if nodeSel == "" {
-		return nodeSelMap, nil
+func (co *Container) GetNodeSelector(nodesel map[string]string) (map[string]string, error) {
+	selector := co.Labels[LabelNodeSelector]
+	if selector == "" {
+		return nodesel, nil
 	}
-	// split and check for comma-separated list
-	nodeSelCommaSplits := strings.Split(nodeSel, ",")
-	if len(nodeSelCommaSplits) == 1 {
-		// not a comma-separated list, wrap in slice
-		nodeSelCommaSplits = []string{nodeSel}
+
+	if nodesel == nil {
+		nodesel = map[string]string{}
 	}
-	for _, nodeSelCommaSplit := range nodeSelCommaSplits {
-		if nodeSelKey, nodeSelValue, err := splitNodeSelector(nodeSelCommaSplit); err != nil {
-			return nodeSelMap, err
+
+	for _, s := range strings.Split(selector, ",") {
+		if k, v, err := splitNodeSelector(s); err == nil {
+			nodesel[k] = v
 		} else {
-			nodeSelMap[nodeSelKey] = nodeSelValue
+			return nodesel, err
 		}
 	}
-	return nodeSelMap, nil
+
+	return nodesel, nil
 }
 
 // splitNodeSelector will try to split the given string by the equals sign '='.
-// If there is an equals sign in the given string, LHS and RHS are returned.
-// Otherwise empty strings will be returned and the error will be set.
-func splitNodeSelector(nodeSel string) (string, string, error) {
-	nodeSelSplit := strings.Split(nodeSel, "=")
-	if len(nodeSelSplit) != 2 {
+// If there is an equals sign in the given string, left-hand-string and
+// right-hand-string are returned. Otherwise empty strings will be returned and
+// the error will be set.
+func splitNodeSelector(selector string) (string, string, error) {
+	parts := strings.Split(selector, "=")
+	if len(parts) != 2 {
 		return "", "",
-			fmt.Errorf("node-selector in wrong format, must contain exactly one equals sign '=': '%s'", nodeSel)
-	} else {
-		return nodeSelSplit[0], nodeSelSplit[1], nil
+			fmt.Errorf("node-selector in wrong format, must contain exactly one equals sign '=': '%s'", selector)
 	}
+	return parts[0], parts[1], nil
 }
 
 // GetServiceAccountName will return the service account to be used for containers
