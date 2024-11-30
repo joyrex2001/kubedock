@@ -89,7 +89,10 @@ func GetTargetFileNames(dst string, archive io.Reader) ([]string, error) {
 // getTargets will return all given asset names of type (dir/file).
 func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 	res := []string{}
-	tr := tar.NewReader(archive)
+	tr, err := NewReader(archive)
+	if err != nil {
+		return nil, err
+	}
 	for {
 		header, err := tr.Next()
 		switch {
