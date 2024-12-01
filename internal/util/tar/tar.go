@@ -58,7 +58,10 @@ func PackFolder(src string, buf io.Writer) error {
 // UnpackFile will extract the given file from the given archive to the
 // given dest writer.
 func UnpackFile(dst, fname string, archive io.Reader, dest io.Writer) error {
-	tr := tar.NewReader(archive)
+	tr, err := NewReader(archive)
+	if err != nil {
+		return err
+	}
 	for {
 		header, err := tr.Next()
 		if err != nil {
@@ -86,7 +89,10 @@ func GetTargetFileNames(dst string, archive io.Reader) ([]string, error) {
 // getTargets will return all given asset names of type (dir/file).
 func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 	res := []string{}
-	tr := tar.NewReader(archive)
+	tr, err := NewReader(archive)
+	if err != nil {
+		return nil, err
+	}
 	for {
 		header, err := tr.Next()
 		switch {
@@ -107,7 +113,11 @@ func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 // IsSingleFileArchive will return true if there is only 1 file stored in the
 // given archive.
 func IsSingleFileArchive(archive []byte) bool {
-	tr := tar.NewReader(bytes.NewReader(archive))
+	tr, err := NewReader(bytes.NewReader(archive))
+	if err != nil {
+		klog.Errorf("error reading tar archive: %v", err)
+		return false
+	}
 	count := 0
 	for count < 2 {
 		header, err := tr.Next()
@@ -126,8 +136,10 @@ func IsSingleFileArchive(archive []byte) bool {
 func GetTarSize(dat []byte) (int, error) {
 	var err error
 
-	r := bytes.NewReader(dat)
-	tr := tar.NewReader(r)
+	tr, err := NewReader(bytes.NewReader(dat))
+	if err != nil {
+		return 0, err
+	}
 
 	for {
 		if _, err = tr.Next(); err != nil {
@@ -139,5 +151,5 @@ func GetTarSize(dat []byte) (int, error) {
 		io.Copy(io.Discard, tr)
 	}
 
-	return len(dat) - r.Len(), err
+	return tr.ReadBytes(), err
 }
