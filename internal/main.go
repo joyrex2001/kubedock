@@ -98,6 +98,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	timeout := viper.GetDuration("kubernetes.timeout")
 	podtmpl := viper.GetString("kubernetes.pod-template")
 	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
+	dissvcs := viper.GetBool("disable-services")
 
 	optlog := ""
 	imgps := []string{}
@@ -128,6 +129,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		PodTemplate:      podtmpl,
 		KubedockURL:      kuburl,
 		TimeOut:          timeout,
+		DisableServices:  dissvcs,
 	})
 }
 

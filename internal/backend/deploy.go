@@ -262,6 +262,9 @@ func (in *instance) createServices(tainr *types.Container) error {
 // container definition.
 func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	svcs := []corev1.Service{}
+	if in.disableServices {
+		return svcs
+	}
 	ports := tainr.GetServicePorts()
 	if len(ports) == 0 {
 		// no ports available, can't create a service without ports
