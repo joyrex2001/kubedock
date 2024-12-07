@@ -48,6 +48,7 @@ type instance struct {
 	namespace         string
 	timeOut           int
 	kuburl            string
+	disableServices   bool
 }
 
 // Config is the structure to instantiate a Backend object
@@ -77,6 +78,10 @@ type Config struct {
 	// KubedockURL contains the url of this kubedock instance, to be used in
 	// docker-in-docker instances/sidecars.
 	KubedockURL string
+
+	// Disable the creation of services. A networking solution such as kubedock-dns
+	// should be used.
+	DisableServices bool
 }
 
 // New will return a Backend instance.
@@ -102,5 +107,6 @@ func New(cfg Config) (Backend, error) {
 		containerTemplate: podtemplate.ContainerFromPod(pod),
 		kuburl:            cfg.KubedockURL,
 		timeOut:           int(cfg.TimeOut.Seconds()),
+		disableServices:   cfg.DisableServices,
 	}, nil
 }
