@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.23
     steps:
       - checkout
       - run:
@@ -13,7 +13,7 @@ jobs:
 
   release:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.23
     steps:
       - checkout
       - run:
