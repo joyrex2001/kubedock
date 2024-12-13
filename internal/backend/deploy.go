@@ -71,6 +71,16 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 	pod.ObjectMeta.Labels = in.getLabels(pod.ObjectMeta.Labels, tainr)
 	pod.ObjectMeta.Annotations = in.getAnnotations(pod.ObjectMeta.Annotations, tainr)
 
+	pod.ObjectMeta.Annotations["kubedock.hostalias/0"] = tainr.Hostname
+	for i, hostname := range tainr.NetworkAliases {
+		pod.ObjectMeta.Annotations[fmt.Sprintf("kubedock.hostalias/%d", i+1)] = hostname
+	}
+	inetwork := 0
+	for network, _ := range tainr.Networks {
+		pod.ObjectMeta.Annotations[fmt.Sprintf("kubedock.network/%d", inetwork)] = network
+		inetwork++
+	}
+
 	container := in.containerTemplate
 	container.Image = tainr.Image
 	container.Name = "main"
@@ -268,6 +278,9 @@ func (in *instance) createServices(tainr *types.Container) error {
 // container definition.
 func (in *instance) getServices(tainr *types.Container) []corev1.Service {
 	svcs := []corev1.Service{}
+	if in.disableServices {
+		return svcs
+	}
 	ports := tainr.GetServicePorts()
 	if len(ports) == 0 {
 		// no ports available, can't create a service without ports

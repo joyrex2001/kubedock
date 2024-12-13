@@ -5,6 +5,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -36,13 +37,14 @@ func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, stdin 
 		req.Stdout = stdout
 		req.Stderr = io.Discard
 	} else {
+		lock := sync.Mutex{}
 		if ex.Stdout {
-			iop := ioproxy.New(stdout, ioproxy.Stdout)
+			iop := ioproxy.New(stdout, ioproxy.Stdout, &lock)
 			req.Stdout = iop
 			defer iop.Flush()
 		}
 		if ex.Stderr {
-			iop := ioproxy.New(stdout, ioproxy.Stderr)
+			iop := ioproxy.New(stdout, ioproxy.Stderr, &lock)
 			req.Stderr = iop
 			defer iop.Flush()
 		}

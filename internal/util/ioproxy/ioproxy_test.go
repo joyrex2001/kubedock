@@ -2,9 +2,29 @@ package ioproxy
 
 import (
 	"bytes"
+	"sync"
 	"testing"
-	"time"
 )
+
+type ShortWriteBuffer struct {
+	bytes.Buffer
+}
+
+func (buf *ShortWriteBuffer) Write(b []byte) (int, error) {
+	if len(b) == 0 {
+		return buf.Buffer.Write(b)
+	}
+	return buf.Buffer.Write(b[:1])
+}
+
+func (buf *ShortWriteBuffer) Bytes() []byte {
+	return buf.Buffer.Bytes()
+}
+
+type TestBuffer interface {
+	Write(b []byte) (int, error)
+	Bytes() []byte
+}
 
 func TestWrite(t *testing.T) {
 	tests := []struct {
@@ -29,36 +49,40 @@ func TestWrite(t *testing.T) {
 	}
 	for i, tst := range tests {
 		// with manual flush
-		buf := &bytes.Buffer{}
-		iop := New(buf, Stdout)
-		iop.Write([]byte(tst.write))
-		if !bytes.Equal(buf.Bytes(), tst.read) {
-			t.Errorf("failed read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
-		}
-		iop.Flush()
-		if !bytes.Equal(buf.Bytes(), tst.flush) {
-			t.Errorf("failed flush %d - expected %v, but got %v", i, tst.flush, buf.Bytes())
-		}
-		if len(iop.buf) > 0 {
-			t.Errorf("failed flush %d - buffer not empty...", i)
-		}
+		writeToBufferfuncName(t, &bytes.Buffer{}, tst, i)
+		// with manual flush and short writes
+		writeToBufferfuncName(t, &ShortWriteBuffer{}, tst, i)
+
 		// without manual flushing
-		buf = &bytes.Buffer{}
-		iop = New(buf, Stdout)
-		iop.Write([]byte(tst.write))
-		time.Sleep(110 * time.Millisecond)
-		if !bytes.Equal(buf.Bytes(), tst.flush) {
-			t.Errorf("failed auto flush read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
-		}
-		if len(iop.buf) > 0 {
-			t.Errorf("failed auto flush %d - buffer not empty...", i)
-		}
+		// There is no automatic flushing. Automatic caused an issue where data could be written to
+		// the gin.Context after the request was finished and the gin.Context was returned to the pool.
+		// This causes issues where sometime a length 0 byte array (with 8 byte stream header was written
+		// to another connection that reused the gin.Context from the pool.
+	}
+}
+
+func writeToBufferfuncName(t *testing.T, buf TestBuffer, tst struct {
+	write string
+	read  []byte
+	flush []byte
+}, i int) {
+	iop := New(buf, Stdout, &sync.Mutex{})
+	iop.Write([]byte(tst.write))
+	if !bytes.Equal(buf.Bytes(), tst.read) {
+		t.Errorf("failed read %d - expected %v, but got %v", i, tst.read, buf.Bytes())
+	}
+	iop.Flush()
+	if !bytes.Equal(buf.Bytes(), tst.flush) {
+		t.Errorf("failed flush %d - expected %v, but got %v", i, tst.flush, buf.Bytes())
+	}
+	if len(iop.buf) > 0 {
+		t.Errorf("failed flush %d - buffer not empty...", i)
 	}
 }
 
 func TestLargeLine(t *testing.T) {
 	buf := &bytes.Buffer{}
-	iop := New(buf, Stdout)
+	iop := New(buf, Stdout, &sync.Mutex{})
 
 	data := make([]byte, 1350)
 	for i := 0; i < len(data); i++ {

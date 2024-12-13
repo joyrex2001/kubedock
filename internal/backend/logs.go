@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"io"
+	"sync"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -50,7 +51,7 @@ func (in *instance) GetLogs(tainr *types.Container, opts *LogOptions, stop chan 
 		}()
 	}
 
-	out := ioproxy.New(w, ioproxy.Stdout)
+	out := ioproxy.New(w, ioproxy.Stdout, &sync.Mutex{})
 	defer out.Flush()
 	for {
 		// close when container is done
