@@ -55,12 +55,18 @@ func (in *instance) readFile(file string) ([]byte, error) {
 // MapContainerTCPPorts will map random available ports to the ports
 // in the container.
 func (in *instance) MapContainerTCPPorts(tainr *types.Container) error {
+OUTER:
 	for _, pp := range tainr.GetContainerTCPPorts() {
+		// skip explicitly bound ports
+		for src, dst := range tainr.HostPorts {
+			if src > 0 && dst == pp {
+				continue OUTER
+			}
+		}
 		addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 		if err != nil {
 			return err
 		}
-
 		l, err := net.ListenTCP("tcp", addr)
 		if err != nil {
 			return err
