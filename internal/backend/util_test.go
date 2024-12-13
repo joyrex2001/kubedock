@@ -116,3 +116,32 @@ func TestMapContainerTCPPorts(t *testing.T) {
 		}
 	}
 }
+
+func TestMapContainerTCPPortsSkipBoundPorts(t *testing.T) {
+	kub := &instance{}
+	c := &types.Container{
+		ExposedPorts: map[string]interface{}{
+			"303/tcp": 0,
+			"80/tcp":  0,
+		},
+		HostPorts: map[int]int{
+			-303: 303,
+			8080: 80,
+		},
+	}
+	if err := kub.MapContainerTCPPorts(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	n := len(c.MappedPorts)
+	if n != 1 {
+		t.Errorf("expected 1 mapped port, but got %d", n)
+	}
+	for src, dst := range c.MappedPorts {
+		if src == 0 {
+			t.Errorf("expected non-zero source port, but got %d", src)
+		}
+		if dst != 303 {
+			t.Errorf("expected destination port 303, but got %d", dst)
+		}
+	}
+}
