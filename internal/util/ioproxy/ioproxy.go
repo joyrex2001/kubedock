@@ -5,6 +5,7 @@ import (
 	"io"
 	"k8s.io/klog"
 	"sync"
+	"time"
 )
 
 // StdType is the type of standard stream
@@ -49,8 +50,13 @@ func (w *IoProxy) Write(p []byte) (int, error) {
 	w.buf = append(w.buf, p...)
 	for w.process() != 0 {
 	}
-	// callers of ipProxy.New() should call Flush() before the request returns.
-	// This can be guaranteed by doing a defer Flush() directly after ioProxy.New()
+	if len(w.buf) > 0 && !w.flusher {
+		w.flusher = true
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			w.Flush()
+		}()
+	}
 	return len(p), nil
 }
 
@@ -99,6 +105,9 @@ func (w *IoProxy) write(p []byte) error {
 func (w *IoProxy) Flush() error {
 	w.lock.Lock()
 	defer w.lock.Unlock()
+	if len(w.buf) == 0 {
+		return nil
+	}
 	err := w.write(w.buf)
 	w.buf = []byte{}
 	w.flusher = false
