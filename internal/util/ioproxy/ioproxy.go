@@ -71,17 +71,25 @@ func (w *IoProxy) writeAll(writer io.Writer, buf []byte) error {
 	return nil
 }
 
-// process will go through the buffer and writes chunks that end with
-// a newline to the output writer.
+// process iterates over the buffer and writes chunks that end with
+// a newline character to the output writer.
 func (w *IoProxy) process() int {
-	for pos := 0; pos < len(w.buf)-1; pos++ {
-		if w.buf[pos] == 10 { // write chunk if newline char is found
+	bufferLength := len(w.buf)
+	// Iterate over the buffer to find newline characters
+	for pos := 0; pos < bufferLength-1; pos++ {
+		if w.buf[pos] == '\n' {
 			w.write(w.buf[:pos+1])
 			w.buf = w.buf[pos+1:]
 			return pos + 1
 		}
 	}
-	return 0
+
+	// If no newline was found, write the entire buffer if not empty
+	if bufferLength > 0 {
+		w.write(w.buf)
+	}
+	w.buf = nil
+	return bufferLength
 }
 
 // write will write data to the configured writer, using the correct header.
