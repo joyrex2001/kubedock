@@ -20,52 +20,11 @@ import (
 // https://docs.docker.com/engine/api/v1.41/#operation/ContainerCreate
 // POST "/containers/create"
 func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
-	in := &ContainerCreateRequest{}
-	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
+	in, err := getContainerCreateRequest(c, cr)
+	if err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}
-
-	if in.Name == "" {
-		in.Name = c.Query("name")
-	}
-
-	if in.Labels == nil {
-		in.Labels = map[string]string{}
-	}
-
-	if _, ok := in.Labels[types.LabelRunasUser]; !ok && cr.Config.RunasUser != "" {
-		in.Labels[types.LabelRunasUser] = cr.Config.RunasUser
-	}
-	if in.User != "" {
-		// The User defined in HTTP request takes precedence over the cli and label.
-		in.Labels[types.LabelRunasUser] = in.User
-	}
-	if _, ok := in.Labels[types.LabelNamePrefix]; !ok && cr.Config.NamePrefix != "" {
-		in.Labels[types.LabelNamePrefix] = cr.Config.NamePrefix
-	}
-	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.Config.RequestCPU != "" {
-		in.Labels[types.LabelRequestCPU] = cr.Config.RequestCPU
-	}
-	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.Config.RequestMemory != "" {
-		in.Labels[types.LabelRequestMemory] = cr.Config.RequestMemory
-	}
-	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
-		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
-	}
-	if _, ok := in.Labels[types.LabelNodeSelector]; !ok && cr.Config.NodeSelector != "" {
-		in.Labels[types.LabelNodeSelector] = cr.Config.NodeSelector
-	}
-	if _, ok := in.Labels[types.LabelActiveDeadlineSeconds]; !ok && cr.Config.ActiveDeadlineSeconds >= 0 {
-		in.Labels[types.LabelActiveDeadlineSeconds] = fmt.Sprintf("%d", cr.Config.ActiveDeadlineSeconds)
-	}
-	if in.HostConfig.Memory != 0 {
-		in.Labels[types.LabelRequestMemory] = fmt.Sprintf("%d", in.HostConfig.Memory)
-	}
-	if in.HostConfig.NanoCpus != 0 {
-		in.Labels[types.LabelRequestCPU] = fmt.Sprintf("%dn", in.HostConfig.NanoCpus)
-	}
-	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
 
 	mounts := []types.Mount{}
 	for _, m := range in.HostConfig.Mounts {
@@ -144,6 +103,56 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": tainr.ID,
 	})
+}
+
+// getContainerCreateRequest converts the request body into a ContainerCreateRequest
+func getContainerCreateRequest(c *gin.Context, cr *common.ContextRouter) (*ContainerCreateRequest, error) {
+	in := &ContainerCreateRequest{}
+	if err := json.NewDecoder(c.Request.Body).Decode(&in); err != nil {
+		return nil, err
+	}
+
+	if in.Name == "" {
+		in.Name = c.Query("name")
+	}
+
+	if in.Labels == nil {
+		in.Labels = map[string]string{}
+	}
+
+	if _, ok := in.Labels[types.LabelRunasUser]; !ok && cr.Config.RunasUser != "" {
+		in.Labels[types.LabelRunasUser] = cr.Config.RunasUser
+	}
+	if in.User != "" {
+		// The User defined in HTTP request takes precedence over the cli and label.
+		in.Labels[types.LabelRunasUser] = in.User
+	}
+	if _, ok := in.Labels[types.LabelNamePrefix]; !ok && cr.Config.NamePrefix != "" {
+		in.Labels[types.LabelNamePrefix] = cr.Config.NamePrefix
+	}
+	if _, ok := in.Labels[types.LabelRequestCPU]; !ok && cr.Config.RequestCPU != "" {
+		in.Labels[types.LabelRequestCPU] = cr.Config.RequestCPU
+	}
+	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.Config.RequestMemory != "" {
+		in.Labels[types.LabelRequestMemory] = cr.Config.RequestMemory
+	}
+	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
+		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
+	}
+	if _, ok := in.Labels[types.LabelNodeSelector]; !ok && cr.Config.NodeSelector != "" {
+		in.Labels[types.LabelNodeSelector] = cr.Config.NodeSelector
+	}
+	if _, ok := in.Labels[types.LabelActiveDeadlineSeconds]; !ok && cr.Config.ActiveDeadlineSeconds >= 0 {
+		in.Labels[types.LabelActiveDeadlineSeconds] = fmt.Sprintf("%d", cr.Config.ActiveDeadlineSeconds)
+	}
+	if in.HostConfig.Memory != 0 && !cr.Config.IgnoreContainerMemory {
+		in.Labels[types.LabelRequestMemory] = fmt.Sprintf("%d", in.HostConfig.Memory)
+	}
+	if in.HostConfig.NanoCpus != 0 {
+		in.Labels[types.LabelRequestCPU] = fmt.Sprintf("%dn", in.HostConfig.NanoCpus)
+	}
+	in.Labels[types.LabelServiceAccount] = cr.Config.ServiceAccount
+	return in, nil
 }
 
 // ContainerWait - Block until a container stops, then returns the exit code.

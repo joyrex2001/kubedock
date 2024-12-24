@@ -1,7 +1,10 @@
 package docker
 
 import (
+	"io"
+	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -253,6 +256,50 @@ func TestGetContainerNames(t *testing.T) {
 		res := getContainerNames(tst.tainr)
 		if !reflect.DeepEqual(res, tst.out) {
 			t.Errorf("failed test %d - expected %s, but got %s", i, tst.out, res)
+		}
+	}
+}
+
+func TestGetContainerCreateRequestLabelRequestMemory(t *testing.T) {
+	tests := []struct {
+		ignoreCtnrMem bool
+		body          string
+		expected      string
+	}{
+		{
+			ignoreCtnrMem: false,
+			body:          "{\"Name\": \"Foo\"}",
+			expected:      "1Gi,2Gi",
+		},
+		{
+			ignoreCtnrMem: false,
+			body:          "{\"Name\": \"Foo\",\"HostConfig\":{\"Memory\": 1024}}",
+			expected:      "1024",
+		},
+		{
+			ignoreCtnrMem: true,
+			body:          "{\"Name\": \"Foo\",\"HostConfig\":{\"Memory\": 1024}}",
+			expected:      "1Gi,2Gi",
+		},
+	}
+	for i, tst := range tests {
+		c := &gin.Context{
+			Request: &http.Request{
+				Body: io.NopCloser(strings.NewReader(tst.body)),
+			},
+		}
+		cr := &common.ContextRouter{
+			Config: common.Config{
+				RequestMemory:         "1Gi,2Gi",
+				IgnoreContainerMemory: tst.ignoreCtnrMem,
+			},
+		}
+		ccr, err := getContainerCreateRequest(c, cr)
+		if err != nil {
+			t.Errorf("failed test %d - error creating ContainerCreateRequerst: %s", i, err)
+		}
+		if ccr.Labels[types.LabelRequestMemory] != tst.expected {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.expected, ccr.Labels[types.LabelRequestMemory])
 		}
 	}
 }

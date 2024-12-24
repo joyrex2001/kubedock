@@ -64,6 +64,7 @@ func init() {
 	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services via 0.0.0.0 on the kubedock host as well")
 	serverCmd.PersistentFlags().Bool("pre-archive", false, "Enable support for copying single files to containers without starting them")
 	serverCmd.PersistentFlags().Bool("disable-services", false, "Disable service creation (requires a network solution such as kubedock-dns)")
+	serverCmd.PersistentFlags().Bool("ignore-container-memory", false, "Ignore container memory setting and use requests/limits from gobal settings or container labels")
 
 	viper.BindPFlag("server.listen-addr", serverCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", serverCmd.PersistentFlags().Lookup("unix-socket"))
@@ -95,6 +96,7 @@ func init() {
 	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
 	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
 	viper.BindPFlag("disable-services", serverCmd.PersistentFlags().Lookup("disable-services"))
+	viper.BindPFlag("ignore-container-memory", serverCmd.PersistentFlags().Lookup("ignore-container-memory"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
