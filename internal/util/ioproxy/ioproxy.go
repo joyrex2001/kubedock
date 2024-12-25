@@ -76,20 +76,14 @@ func (w *IoProxy) writeAll(writer io.Writer, buf []byte) error {
 func (w *IoProxy) process() int {
 	bufferLength := len(w.buf)
 	// Iterate over the buffer to find newline characters
-	for pos := 0; pos < bufferLength-1; pos++ {
+	for pos := 0; pos < bufferLength; pos++ {
 		if w.buf[pos] == '\n' {
 			w.write(w.buf[:pos+1])
 			w.buf = w.buf[pos+1:]
 			return pos + 1
 		}
 	}
-
-	// If no newline was found, write the entire buffer if not empty
-	if bufferLength > 0 {
-		w.write(w.buf)
-	}
-	w.buf = nil
-	return bufferLength
+	return 0
 }
 
 // write will write data to the configured writer, using the correct header.
