@@ -41,6 +41,8 @@ type Config struct {
 	NamePrefix string
 	// NodeSelector contains a comma-separated list of key=value pairs that is used to schedule pods to specific nodes
 	NodeSelector string
+	// IgnoreContainerMemory is used to ignore Docker memory settings and use requests/limits from Kubedock config
+	IgnoreContainerMemory bool
 }
 
 // ContextRouter is the object that contains shared context for the kubedock API endpoints.

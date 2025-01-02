@@ -140,6 +140,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	ads := viper.GetInt64("kubernetes.active-deadline-seconds")
 
+	icm := viper.GetBool("ignore-container-memory")
+
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
 	cr, err := common.NewContextRouter(s.kub, common.Config{
@@ -155,6 +157,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 		PreArchive:            prea,
 		NamePrefix:            podprfx,
 		ActiveDeadlineSeconds: ads,
+		IgnoreContainerMemory: icm,
 	})
 	if err != nil {
 		klog.Errorf("error setting up context: %s", err)
