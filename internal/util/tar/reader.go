@@ -5,8 +5,9 @@ import (
 	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
-	"github.com/ulikunitz/xz"
 	"io"
+
+	"github.com/ulikunitz/xz"
 )
 
 // Reader is able to read tar archive uncompressed, compressed with gzip, xz, or bzip2
@@ -16,6 +17,10 @@ type Reader struct {
 	close        func() error
 }
 
+// NewReader initializes a new Reader instance to process compressed or uncompressed archive data.
+// It takes an `io.Reader` as input, reads the first 5 bytes to detect the compression type,
+// and returns a `*Reader` configured to handle the detected compression format (e.g., gzip,
+// bzip2, xz, or none).
 func NewReader(reader io.Reader) (r *Reader, err error) {
 	first5Bytes := make([]byte, 5)
 	_, err = reader.Read(first5Bytes)
@@ -83,6 +88,7 @@ func (r *Reader) ReadBytes() int {
 	return r.concatReader.ReadBytes()
 }
 
+// Close closes the reader for further reading and returns an error on failure.
 func (r *Reader) Close() error {
 	if r.close != nil {
 		return r.close()

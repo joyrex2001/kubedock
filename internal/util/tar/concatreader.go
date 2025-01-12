@@ -10,6 +10,8 @@ type ConcatReader struct {
 	reader io.Reader
 }
 
+// NewConcatReader creates a new ConcatReader instance that sequentially reads data from a provided byte slice
+// and then continues reading from an underlying io.Reader.
 func NewConcatReader(data []byte, reader io.Reader) *ConcatReader {
 	return &ConcatReader{data: data, reader: reader}
 }

@@ -76,7 +76,7 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		pod.ObjectMeta.Annotations[fmt.Sprintf("kubedock.hostalias/%d", i+1)] = hostname
 	}
 	inetwork := 0
-	for network, _ := range tainr.Networks {
+	for network := range tainr.Networks {
 		pod.ObjectMeta.Annotations[fmt.Sprintf("kubedock.network/%d", inetwork)] = network
 		inetwork++
 	}
