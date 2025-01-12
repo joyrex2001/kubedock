@@ -29,7 +29,7 @@ Starting a container is a blocking call that will wait until it results in a run
 
 By default, all containers will be orchestrated using kubernetes pods. If a container has been given a specific name, this will be visible in the name of the pod. If the label `com.joyrex2001.kubedock.name-prefix` has been set, this will be added as a prefix to the name. This can also be set with the environment variable `POD_NAME_PREFIX` or with the `--pod-name-prefix` argument.
 
-The containers will be started with the `default` service account. This can be changed with the `--service-account`. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
+The containers that kubedock creates will be started with the `default` service account. This can be changed with the `--service-account`. Note that this is not the service account of kubedock itself. When deploying kubedock, make sure that the deployment/pod configuration of kubedock itself is using a service account with the proper permissions. If required, the uid of the user that runs inside the container can also be enforced with the `--runas-user` argument and the `com.joyrex2001.kubedock.runas-user` label.
 
 ## Volumes
 
@@ -53,7 +53,10 @@ If multiple kubedocks are using the namespace, it might be possible there will b
 
 ## Resource requests and limits
 
-By default containers are started without any resource request configuration. This can impact performance of the tests that are run in the containers. Setting resource requests (and limits) will allow better scheduling, and can improve the overall performance of the running containers. Global requests and limits can be set with `--request-cpu` and `--request-memory`, which takes regular kubernetes resource requests configurations as can be found in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). Limits are optional, and can be configured by adding it with a ,limit. If the values should be configured specifically for a container, they can be configured by adding `com.joyrex2001.kubedock.request-cpu` or `com.joyrex2001.kubedock.request-memory` labels to the container with their specific requests (and limits). The labels take precedence over the cli configuration.
+By default containers are started without any resource request configuration. This can impact performance of the tests that are run in the containers. Setting resource requests (and limits) will allow better scheduling, and can improve the overall performance of the running containers. Global requests and limits can be set with `--request-cpu` and `--request-memory`, which takes regular kubernetes resource requests configurations as can be found in the [kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/). Limits are optional, and can be configured by adding it with a ,limit. For example, `--request-cpu 10m,1000m` will set a request of 10m cpu and a limit to 1000m cpu. Another example is `--request-memory 128Mi` would set a memory request of 128Mi, without a limit.
+
+If the values should be configured specifically for a container, they can be configured by adding `com.joyrex2001.kubedock.request-cpu` or `com.joyrex2001.kubedock.request-memory` labels to the container with their specific requests (and limits). The labels take precedence over the cli configuration.
+
 If the container is started setting a maximum memory (equivalent to Docker `--memory` option), the value is translated into the memory requests setting, without setting any value for limits. This means that the container will inherit limits from the defined `LimitRange`, but this can cause issues in case the default `limits` value is lower than the memory specified for the container. To work around this issue you can use `--ignore-container-memory` that tells Kubedock to use the requests and limits from the global or label configuration.
 
 ## Node Selector
