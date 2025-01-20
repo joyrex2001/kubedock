@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -573,13 +574,24 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: cm.ObjectMeta.Name,
 				},
+				Items: func() []corev1.KeyToPath {
+					items := []corev1.KeyToPath{}
+					for file := range pfiles {
+						items = append(items, corev1.KeyToPath{
+							Key:  in.fileID(file),
+							Path: filepath.Base(file),
+							Mode: func(i int32) *int32 { return &i }(0755), // THIS FILE MODESET VALUE NEEDS TO BE PULLED FROM THE ORIGINAL FILE
+						})
+					}
+					return items
+				}(),
 			}},
 		})
 		for dst := range pfiles {
 			mounts = append(mounts, corev1.VolumeMount{
 				Name:      "pfiles",
 				MountPath: dst,
-				SubPath:   in.fileID(dst),
+				SubPath:   filepath.Base(dst),
 			})
 		}
 	}
