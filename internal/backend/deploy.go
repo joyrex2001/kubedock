@@ -576,11 +576,11 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 				},
 				Items: func() []corev1.KeyToPath {
 					items := []corev1.KeyToPath{}
-					for file := range pfiles {
+					for file, FileInfo := range pfiles {
 						items = append(items, corev1.KeyToPath{
 							Key:  in.fileID(file),
 							Path: filepath.Base(file),
-							Mode: func(i int32) *int32 { return &i }(0755), // THIS FILE MODESET VALUE NEEDS TO BE PULLED FROM THE ORIGINAL FILE
+							Mode: func(i int32) *int32 { return &i }(int32(FileInfo[0].FileMode)),
 						})
 					}
 					return items
