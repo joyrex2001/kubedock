@@ -694,11 +694,13 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 
 // createConfigMapFromRaw will create a configmap with given name, and adds
 // given files to it. If failed, it will return an error.
-func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[string][]byte) (*corev1.ConfigMap, error) {
+func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[string][]types.File) (*corev1.ConfigMap, error) {
 	dat := map[string][]byte{}
 	for src, d := range files {
 		klog.V(3).Infof("adding %s to configmap %s", src, tainr.ShortID)
-		dat[in.fileID(src)] = d
+		for _, file := range d {
+			dat[in.fileID(src)] = file.Data.Bytes()
+		}
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
