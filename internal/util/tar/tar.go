@@ -86,6 +86,24 @@ func GetTargetFileNames(dst string, archive io.Reader) ([]string, error) {
 	return getTargets(dst, archive, tar.TypeReg)
 }
 
+// GetFileMode will return the file mode permissions of the given file in 
+// the archive.
+func GetFileMode(dst string, fname string, archive io.Reader) (os.FileMode, error) {
+	tr, err := NewReader(archive)
+	if err != nil {
+		return 0, err
+	}
+	for {
+		header, err := tr.Next()
+		if err != nil {
+			return 0, err
+		}
+		if header != nil && filepath.Join(dst, header.Name) == fname {
+			return header.FileInfo().Mode(), nil
+		}
+	}
+}
+
 // getTargets will return all given asset names of type (dir/file).
 func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 	res := []string{}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -573,13 +574,24 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 				LocalObjectReference: corev1.LocalObjectReference{
 					Name: cm.ObjectMeta.Name,
 				},
+				Items: func() []corev1.KeyToPath {
+					items := []corev1.KeyToPath{}
+					for file, info := range pfiles {
+						items = append(items, corev1.KeyToPath{
+							Key:  in.fileID(file),
+							Path: filepath.Base(file),
+							Mode: func(i int32) *int32 { return &i }(int32(info[0].FileMode)),
+						})
+					}
+					return items
+				}(),
 			}},
 		})
 		for dst := range pfiles {
 			mounts = append(mounts, corev1.VolumeMount{
 				Name:      "pfiles",
 				MountPath: dst,
-				SubPath:   in.fileID(dst),
+				SubPath:   filepath.Base(dst),
 			})
 		}
 	}
@@ -682,11 +694,13 @@ func (in *instance) createConfigMapFromFiles(tainr *types.Container, files map[s
 
 // createConfigMapFromRaw will create a configmap with given name, and adds
 // given files to it. If failed, it will return an error.
-func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[string][]byte) (*corev1.ConfigMap, error) {
+func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[string][]types.File) (*corev1.ConfigMap, error) {
 	dat := map[string][]byte{}
 	for src, d := range files {
 		klog.V(3).Infof("adding %s to configmap %s", src, tainr.ShortID)
-		dat[in.fileID(src)] = d
+		for _, file := range d {
+			dat[in.fileID(src)] = file.Data.Bytes()
+		}
 	}
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

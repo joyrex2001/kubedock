@@ -444,8 +444,8 @@ func (co *Container) HasDockerSockBinding() bool {
 
 // GetPreArchiveFiles will return all single files from the pre-archives as
 // a map with the filename as key, and the actual file contents as value.
-func (co *Container) GetPreArchiveFiles() map[string][]byte {
-	files := map[string][]byte{}
+func (co *Container) GetPreArchiveFiles() map[string][]File {
+	files := map[string][]File{}
 	for _, pa := range co.PreArchives {
 		fls, err := tar.GetTargetFileNames(pa.Path, bytes.NewReader(pa.Archive))
 		if err != nil {
@@ -460,7 +460,14 @@ func (co *Container) GetPreArchiveFiles() map[string][]byte {
 			klog.Errorf("error extracting %s from archive: %s", fls[0], err)
 			continue
 		}
-		files[fls[0]] = dat.Bytes()
+		mode, err := tar.GetFileMode(pa.Path, fls[0], bytes.NewReader(pa.Archive))
+		if err != nil {
+			klog.Errorf("error getting %s file mode from archive: %s", mode, err)
+			continue
+		}
+
+		files[fls[0]] = []File{{FileMode: mode, Data: dat}}
+		klog.Infof("File mode for %s is: %o\n", fls[0], mode)
 	}
 	return files
 }
