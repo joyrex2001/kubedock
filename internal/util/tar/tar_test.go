@@ -38,11 +38,11 @@ func TestPackFolder(t *testing.T) {
 		t.Error("expected archive to contain .")
 	}
 
-	fileMode, err := GetFileMode("", "tar_test.go", bytes.NewReader(dat))
+	mode, err := GetFileMode("", "tar_test.go", bytes.NewReader(dat))
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	if fileMode == 0 {
+	if mode == 0 {
 		t.Error("expected archive to contain tar_test.go with valid file mode")
 	}
 

@@ -460,14 +460,14 @@ func (co *Container) GetPreArchiveFiles() map[string][]File {
 			klog.Errorf("error extracting %s from archive: %s", fls[0], err)
 			continue
 		}
-		fileMode, err := tar.GetFileMode(pa.Path, fls[0], bytes.NewReader(pa.Archive))
+		mode, err := tar.GetFileMode(pa.Path, fls[0], bytes.NewReader(pa.Archive))
 		if err != nil {
-			klog.Errorf("error getting %s file mode from archive: %s", fileMode, err)
+			klog.Errorf("error getting %s file mode from archive: %s", mode, err)
 			continue
 		}
 
-		files[fls[0]] = []File{{FileMode: fileMode, Data: dat}}
-		klog.Infof("File mode for %s is: %o\n", fls[0], fileMode)
+		files[fls[0]] = []File{{FileMode: mode, Data: dat}}
+		klog.Infof("File mode for %s is: %o\n", fls[0], mode)
 	}
 	return files
 }
