@@ -267,7 +267,7 @@ func (co *Container) GetPodSecurityContext(context *corev1.PodSecurityContext) (
 	}
 
 	// the user id for the root user is always 0
-	if user == "root" {
+	if strings.Split(user, ":")[0] == "root" {
 		klog.Infof("user is root so setting user to 0")
 		user = "0"
 	}

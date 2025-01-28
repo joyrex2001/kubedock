@@ -483,6 +483,22 @@ func TestGetRunasUser(t *testing.T) {
 			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(1000)},
 			err:   false,
 		},
+		{ // 8
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "root",
+			}},
+			insc:  &corev1.PodSecurityContext{RunAsUser: makeIntPointer(500)},
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
+			err:   false,
+		},
+		{ // 9
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.runas-user": "root:root",
+			}},
+			insc:  &corev1.PodSecurityContext{RunAsUser: makeIntPointer(500)},
+			outsc: corev1.PodSecurityContext{RunAsUser: makeIntPointer(0)},
+			err:   false,
+		},
 	}
 	for i, tst := range tests {
 		res, err := tst.in.GetPodSecurityContext(tst.insc)
