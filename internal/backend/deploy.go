@@ -483,6 +483,11 @@ func (in *instance) createSetupInitContainer(tainr *types.Container) (*corev1.Co
 	container.Image = in.initImage
 	container.ImagePullPolicy = pulpol
 	container.Command = []string{"sh", "-c", "while [ ! -f /tmp/done ]; do sleep 0.1 ; done"}
+	reqlimits, err := tainr.GetResourceRequirements(container.Resources)
+	if err != nil {
+		return nil, err
+	}
+	container.Resources = reqlimits
 	return &container, nil
 }
 
