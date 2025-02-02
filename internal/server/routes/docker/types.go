@@ -41,8 +41,9 @@ type HostConfig struct {
 	Binds        []string `json:"Binds"`
 	Mounts       []Mount  `json:"Mounts"`
 	PortBindings map[string][]PortBinding
-	Memory       int `json:"Memory"`
-	NanoCpus     int `json:"NanoCpus"`
+	Memory       int    `json:"Memory"`
+	NanoCpus     int    `json:"NanoCpus"`
+	NetworkMode  string `json:"NetworkMode"`
 }
 
 // PortBinding represents a binding between to a port
