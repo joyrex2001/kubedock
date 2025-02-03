@@ -71,6 +71,17 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 			}
 		}
 	}
+	
+	net := in.HostConfig.NetworkMode
+	if net != "" && net != "default" {
+		klog.V(5).Infof("NetworkMode != '', connecting container to network: %s", net)
+		netw, err := cr.DB.GetNetworkByName(net)
+		if err != nil {
+			httputil.Error(c, http.StatusInternalServerError, err)
+			return
+		}
+		tainr.ConnectNetwork(netw.ID)
+	}
 
 	for _, endp := range in.NetworkConfig.EndpointsConfig {
 		addNetworkAliases(tainr, endp)
