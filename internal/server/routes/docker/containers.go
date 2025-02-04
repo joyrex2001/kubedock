@@ -75,7 +75,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	net := in.HostConfig.NetworkMode
 	if net != "" && net != "default" {
 		klog.V(5).Infof("NetworkMode != '', connecting container to network: %s", net)
-		netw, err := cr.DB.GetNetworkByName(net)
+		netw, err := cr.DB.GetNetworkByNameOrID(net)
 		if err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
