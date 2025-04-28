@@ -17,6 +17,6 @@ func NewLogger() io.Writer {
 
 // Write will write the log using klog.
 func (w *logger) Write(p []byte) (int, error) {
-	klog.V(3).Infof(string(p))
+	klog.V(3).Info(string(p))
 	return len(p), nil
 }
