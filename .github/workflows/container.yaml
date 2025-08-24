@@ -1,0 +1,42 @@
+name: Container Image CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*.*.*'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image tags
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "TAGS=ghcr.io/${GITHUB_REPOSITORY}:${TAG}" >> $GITHUB_ENV
+          else
+            echo "TAGS=ghcr.io/${GITHUB_REPOSITORY}:latest" >> $GITHUB_ENV
+          fi
+
+      - name: Build Container image
+        run: |
+          docker build . -t ${{ env.TAGS }}
+
+      - name: Push Container image
+        run: |
+          docker push ${{ env.TAGS }}
