@@ -1,7 +1,8 @@
+VERSION=$$(git describe --tags 2>/dev/null || echo 'latest') 
 LDFLAGS="-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
-		 -X github.com/joyrex2001/kubedock/internal/config.Version=`git describe --tags`  \
-		 -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:`git describe --tags | cut -d- -f1`"
+         -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
+         -X github.com/joyrex2001/kubedock/internal/config.Version=$(VERSION) \
+         -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:$(VERSION)"
 
 run:
 	CGO_ENABLED=0 go run main.go server -P -v 2 --port-forward
