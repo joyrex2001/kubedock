@@ -10,6 +10,20 @@ import (
 	"k8s.io/klog"
 )
 
+// CompressionType represents the type of compression used in the tar archive.
+type CompressionType int
+
+const (
+	// Unknown represents an unknown or uncompressed tar archive.
+	Unknown CompressionType = iota
+	// Gzip represents gzip compressed tar archive.
+	Gzip
+	// Bzip2 represents bzip2 compressed tar archive.
+	Bzip2
+	// Xz represents xz compressed tar archive.
+	Xz
+)
+
 // PackFolder will write the given folder as a tar to the given Writer.
 func PackFolder(src string, buf io.Writer) error {
 	tw := tar.NewWriter(buf)
@@ -86,7 +100,7 @@ func GetTargetFileNames(dst string, archive io.Reader) ([]string, error) {
 	return getTargets(dst, archive, tar.TypeReg)
 }
 
-// GetFileMode will return the file mode permissions of the given file in 
+// GetFileMode will return the file mode permissions of the given file in
 // the archive.
 func GetFileMode(dst string, fname string, archive io.Reader) (os.FileMode, error) {
 	tr, err := NewReader(archive)
@@ -170,4 +184,26 @@ func GetTarSize(dat []byte) (int, error) {
 	}
 
 	return tr.ReadBytes(), err
+}
+
+// detectCompressionType determines the compression type based on magic bytes.
+func detectCompressionType(dat []byte) CompressionType {
+	if len(dat) < 3 {
+		return Unknown
+	}
+	switch {
+	case bytes.HasPrefix(dat, []byte{0x1f, 0x8b}): // Gzip
+		return Gzip
+	case bytes.HasPrefix(dat, []byte{0xfd, '7', 'z', 'X', 'Z'}): // XZ
+		return Xz
+	case bytes.HasPrefix(dat, []byte{'B', 'Z', 'h'}): // Bzip2
+		return Bzip2
+	default:
+		return Unknown
+	}
+}
+
+// IsCompressed checks if the provided archive is compressed.
+func IsCompressed(dat []byte) bool {
+	return detectCompressionType(dat) != Unknown
 }

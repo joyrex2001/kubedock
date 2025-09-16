@@ -17,7 +17,7 @@ import (
 )
 
 // CopyToContainer will copy given (tar) archive to given path of the container.
-func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, target string) error {
+func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, target string, compressed bool) error {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -29,12 +29,17 @@ func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, ta
 
 	klog.Infof("copy archive to %s:%s", tainr.ShortID, target)
 
+	cmpflag := ""
+	if compressed {
+		cmpflag = "z"
+	}
+
 	return exec.RemoteCmd(exec.Request{
 		Client:     in.cli,
 		RestConfig: in.cfg,
 		Pod:        *pod,
 		Container:  "main",
-		Cmd:        []string{"tar", "-xf", "-", "-C", target},
+		Cmd:        []string{"tar", "-x" + cmpflag + "f", "-", "-C", target},
 		Stdin:      reader,
 	})
 }

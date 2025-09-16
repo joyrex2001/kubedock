@@ -54,4 +54,8 @@ func TestPackFolder(t *testing.T) {
 	if csz != rsz {
 		t.Errorf("GetTarSize returns %d instead of %d bytes", csz, rsz)
 	}
+
+	if IsCompressed(dat[:5]) {
+		t.Error("IsCompressed returns that archive is compressed, expected uncompressed")
+	}
 }

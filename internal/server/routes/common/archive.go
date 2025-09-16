@@ -81,7 +81,7 @@ func PutArchive(cr *ContextRouter, c *gin.Context) {
 		writer.Close()
 	}()
 
-	if err := cr.Backend.CopyToContainer(tainr, reader, path); err != nil {
+	if err := cr.Backend.CopyToContainer(tainr, reader, path, tar.IsCompressed(archive[:5])); err != nil {
 		httputil.Error(c, http.StatusInternalServerError, err)
 		return
 	}

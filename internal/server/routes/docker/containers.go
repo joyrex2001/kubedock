@@ -71,7 +71,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 			}
 		}
 	}
-	
+
 	net := in.HostConfig.NetworkMode
 	if net != "" && net != "default" {
 		klog.V(5).Infof("NetworkMode != '', connecting container to network: %s", net)

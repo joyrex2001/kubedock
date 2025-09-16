@@ -27,7 +27,7 @@ type Backend interface {
 	DeleteOlderThan(time.Duration) error
 	WatchDeleteContainer(*types.Container) (chan struct{}, error)
 	CopyFromContainer(*types.Container, string, io.Writer) error
-	CopyToContainer(*types.Container, io.Reader, string) error
+	CopyToContainer(*types.Container, io.Reader, string, bool) error
 	GetFileModeInContainer(tainr *types.Container, path string) (fs.FileMode, error)
 	FileExistsInContainer(tainr *types.Container, path string) (bool, error)
 	ExecContainer(*types.Container, *types.Exec, io.Reader, io.Writer) (int, error)

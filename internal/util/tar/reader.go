@@ -2,7 +2,6 @@ package tar
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
 	"io"
@@ -33,16 +32,16 @@ func NewReader(reader io.Reader) (r *Reader, err error) {
 		concatReader: NewConcatReader(first5Bytes, reader),
 	}
 	switch detectCompressionType(first5Bytes) {
-	case "gzip":
+	case Gzip:
 		zr, err := gzip.NewReader(r.concatReader)
 		if err != nil {
 			return nil, err
 		}
 		r.close = zr.Close
 		r.tr = tar.NewReader(zr)
-	case "bzip2":
+	case Bzip2:
 		r.tr = tar.NewReader(bzip2.NewReader(r.concatReader))
-	case "xz":
+	case Xz:
 		xzr, err := xz.NewReader(r.concatReader)
 		if err != nil {
 			return nil, err
@@ -94,21 +93,4 @@ func (r *Reader) Close() error {
 		return r.close()
 	}
 	return nil
-}
-
-// detectCompressionType determines the compression type based on magic bytes.
-func detectCompressionType(data []byte) string {
-	if len(data) < 3 {
-		return "unknown"
-	}
-	switch {
-	case bytes.HasPrefix(data, []byte{0x1f, 0x8b}): // Gzip
-		return "gzip"
-	case bytes.HasPrefix(data, []byte{0xfd, '7', 'z', 'X', 'Z'}): // XZ
-		return "xz"
-	case bytes.HasPrefix(data, []byte{'B', 'Z', 'h'}): // Bzip2
-		return "bzip2"
-	default:
-		return "unknown"
-	}
 }
