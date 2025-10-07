@@ -10,7 +10,7 @@ import (
 )
 
 func helloServer(host string, port int, stop chan struct{}) error {
-	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
+	l, err := net.Listen("tcp", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func helloServer(host string, port int, stop chan struct{}) error {
 }
 
 func callServer(host string, port int) (string, error) {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
+	conn, err := net.Dial("tcp", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
 	if err != nil {
 		return "", err
 	}
@@ -142,6 +142,42 @@ func TestProxyNotReady(t *testing.T) {
 	<-time.After(time.Second)
 
 	res, err = callServer("127.0.0.1", 30590)
+	if err != nil {
+		t.Errorf("unexpected error calling helloServer via proxy: %s", err)
+	}
+
+	if res != "Hello!\n" {
+		t.Errorf("unexpected answer calling helloServer via proxy: %s", res)
+	}
+
+	stopP <- struct{}{}
+	stopS <- struct{}{}
+}
+
+func TestProxyIPv6Normal(t *testing.T) {
+	stopP := make(chan struct{}, 1)
+	req := Request{
+		LocalPort:  30690,
+		RemoteIP:   "::1",
+		RemotePort: 30691,
+		StopCh:     stopP,
+		MaxRetry:   2,
+	}
+
+	if err := Proxy(req); err != nil {
+		t.Errorf("unexpected error starting proxy: %s", err)
+	}
+
+	stopS := make(chan struct{}, 1)
+	go func() {
+		if err := helloServer("::1", 30691, stopS); err != nil {
+			t.Errorf("unexpected error running helloServer: %s", err)
+		}
+	}()
+
+	<-time.After(time.Second)
+
+	res, err := callServer("::1", 30690)
 	if err != nil {
 		t.Errorf("unexpected error calling helloServer via proxy: %s", err)
 	}

@@ -32,7 +32,7 @@ type Request struct {
 // based on: https://gist.github.com/vmihailenco/1380352
 func Proxy(req Request) error {
 	local := fmt.Sprintf("0.0.0.0:%d", req.LocalPort)
-	remote := fmt.Sprintf("%s:%d", req.RemoteIP, req.RemotePort)
+	remote := net.JoinHostPort(req.RemoteIP, fmt.Sprintf("%d", req.RemotePort))
 
 	klog.Infof("start reverse-proxy %s->%s", local, remote)
 
