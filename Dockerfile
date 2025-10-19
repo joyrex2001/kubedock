@@ -2,7 +2,7 @@
 ## Build kubedock ## ----------------------------------------------------------
 ####################
 
-FROM docker.io/golang:1.24 AS kubedock
+FROM docker.io/golang:1.25 AS kubedock
 
 ARG CODE=github.com/joyrex2001/kubedock
 

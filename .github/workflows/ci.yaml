@@ -6,6 +6,10 @@ on:
     tags: [ "**" ]
   pull_request:
 
+env:
+  # Golang version to use across CI steps
+  GOLANG_VERSION: '1.25.3'
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -14,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: ${{ env.GOLANG_VERSION }}
       - name: Run unit tests
         run: make test
 
@@ -27,7 +31,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: ${{ env.GOLANG_VERSION }}
       - name: Install dependencies
         run: make deps
       - name: Cross compile
