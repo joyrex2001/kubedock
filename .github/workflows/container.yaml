@@ -3,10 +3,10 @@ name: Container Image CI
 on:
   push:
     branches:
-      - main
       - master
-    tags:
-      - '*.*.*'
+  release:
+    types:
+      - published
 
 jobs:
   docker:
