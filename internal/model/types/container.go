@@ -44,6 +44,10 @@ type Container struct {
 	Failed         bool
 	Stopped        bool
 	Killed         bool
+	Tty            bool
+	AttachStdin    bool
+	AttachStdout   bool
+	AttachStderr   bool
 	Created        time.Time
 	Finished       time.Time
 }

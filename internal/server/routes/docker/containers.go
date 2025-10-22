@@ -53,6 +53,10 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		Binds:        in.HostConfig.Binds,
 		Mounts:       mounts,
 		PreArchives:  []types.PreArchive{},
+		Tty:          in.TTY,
+		AttachStdin:  in.AttachStdin,
+		AttachStdout: in.AttachStdout,
+		AttachStderr: in.AttachStderr,
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {

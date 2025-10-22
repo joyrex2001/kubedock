@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -191,14 +191,15 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	}
 
 	stdin, _ := strconv.ParseBool(c.Query("stdin"))
-	if stdin {
-		c.Writer.WriteHeader(http.StatusNotImplemented)
-		return
-	}
 	stdout, _ := strconv.ParseBool(c.Query("stdout"))
 	stderr, _ := strconv.ParseBool(c.Query("stderr"))
-	if !stdout || !stderr {
-		klog.Warningf("Ignoring stdout/stderr filtering")
+	stream, _ := strconv.ParseBool(c.Query("stream"))
+	// TTY is not a query param available in the containerAttachRequest so it is retrieved from the containerCreate req
+	tty := tainr.Tty
+
+	if !stream {
+		c.Writer.WriteHeader(http.StatusNoContent)
+		return
 	}
 
 	if !tainr.Running && !tainr.Completed {
@@ -206,12 +207,6 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
-	}
-
-	stream, _ := strconv.ParseBool(c.Query("stream"))
-	if !stream {
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
 	}
 
 	r := c.Request
@@ -229,14 +224,37 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
 
-	count := uint64(100)
-	logOpts := backend.LogOptions{Follow: true, TailLines: &count}
-	if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
-		klog.V(3).Infof("error retrieving logs: %s", err)
+	go func() {
+		<-stop
+	}()
+
+	err = cr.Backend.AttachContainer(
+		tainr,
+		func() io.Reader {
+			if stdin {
+				return in
+			}
+			return nil
+		}(),
+		func() io.Writer {
+			if stdout {
+				return out
+			}
+			return nil
+		}(),
+		func() io.Writer {
+			if stderr {
+				return out
+			}
+			return nil
+		}(),
+		tty,
+	)
+	if err != nil {
+		klog.Errorf("attach error: %v", err)
 	}
 
 	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
-	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 }
 
 // ContainerResize - resize the tty for a container.
