@@ -113,6 +113,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"Id": tainr.ID,
+		"Warnings": []string{},
 	})
 }
 
