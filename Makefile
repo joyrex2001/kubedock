@@ -1,14 +1,18 @@
-VERSION=$$(git describe --tags 2>/dev/null || echo 'latest') 
-LDFLAGS="-X github.com/joyrex2001/kubedock/internal/config.Date=`date -u +%Y%m%d-%H%M%S`  \
-         -X github.com/joyrex2001/kubedock/internal/config.Build=`git rev-list -1 HEAD`   \
-         -X github.com/joyrex2001/kubedock/internal/config.Version=$(VERSION) \
-         -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:$(VERSION)"
+VERSION := $(shell git describe --tags 2>/dev/null || echo 'latest')
+DATE := $(shell date -u +%Y%m%d-%H%M%S)
+COMMIT := $(shell git rev-list -1 HEAD)
+
+LDFLAGS := "-s -w \
+	-X github.com/joyrex2001/kubedock/internal/config.Date=$(DATE) \
+	-X github.com/joyrex2001/kubedock/internal/config.Build=$(COMMIT) \
+	-X github.com/joyrex2001/kubedock/internal/config.Version=$(VERSION) \
+	-X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:$(VERSION)"
 
 run:
 	CGO_ENABLED=0 go run main.go server -P -v 2 --port-forward
 
 build:
-	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o kubedock
+	CGO_ENABLED=0 go build -trimpath -ldflags $(LDFLAGS) -o kubedock
 
 gox:
 	CGO_ENABLED=0 gox -os="linux darwin windows" -arch="amd64" \
