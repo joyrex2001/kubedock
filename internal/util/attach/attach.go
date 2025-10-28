@@ -46,7 +46,7 @@ func RemoteAttach(req Request) error {
 		Stdin:     req.Stdin != nil,
 		Stdout:    req.Stdout != nil,
 		Stderr:    req.Stderr != nil,
-		TTY:       req.Stdin != nil && req.TTY,
+		TTY:       req.TTY,
 	}, scheme.ParameterCodec)
 
 	exec, err := remotecommand.NewSPDYExecutor(req.RestConfig, "POST", r.URL())

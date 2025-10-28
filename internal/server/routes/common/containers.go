@@ -190,7 +190,9 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	stdin, _ := strconv.ParseBool(c.Query("stdin"))
+	// Fallback on settings when container is created
+	stdinParam, _ := strconv.ParseBool(c.Query("stdin"))
+	stdin := tainr.OpenStdin || stdinParam
 	stdout, _ := strconv.ParseBool(c.Query("stdout"))
 	stderr, _ := strconv.ParseBool(c.Query("stderr"))
 	stream, _ := strconv.ParseBool(c.Query("stream"))
@@ -213,47 +215,73 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	w := c.Writer
 	w.WriteHeader(http.StatusOK)
 
-	in, out, err := httputil.HijackConnection(w)
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("hijacking not supported"))
+		return
+	}
+
+	conn, _, err := hj.Hijack()
 	if err != nil {
 		klog.Errorf("error during hijack connection: %s", err)
 		return
 	}
+
+	// Now conn is both your reader and writer
+	in := conn
+	out := conn
+
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
+	attachDone := make(chan struct{}, 1)
 
+	// Start streaming to/from the container
 	go func() {
-		<-stop
+		defer close(attachDone)
+		err := cr.Backend.AttachContainer(
+			tainr,
+			func() io.Reader {
+				if stdin {
+					return in
+				}
+				return nil
+			}(),
+			func() io.Writer {
+				if stdout {
+					return out
+				}
+				return nil
+			}(),
+			func() io.Writer {
+				if stderr {
+					// Docker expects stderr merged if TTY is enabled
+					if tty {
+						return out
+					}
+					return out // or multiplex if you implement it separately
+				}
+				return nil
+			}(),
+			tty,
+		)
+		if err != nil {
+			klog.Errorf("attach error: %v", err)
+		}
 	}()
 
-	err = cr.Backend.AttachContainer(
-		tainr,
-		func() io.Reader {
-			if stdin {
-				return in
-			}
-			return nil
-		}(),
-		func() io.Writer {
-			if stdout {
-				return out
-			}
-			return nil
-		}(),
-		func() io.Writer {
-			if stderr {
-				return out
-			}
-			return nil
-		}(),
-		tty,
-	)
-	if err != nil {
-		klog.Errorf("attach error: %v", err)
+	// Wait until container detach or attach completes
+	select {
+	case <-stop:
+		klog.Infof("detach signal received for container %s", tainr.ID)
+	case <-attachDone:
+		klog.Infof("attach session finished for container %s", tainr.ID)
 	}
 
+	tainr.SignalDetach()
+	// Cleanup and notify events
 	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
 }
 
