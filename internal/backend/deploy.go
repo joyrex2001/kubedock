@@ -94,6 +94,8 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 	container.Env = tainr.GetEnvVar()
 	container.Ports = in.getContainerPorts(tainr)
 	container.ImagePullPolicy = pulpol
+	container.TTY = tainr.Tty
+	container.Stdin = tainr.OpenStdin
 
 	reqlimits, err := tainr.GetResourceRequirements(container.Resources)
 	if err != nil {

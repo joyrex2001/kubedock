@@ -44,6 +44,8 @@ type Container struct {
 	Failed         bool
 	Stopped        bool
 	Killed         bool
+	Tty            bool
+	OpenStdin      bool
 	Created        time.Time
 	Finished       time.Time
 }
@@ -511,6 +513,7 @@ func (co *Container) AddAttachChannel(stop chan struct{}) {
 
 // SignalDetach will signal all stop channels.
 func (co *Container) SignalDetach() {
+	klog.Infof("Detaching container: %s", co.ID)
 	for _, stop := range co.AttachChannels {
 		stop <- struct{}{}
 		close(stop)

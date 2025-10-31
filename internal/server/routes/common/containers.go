@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
-	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -190,15 +190,18 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	stdin, _ := strconv.ParseBool(c.Query("stdin"))
-	if stdin {
-		c.Writer.WriteHeader(http.StatusNotImplemented)
-		return
-	}
+	// Fallback on settings when container is created
+	stdinParam, _ := strconv.ParseBool(c.Query("stdin"))
+	stdin := tainr.OpenStdin || stdinParam
 	stdout, _ := strconv.ParseBool(c.Query("stdout"))
 	stderr, _ := strconv.ParseBool(c.Query("stderr"))
-	if !stdout || !stderr {
-		klog.Warningf("Ignoring stdout/stderr filtering")
+	stream, _ := strconv.ParseBool(c.Query("stream"))
+	// TTY is not a query param available in the containerAttachRequest so it is retrieved from the containerCreate req
+	tty := tainr.Tty
+
+	if !stream {
+		c.Writer.WriteHeader(http.StatusNoContent)
+		return
 	}
 
 	if !tainr.Running && !tainr.Completed {
@@ -208,35 +211,78 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 		}
 	}
 
-	stream, _ := strconv.ParseBool(c.Query("stream"))
-	if !stream {
-		c.Writer.WriteHeader(http.StatusNoContent)
-		return
-	}
-
 	r := c.Request
 	w := c.Writer
 	w.WriteHeader(http.StatusOK)
 
-	in, out, err := httputil.HijackConnection(w)
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("hijacking not supported"))
+		return
+	}
+
+	conn, _, err := hj.Hijack()
 	if err != nil {
 		klog.Errorf("error during hijack connection: %s", err)
 		return
 	}
+
+	// Now conn is both your reader and writer
+	in := conn
+	out := conn
+
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
+	attachDone := make(chan struct{}, 1)
 
-	count := uint64(100)
-	logOpts := backend.LogOptions{Follow: true, TailLines: &count}
-	if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
-		klog.V(3).Infof("error retrieving logs: %s", err)
+	// Start streaming to/from the container
+	go func() {
+		defer close(attachDone)
+		err := cr.Backend.AttachContainer(
+			tainr,
+			func() io.Reader {
+				if stdin {
+					return in
+				}
+				return nil
+			}(),
+			func() io.Writer {
+				if stdout {
+					return out
+				}
+				return nil
+			}(),
+			func() io.Writer {
+				if stderr {
+					// Docker expects stderr merged if TTY is enabled
+					if tty {
+						return out
+					}
+					return out // or multiplex if you implement it separately
+				}
+				return nil
+			}(),
+			tty,
+		)
+		if err != nil {
+			klog.Errorf("attach error: %v", err)
+		}
+	}()
+
+	// Wait until container detach or attach completes
+	select {
+	case <-stop:
+		klog.Infof("detach signal received for container %s", tainr.ID)
+	case <-attachDone:
+		klog.Infof("attach session finished for container %s", tainr.ID)
 	}
 
+	tainr.SignalDetach()
+	// Cleanup and notify events
 	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
-	cr.Events.Publish(tainr.ID, events.Container, events.Die)
 }
 
 // ContainerResize - resize the tty for a container.

@@ -14,6 +14,8 @@ type ContainerCreateRequest struct {
 	User          string                 `json:"User"`
 	HostConfig    HostConfig             `json:"HostConfig"`
 	NetworkConfig NetworkingConfig       `json:"NetworkingConfig"`
+	TTY           bool                   `json:"Tty"`
+	OpenStdin     bool                   `json:"OpenStdin"`
 }
 
 // NetworkCreateRequest represents the json structure that

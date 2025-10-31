@@ -53,6 +53,8 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		Binds:        in.HostConfig.Binds,
 		Mounts:       mounts,
 		PreArchives:  []types.PreArchive{},
+		Tty:          in.TTY,
+		OpenStdin:    in.OpenStdin,
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
@@ -112,7 +114,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	cr.Events.Publish(tainr.ID, events.Container, events.Create)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": tainr.ID,
+		"Id":       tainr.ID,
 		"Warnings": []string{},
 	})
 }
