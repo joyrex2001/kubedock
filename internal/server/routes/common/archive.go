@@ -86,9 +86,7 @@ func PutArchive(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "archive copied succesfully to container",
-	})
+	c.Status(http.StatusOK)
 }
 
 // HeadArchive - get information about files in a container.
