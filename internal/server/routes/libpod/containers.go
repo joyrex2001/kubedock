@@ -77,6 +77,8 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		ExposedPorts: map[string]interface{}{},
 		ImagePorts:   map[string]interface{}{},
 		Labels:       in.Labels,
+		Tty:          in.Terminal,
+		OpenStdin:    in.Stdin,
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
@@ -118,7 +120,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	cr.Events.Publish(tainr.ID, events.Container, events.Create)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"Id": tainr.ID,
+		"Id":       tainr.ID,
 		"Warnings": []string{},
 	})
 }
