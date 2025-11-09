@@ -13,6 +13,8 @@ type ContainerCreateRequest struct {
 	PortMappings []PortMapping               `json:"portmappings"`
 	Network      map[string]NetworksProperty `json:"Networks"`
 	Mounts       []Mount                     `json:"mounts"`
+	Terminal     bool                        `json:"terminal"`
+	Stdin        bool                        `json:"Stdin"`
 }
 
 // PortMapping describes how to map a port into the container.
