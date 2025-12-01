@@ -4,6 +4,10 @@ on:
     types:
       - published
 
+env:
+  # Golang version to use across CI steps
+  GOLANG_VERSION: '1.25.3'
+  
 jobs:
   release:
     runs-on: ubuntu-latest
