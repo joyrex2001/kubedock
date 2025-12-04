@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/opencontainers/image-spec v1.1.1
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/time v0.14.0
