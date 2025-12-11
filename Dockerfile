@@ -25,7 +25,7 @@ RUN make test build \
 ## Final image ## ------------------------------------------------------------
 #################
 
-FROM scratch
+FROM docker.io/busybox:latest
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # Copy the compiled binary from the builder stage
