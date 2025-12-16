@@ -863,10 +863,36 @@ func TestMatch(t *testing.T) {
 			val:    "",
 			match:  true,
 		},
+		{
+			name:   "testymctestface",
+			labels: map[string]string{"some": "what"},
+			typ:    "name",
+			key:    "^testymctestface$", // Full name regex match
+			val:    "",
+			match:  true,
+		},
+		{
+			name:   "testymctestface",
+			labels: map[string]string{"some": "what"},
+			typ:    "name",
+			key:    "mctest", // Partial regex match
+			val:    "",
+			match:  true,
+		},
+		{
+			name:   "testymctestface",
+			labels: map[string]string{"some": "what"},
+			typ:    "name",
+			key:    "^nomatch$",
+			val:    "",
+			match:  false,
+		},
 	}
 	for i, tst := range tests {
 		in := &Container{Labels: tst.labels, Name: tst.name}
-		if in.Match(tst.typ, tst.key, tst.val) != tst.match {
+		if isMatch, err := in.Match(tst.typ, tst.key, tst.val); err != nil {
+			t.Errorf("failed test %d, with unexpected error: %v", i, err)
+		} else if isMatch != tst.match {
 			t.Errorf("failed test %d - match %v", i, tst.match)
 		}
 	}

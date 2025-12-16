@@ -539,18 +539,34 @@ func (co *Container) DisconnectNetwork(id string) error {
 }
 
 // Match will match given type with given key value pair.
-func (co *Container) Match(typ string, key string, val string) bool {
+func (co *Container) Match(typ string, key string, val string) (bool, error) {
 	if typ == "name" {
-		return co.Name == key
+		return co.nameMatch(key)
 	}
 	if typ != "label" {
-		return true
+		return true, nil
 	}
 	v, ok := co.Labels[key]
 	if !ok {
-		return false
+		return false, nil
 	}
-	return v == val
+	return v == val, nil
+}
+
+func (co *Container) nameMatch(key string) (bool, error) {
+	// Fast path, exact match
+	if co.Name == key {
+		return true, nil
+	}
+	// Fallback to regexp
+	match, err := regexp.MatchString(key, co.Name)
+	if err != nil {
+		return false, err
+	}
+	if match {
+		return true, nil
+	}
+	return false, nil
 }
 
 // StateString returns a string that describes the state.

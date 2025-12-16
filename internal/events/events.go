@@ -65,13 +65,13 @@ func (e *instance) Unsubscribe(id string) {
 }
 
 // Match will match given event filter conditions.
-func (m *Message) Match(typ string, key string, val string) bool {
+func (m *Message) Match(typ string, key string, val string) (bool, error) {
 	klog.V(5).Infof("match %s: %s = %s", typ, key, val)
 	if typ == Type {
-		return m.Type == key
+		return m.Type == key, nil
 	}
 	if m.Type == typ {
-		return m.ID == key
+		return m.ID == key, nil
 	}
-	return true
+	return true, nil
 }

@@ -10,10 +10,10 @@ type Request map[string]map[string]bool
 
 // Matcher is the interface for a Match method to test the filter.
 type Matcher interface {
-	Match(string, string, string) bool
+	Match(string, string, string) (bool, error)
 }
 
-// Filter is the instace of this filter object
+// Filter is the instance of this filter object
 type Filter struct {
 	filters map[string][]keyval
 }
@@ -81,14 +81,26 @@ func unmarshal(dat string, rq *Request) error {
 
 // Match will call the matcher function and test if the object matches the
 // given key values.
+// To match moby we need to
+// - OR the matching inside of each type filters
+// - AND the result of the above for each type
+// See https://github.com/moby/moby/blob/master/daemon/internal/filters/parse.go
 func (in *Filter) Match(matcher Matcher) bool {
-	res := true
 	for typ, filtrs := range in.filters {
+		foundMatch := false
 		for _, f := range filtrs {
-			if matcher.Match(typ, f.K, f.V) != f.P {
-				res = false
+			if isMatch, err := matcher.Match(typ, f.K, f.V); err != nil {
+				continue // follows the moby pattern, ignore erroneous filters altogether
+			} else if isMatch == f.P { // we found a match in this type filters
+				foundMatch = true
+				break // since we OR results of a type filters its safe to break here
 			}
 		}
+		// if any type doesn't have a match return false immediately
+		if !foundMatch {
+			return false
+		}
 	}
-	return res
+	// all types had a match
+	return true
 }
