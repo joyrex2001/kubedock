@@ -8,8 +8,8 @@ type matcher struct {
 	res bool
 }
 
-func (m *matcher) Match(t, k, v string) bool {
-	return m.res
+func (m *matcher) Match(t string, k string, v string) (bool, error) {
+	return m.res, nil
 }
 
 func TestFilter(t *testing.T) {
