@@ -63,6 +63,12 @@ OUTER:
 				continue OUTER
 			}
 		}
+		// skip already mapped ports (for idempotency)
+		for _, dst := range tainr.MappedPorts {
+			if dst == pp {
+				continue OUTER
+			}
+		}
 		addr, err := net.ResolveTCPAddr("tcp", "0.0.0.0:0")
 		if err != nil {
 			return err

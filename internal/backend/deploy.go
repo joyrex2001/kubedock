@@ -13,6 +13,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/watch"
@@ -153,8 +154,11 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		}
 	}
 
-	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.Background(), pod, metav1.CreateOptions{}); err != nil {
+	duplicateRequest := false
+	if _, err := in.cli.CoreV1().Pods(in.namespace).Create(context.Background(), pod, metav1.CreateOptions{}); err != nil && !errors.IsAlreadyExists(err) {
 		return DeployFailed, err
+	} else if errors.IsAlreadyExists(err) {
+		duplicateRequest = true
 	}
 
 	if tainr.HasVolumes() || tainr.HasPreArchives() {
@@ -172,7 +176,10 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		return DeployFailed, err
 	}
 
-	if err := in.createServices(tainr); err != nil {
+	// Since service names are not necessary unique and can collide between different containers, we should be smart
+	// on it's idempotency, so we only drop errors due to already existing kubernetes objects
+	// when we detect duplicate requests.
+	if err := in.createServices(tainr); err != nil && !(duplicateRequest && errors.IsAlreadyExists(err)) {
 		return state, err
 	}
 
@@ -467,6 +474,9 @@ func (in *instance) waitInitContainerRunning(tainr *types.Container, name string
 			if status.State.Running != nil {
 				return nil
 			}
+			if status.State.Terminated != nil && status.State.Terminated.ExitCode == 0 {
+				return nil
+			}
 		}
 		time.Sleep(time.Second)
 	}
@@ -504,7 +514,7 @@ func (in *instance) addSetupInitContainer(tainr *types.Container, pod *corev1.Po
 	return in.createSetupInitContainer(tainr)
 }
 
-// addVolumes will add an init-container "setup" and creates volumes and
+// addVolumes will add an init-container SetupInitContainerName and creates volumes and
 // volume mounts in both the init container and "main" container in order
 // to copy data before the container is started. If files are included,
 // rather than folders, it will create a configmap, and mounts the files
@@ -725,13 +735,21 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, files map[str
 // the running init container, and signal the init container when finished
 // with copying.
 func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
-	if err := in.waitInitContainerRunning(tainr, "setup", wait); err != nil {
+	if err := in.waitInitContainerRunning(tainr, SetupInitContainerName, wait); err != nil {
 		return err
 	}
 
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
 		return err
+	}
+
+	// Check if init container already completed - if so, skip copying
+	for _, status := range pod.Status.InitContainerStatuses {
+		if status.Name == SetupInitContainerName && status.State.Terminated != nil && status.State.Terminated.ExitCode == 0 {
+			klog.V(2).Infof("Init container %s already completed, skipping volume copy", SetupInitContainerName)
+			return nil
+		}
 	}
 
 	volumes := tainr.GetVolumeFolders()
@@ -748,7 +766,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 			Client:     in.cli,
 			RestConfig: in.cfg,
 			Pod:        *pod,
-			Container:  "setup",
+			Container:  SetupInitContainerName,
 			Cmd:        []string{"tar", "-xf", "-", "-C", dst},
 			Stdin:      reader,
 		}); err != nil {
@@ -756,7 +774,7 @@ func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 		}
 	}
 
-	return in.touchFileInContainer(tainr, "setup", "/tmp/done")
+	return in.touchFileInContainer(tainr, SetupInitContainerName, "/tmp/done")
 }
 
 // fileID will create an unique k8s compatible id to refer to the given file.
