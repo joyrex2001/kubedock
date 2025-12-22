@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"strconv"
@@ -358,6 +359,56 @@ func TestStartContainerAddsActiveDeadlineSeconds(t *testing.T) {
 	}
 }
 
+func TestStartContainerIdempotency(t *testing.T) {
+	// Test that calling StartContainer twice doesn't delete the pod
+	existingPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kubedock-test-abc123",
+			Namespace: "default",
+			Labels:    map[string]string{"kubedock.containerid": "abc123"},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			ContainerStatuses: []corev1.ContainerStatus{
+				{Name: "main", State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{}}},
+			},
+		},
+	}
+
+	kub := &instance{
+		namespace:   "default",
+		cli:         fake.NewSimpleClientset(existingPod),
+		podTemplate: &corev1.Pod{},
+		timeOut:     1,
+	}
+
+	container := &types.Container{
+		ID:       "rc752",
+		ShortID:  "abc123",
+		Name:     "test",
+		Networks: map[string]any{"bridge": true},
+	}
+
+	// Call StartContainer when pod already exists
+	state, err := kub.StartContainer(container)
+
+	// Should not return error
+	if err != nil {
+		t.Errorf("expected no error when pod exists, got: %s", err)
+	}
+
+	// Should return DeployRunning (not DeployFailed)
+	if state != DeployRunning {
+		t.Errorf("expected DeployRunning state, got: %d", state)
+	}
+
+	// Verify pod was NOT deleted
+	pods, _ := kub.cli.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
+	if len(pods.Items) != 1 {
+		t.Errorf("expected pod to still exist, but found %d pods", len(pods.Items))
+	}
+}
+
 func TestWaitReadyState(t *testing.T) {
 	tests := []struct {
 		in    *types.Container
@@ -529,6 +580,62 @@ func TestWaitInitContainerRunning(t *testing.T) {
 			name: "main",
 			in:   &types.Container{ID: "rc752", ShortID: "tr606", Name: "f1spirit"},
 			out:  true,
+		},
+		{ // init container already completed successfully - should be idempotent
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "kubedock-p6ehieta-igee4",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock.containerid": "completed"},
+					},
+					Status: corev1.PodStatus{
+						InitContainerStatuses: []corev1.ContainerStatus{
+							{
+								Name: "setup",
+								State: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 0,
+										Reason:   "Completed",
+									},
+								},
+							},
+						},
+					},
+				}),
+			},
+			name: "setup",
+			in:   &types.Container{ID: "completed", ShortID: "igee4", Name: "p6ehieta"},
+			out:  false, // Should return nil (no error) for completed init container
+		},
+		{ // init container terminated with error - should fail
+			kub: &instance{
+				namespace: "default",
+				cli: fake.NewSimpleClientset(&corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "kubedock-sihio2i-ew4oh",
+						Namespace: "default",
+						Labels:    map[string]string{"kubedock.containerid": "failed"},
+					},
+					Status: corev1.PodStatus{
+						InitContainerStatuses: []corev1.ContainerStatus{
+							{
+								Name: "setup",
+								State: corev1.ContainerState{
+									Terminated: &corev1.ContainerStateTerminated{
+										ExitCode: 1,
+										Reason:   "Error",
+									},
+								},
+							},
+						},
+					},
+				}),
+			},
+			name: "setup",
+			in:   &types.Container{ID: "failed", ShortID: "ew4oh", Name: "sihio2i"},
+			out:  true, // Should timeout (non-zero exit code not handled)
 		},
 	}
 
