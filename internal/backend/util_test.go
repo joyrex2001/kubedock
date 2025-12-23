@@ -145,3 +145,48 @@ func TestMapContainerTCPPortsSkipBoundPorts(t *testing.T) {
 		}
 	}
 }
+
+func TestMapContainerTCPPortsIdempotency(t *testing.T) {
+	// Test that calling MapContainerTCPPorts twice doesn't create duplicate mappings
+	kub := &instance{}
+
+	container := &types.Container{
+		ExposedPorts: map[string]interface{}{
+			"9042/tcp": 0,
+			"7000/tcp": 0,
+		},
+		MappedPorts: map[int]int{}, // Start empty
+	}
+
+	// First call - should map ports
+	if err := kub.MapContainerTCPPorts(container); err != nil {
+		t.Fatalf("first call failed: %v", err)
+	}
+
+	firstMappings := make(map[int]int)
+	for k, v := range container.MappedPorts {
+		firstMappings[k] = v
+	}
+
+	if len(firstMappings) != 2 {
+		t.Errorf("expected 2 mapped ports after first call, got %d", len(firstMappings))
+	}
+
+	// Second call - should be idempotent (no new mappings added)
+	if err := kub.MapContainerTCPPorts(container); err != nil {
+		t.Fatalf("second call failed: %v", err)
+	}
+
+	// Verify mappings didn't change
+	if len(container.MappedPorts) != 2 {
+		t.Errorf("expected 2 mapped ports after second call, got %d", len(container.MappedPorts))
+	}
+
+	// Verify exact same mappings (ports shouldn't have changed)
+	for k, v := range firstMappings {
+		if container.MappedPorts[k] != v {
+			t.Errorf("port mapping changed: expected %d->%d, got %d->%d",
+				k, v, k, container.MappedPorts[k])
+		}
+	}
+}
