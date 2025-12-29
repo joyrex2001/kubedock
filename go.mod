@@ -1,6 +1,6 @@
 module github.com/joyrex2001/kubedock
 
-go 1.25.3
+go 1.25.5
 
 require (
 	github.com/containers/image/v5 v5.36.2
