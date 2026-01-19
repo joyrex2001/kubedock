@@ -81,26 +81,16 @@ func unmarshal(dat string, rq *Request) error {
 
 // Match will call the matcher function and test if the object matches the
 // given key values.
-// To match moby we need to
-// - OR the matching inside of each type filters
-// - AND the result of the above for each type
-// See https://github.com/moby/moby/blob/master/daemon/internal/filters/parse.go
 func (in *Filter) Match(matcher Matcher) bool {
 	for typ, filtrs := range in.filters {
-		foundMatch := false
 		for _, f := range filtrs {
 			if isMatch, err := matcher.Match(typ, f.K, f.V); err != nil {
 				continue // follows the moby pattern, ignore erroneous filters altogether
-			} else if isMatch == f.P { // we found a match in this type filters
-				foundMatch = true
-				break // since we OR results of a type filters its safe to break here
+			} else if isMatch != f.P { // didn't match specified filter, reject
+				return false
 			}
 		}
-		// if any type doesn't have a match return false immediately
-		if !foundMatch {
-			return false
-		}
 	}
-	// all types had a match
+	// all filters had a match
 	return true
 }
