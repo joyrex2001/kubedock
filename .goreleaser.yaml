@@ -25,21 +25,11 @@ builds:
       - arm64
 
 dockers_v2:
-  - # IDs to filter the binaries/packages.
-    #
-    # Make sure to only include the IDs of binaries you want to `COPY` in your
-    # Dockerfile.
-    #
-    # If you include IDs that don't exist or are not available for the current
-    # architecture being built, the build of the image will be skipped.
-    ids:
-      - kubedock
-
-    images:
+  - images:
       - "ghcr.io/joyrex2001/kubedock"
 
     tags:
-      - "{{ .Version }}"
+      - "{{ .Tag }}"
       - "{{ if not .IsNightly }}latest{{ end }}"
 
     # Labels to be added to the image.
@@ -71,38 +61,6 @@ dockers_v2:
     platforms:
       - linux/amd64
       - linux/arm64
-
-    # Additional `--build-arg`s to be passed.
-    #
-    # Templates: allowed.
-    build_args:
-      FOO: bar
-
-    # Arbitrary flags to pass to the build command.
-    #
-    # Note: use this at your own risk.
-    # Note: flags must have the `=` sign between flag name and value.
-    #
-    # Templates: allowed.
-    flags:
-      - "--ulimit=10"
-
-    # Retry configuration.
-    retry:
-      # Attempts of retry.
-      #
-      # Default: 10.
-      attempts: 5
-
-      # Delay between retry attempts.
-      #
-      # Default: 10s.
-      delay: 5s
-
-      # Maximum delay between retry attempts.
-      #
-      # Default: 5m.
-      max_delay: 2m
 
 archives:
   - formats: [tar.gz]
