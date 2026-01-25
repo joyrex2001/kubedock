@@ -1,0 +1,132 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+dockers_v2:
+  - # IDs to filter the binaries/packages.
+    #
+    # Make sure to only include the IDs of binaries you want to `COPY` in your
+    # Dockerfile.
+    #
+    # If you include IDs that don't exist or are not available for the current
+    # architecture being built, the build of the image will be skipped.
+    ids:
+      - kubedock
+
+    images:
+      - "ghcr.io/joyrex2001/kubedock"
+
+    tags:
+      - "{{ .Version }}"
+      - "{{ if not .IsNightly }}latest{{ end }}"
+
+    # Labels to be added to the image.
+    #
+    # Items with empty keys or values will be ignored.
+    #
+    # Templates: allowed.
+    labels:
+      "org.opencontainers.image.description": "My software"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+
+    # Annotations to be added to the image.
+    #
+    # Items with empty keys or values will be ignored.
+    #
+    # Templates: allowed.
+    annotations:
+      "foo": "bar"
+      "project": "{{.ProjectName}}"
+
+    # Platforms to build.
+    #
+    # Default: [ linux/amd64 linux/arm64 ]
+    # Templates: allowed. (since v2.14)
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+    # Additional `--build-arg`s to be passed.
+    #
+    # Templates: allowed.
+    build_args:
+      FOO: bar
+
+    # Arbitrary flags to pass to the build command.
+    #
+    # Note: use this at your own risk.
+    # Note: flags must have the `=` sign between flag name and value.
+    #
+    # Templates: allowed.
+    flags:
+      - "--ulimit=10"
+
+    # Retry configuration.
+    retry:
+      # Attempts of retry.
+      #
+      # Default: 10.
+      attempts: 5
+
+      # Delay between retry attempts.
+      #
+      # Default: 10s.
+      delay: 5s
+
+      # Maximum delay between retry attempts.
+      #
+      # Default: 5m.
+      max_delay: 2m
+
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+# Disable changelog, that is maintained by ReleaseDrafter
+changelog:
+  disable: true
+
+# Disable creating release, that is maintained by ReleaseDrafter
+release:
+  disable: true
+
+# We don't add the source archive, that is by default added by to the GitHub release
+source:
+  enabled: false
