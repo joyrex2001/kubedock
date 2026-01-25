@@ -23,6 +23,13 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/joyrex2001/kubedock/internal/config.Date={{ .Now.Format "20060102-150405" }}
+        -X github.com/joyrex2001/kubedock/internal/config.Build={{ .FullCommit }}
+        -X github.com/joyrex2001/kubedock/internal/config.Version={{ .Tag }}
+        -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:{{ .Version }}
 
 dockers_v2:
   - images:
@@ -30,34 +37,17 @@ dockers_v2:
 
     tags:
       - "{{ .Tag }}"
+      # TODO figure the following:
       - "{{ if not .IsNightly }}latest{{ end }}"
 
-    # Labels to be added to the image.
-    #
-    # Items with empty keys or values will be ignored.
-    #
-    # Templates: allowed.
     labels:
-      "org.opencontainers.image.description": "My software"
+      "org.opencontainers.image.description": "Kubedock is a minimal implementation of the docker api that will orchestrate containers on a Kubernetes cluster, rather than running containers locally."
       "org.opencontainers.image.created": "{{.Date}}"
       "org.opencontainers.image.name": "{{.ProjectName}}"
       "org.opencontainers.image.revision": "{{.FullCommit}}"
       "org.opencontainers.image.version": "{{.Version}}"
       "org.opencontainers.image.source": "{{.GitURL}}"
 
-    # Annotations to be added to the image.
-    #
-    # Items with empty keys or values will be ignored.
-    #
-    # Templates: allowed.
-    annotations:
-      "foo": "bar"
-      "project": "{{.ProjectName}}"
-
-    # Platforms to build.
-    #
-    # Default: [ linux/amd64 linux/arm64 ]
-    # Templates: allowed. (since v2.14)
     platforms:
       - linux/amd64
       - linux/arm64
