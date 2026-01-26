@@ -33,6 +33,5 @@ cover:
 deps:
 	go install golang.org/x/lint/golint@latest
 	go install github.com/kisielk/errcheck@latest
-	go install github.com/tcnksm/ghr@latest
 
 .PHONY: run docker clean cloc fmt test lint cover deps
