@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-  release:
-    types:
-      - published
 
 jobs:
   docker:
@@ -18,7 +15,12 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
-
+      # Build the binaries using goreleaser
+      - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        with:
+          args: build --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
@@ -32,26 +34,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set image tags
-        id: vars
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-            echo "GITHUB_TAG=ghcr.io/${GITHUB_REPOSITORY}:${TAG}" >> $GITHUB_ENV
-            echo "DOCKERHUB_TAG=joyrex2001/kubedock:${TAG}" >> $GITHUB_ENV
-          else
-            echo "GITHUB_TAG=ghcr.io/${GITHUB_REPOSITORY}:latest" >> $GITHUB_ENV
-            echo "DOCKERHUB_TAG=joyrex2001/kubedock:latest" >> $GITHUB_ENV
-          fi
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - name: Build Container image
-        run: |
-          docker build . -t ${{ env.GITHUB_TAG }} -t ${{ env.DOCKERHUB_TAG }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Push Container image to GitHub Container Registry
-        run: |
-          docker push ${{ env.GITHUB_TAG }}
-
-      - name: Push Container image to Docker Hub
-        run: |
-          docker push ${{ env.DOCKERHUB_TAG }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/joyrex2001/kubedock:latest
+            joyrex2001/kubedock:latest
