@@ -1,8 +1,11 @@
 run:
 	CGO_ENABLED=0 go run main.go server -P -v 2 --port-forward
 
-docker:
-	docker build . -t joyrex2001/kubedock:latest
+# Will build binaries using GoReleaser.
+# Install GoReleaser on forehand. https://goreleaser.com/install/
+# For more information about the commands, read the docs https://goreleaser.com/customization/
+build:
+	goreleaser build --clean --snapshot
 
 clean:
 	rm -f kubedock
@@ -34,4 +37,4 @@ deps:
 	go install golang.org/x/lint/golint@latest
 	go install github.com/kisielk/errcheck@latest
 
-.PHONY: run docker clean cloc fmt test lint cover deps
+.PHONY: run build clean cloc fmt test lint cover deps
