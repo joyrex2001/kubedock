@@ -1,0 +1,71 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - >-
+        -s -w
+        -X github.com/joyrex2001/kubedock/internal/config.Date={{ .Now.Format "20060102-150405" }}
+        -X github.com/joyrex2001/kubedock/internal/config.Build={{ .FullCommit }}
+        -X github.com/joyrex2001/kubedock/internal/config.Version={{ .Version }}
+        -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:{{ .Version }}
+
+dockers_v2:
+  - images:
+      - "ghcr.io/joyrex2001/kubedock"
+      - "joyrex2001/kubedock"
+
+    tags:
+      - "{{ .Version }}"
+      - "latest"
+
+    labels:
+      "org.opencontainers.image.description": "Kubedock is a minimal implementation of the docker api that will orchestrate containers on a Kubernetes cluster, rather than running containers locally."
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+archives:
+  - formats: [tar.gz]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+# Disable changelog, that is maintained by ReleaseDrafter
+changelog:
+  disable: true
+
+# Disable creating release, that is maintained by ReleaseDrafter
+release:
+  disable: true
+
+# We don't add the source archive, that is by default added by to the GitHub release
+source:
+  enabled: false

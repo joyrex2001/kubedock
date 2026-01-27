@@ -1,25 +1,11 @@
-VERSION := $(shell git describe --tags 2>/dev/null || echo 'latest')
-DATE := $(shell date -u +%Y%m%d-%H%M%S)
-COMMIT := $(shell git rev-list -1 HEAD)
-
-LDFLAGS := "-s -w \
-	-X github.com/joyrex2001/kubedock/internal/config.Date=$(DATE) \
-	-X github.com/joyrex2001/kubedock/internal/config.Build=$(COMMIT) \
-	-X github.com/joyrex2001/kubedock/internal/config.Version=$(VERSION) \
-	-X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:$(VERSION)"
-
 run:
 	CGO_ENABLED=0 go run main.go server -P -v 2 --port-forward
 
+# Will build binaries using GoReleaser.
+# Install GoReleaser on forehand. https://goreleaser.com/install/
+# For more information about the commands, read the docs https://goreleaser.com/customization/
 build:
-	CGO_ENABLED=0 go build -trimpath -ldflags $(LDFLAGS) -o kubedock
-
-gox:
-	CGO_ENABLED=0 gox -os="linux darwin windows" -arch="amd64" \
-		-output="dist/kubedock_`git describe --tags`_{{.OS}}_{{.Arch}}" -ldflags $(LDFLAGS)
-
-docker:
-	docker build . -t joyrex2001/kubedock:latest
+	goreleaser build --clean --snapshot
 
 clean:
 	rm -f kubedock
@@ -50,7 +36,5 @@ cover:
 deps:
 	go install golang.org/x/lint/golint@latest
 	go install github.com/kisielk/errcheck@latest
-	go install github.com/mitchellh/gox@latest
-	go install github.com/tcnksm/ghr@latest
 
-.PHONY: run build gox docker clean cloc fmt test lint cover deps
+.PHONY: run build clean cloc fmt test lint cover deps
