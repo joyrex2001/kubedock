@@ -19,8 +19,8 @@ builds:
         -s -w
         -X github.com/joyrex2001/kubedock/internal/config.Date={{ .Now.Format "20060102-150405" }}
         -X github.com/joyrex2001/kubedock/internal/config.Build={{ .FullCommit }}
-        -X github.com/joyrex2001/kubedock/internal/config.Version={{ .Version }}
-        -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:{{ .Version }}
+        -X github.com/joyrex2001/kubedock/internal/config.Version={{ if .IsSnapshot }}latest{{ else }}{{ .Version }}{{ end }}
+        -X github.com/joyrex2001/kubedock/internal/config.Image=joyrex2001/kubedock:{{ if .IsSnapshot }}latest{{ else }}{{ .Version }}{{ end }}
 
 dockers_v2:
   - images:
