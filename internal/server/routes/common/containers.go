@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog"
 
+	"github.com/joyrex2001/kubedock/internal/backend"
 	"github.com/joyrex2001/kubedock/internal/events"
 	"github.com/joyrex2001/kubedock/internal/server/httputil"
 )
@@ -236,6 +237,19 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 
 	stop := make(chan struct{}, 1)
 	tainr.AddAttachChannel(stop)
+
+	defer tainr.SignalDetach()
+	defer cr.Events.Publish(tainr.ID, events.Container, events.Detach)
+
+	if tainr.Completed || tainr.Stopped {
+		count := uint64(100)
+		logOpts := backend.LogOptions{Follow: true, TailLines: &count}
+		if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
+			klog.V(3).Infof("error retrieving logs: %s", err)
+		}
+		return
+	}
+
 	attachDone := make(chan struct{}, 1)
 
 	// Start streaming to/from the container
@@ -279,10 +293,6 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	case <-attachDone:
 		klog.Infof("attach session finished for container %s", tainr.ID)
 	}
-
-	tainr.SignalDetach()
-	// Cleanup and notify events
-	cr.Events.Publish(tainr.ID, events.Container, events.Detach)
 }
 
 // ContainerResize - resize the tty for a container.
