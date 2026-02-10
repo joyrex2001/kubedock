@@ -216,22 +216,11 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	w := c.Writer
 	w.WriteHeader(http.StatusOK)
 
-	hj, ok := w.(http.Hijacker)
-	if !ok {
-		httputil.Error(c, http.StatusInternalServerError, fmt.Errorf("hijacking not supported"))
-		return
-	}
-
-	conn, _, err := hj.Hijack()
+	in, out, err := httputil.HijackConnection(w)
 	if err != nil {
 		klog.Errorf("error during hijack connection: %s", err)
 		return
 	}
-
-	// Now conn is both your reader and writer
-	in := conn
-	out := conn
-
 	defer httputil.CloseStreams(in, out)
 	httputil.UpgradeConnection(r, out)
 
@@ -244,8 +233,14 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	if tainr.Completed || tainr.Stopped {
 		count := uint64(100)
 		logOpts := backend.LogOptions{Follow: true, TailLines: &count}
-		if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
-			klog.V(3).Infof("error retrieving logs: %s", err)
+		if tty {
+			if err := cr.Backend.GetLogsRaw(tainr, &logOpts, stop, out); err != nil {
+				klog.V(3).Infof("error retrieving logs: %s", err)
+			}
+		} else {
+			if err := cr.Backend.GetLogs(tainr, &logOpts, stop, out); err != nil {
+				klog.V(3).Infof("error retrieving logs: %s", err)
+			}
 		}
 		return
 	}

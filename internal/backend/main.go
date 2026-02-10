@@ -33,6 +33,7 @@ type Backend interface {
 	FileExistsInContainer(tainr *types.Container, path string) (bool, error)
 	ExecContainer(*types.Container, *types.Exec, io.Reader, io.Writer) (int, error)
 	GetLogs(*types.Container, *LogOptions, chan struct{}, io.Writer) error
+	GetLogsRaw(*types.Container, *LogOptions, chan struct{}, io.Writer) error
 	GetImageExposedPorts(string) (map[string]struct{}, error)
 }
 

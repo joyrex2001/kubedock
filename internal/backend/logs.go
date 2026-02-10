@@ -25,8 +25,19 @@ type LogOptions struct {
 	TailLines *uint64
 }
 
-// GetLogs will write the logs for given container to given writer.
+// GetLogs will write the logs for given container to given writer using stdout/stderr multiplexing.
 func (in *instance) GetLogs(tainr *types.Container, opts *LogOptions, stop chan struct{}, w io.Writer) error {
+	out := ioproxy.New(w, ioproxy.Stdout, &sync.Mutex{})
+	defer out.Flush()
+	return in.getLogs(tainr, opts, stop, out)
+}
+
+// GetLogsRaw will write the unprocessed logs for given container to given writer.
+func (in *instance) GetLogsRaw(tainr *types.Container, opts *LogOptions, stop chan struct{}, w io.Writer) error {
+	return in.getLogs(tainr, opts, stop, w)
+}
+
+func (in *instance) getLogs(tainr *types.Container, opts *LogOptions, stop chan struct{}, out io.Writer) error {
 	options := newPodLogOptions(opts)
 
 	_, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
@@ -51,8 +62,6 @@ func (in *instance) GetLogs(tainr *types.Container, opts *LogOptions, stop chan 
 		}()
 	}
 
-	out := ioproxy.New(w, ioproxy.Stdout, &sync.Mutex{})
-	defer out.Flush()
 	for {
 		// close when container is done
 		select {
