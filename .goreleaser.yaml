@@ -62,10 +62,6 @@ archives:
 changelog:
   disable: true
 
-# Disable creating release, that is maintained by ReleaseDrafter
-release:
-  disable: true
-
 # We don't add the source archive, that is by default added by to the GitHub release
 source:
   enabled: false
