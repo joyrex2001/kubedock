@@ -65,3 +65,6 @@ changelog:
 # We don't add the source archive, that is by default added by to the GitHub release
 source:
   enabled: false
+
+release:
+  name_template: "kubedock-{{.Version}}"
