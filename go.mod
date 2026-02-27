@@ -14,9 +14,9 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/ulikunitz/xz v0.5.15
 	golang.org/x/time v0.14.0
-	k8s.io/api v0.35.1
-	k8s.io/apimachinery v0.35.1
-	k8s.io/client-go v0.35.1
+	k8s.io/api v0.35.2
+	k8s.io/apimachinery v0.35.2
+	k8s.io/client-go v0.35.2
 	k8s.io/klog v1.0.0
 )
 
