@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	// PollRate defines maximum polling request per second towards the backend
-	PollRate = 1
-	// PollBurst defines maximum burst poll requests towards the backend
-	PollBurst = 3
+	// DefaultPollRate defines maximum polling request per second towards the backend
+	DefaultPollRate = 1
+	// DefaultPollBurst defines maximum burst poll requests towards the backend
+	DefaultPollBurst = 3
 )
 
 // Config is the structure to instantiate a Router object
@@ -44,10 +44,10 @@ type Config struct {
 	// IgnoreContainerMemory is used to ignore Docker memory settings and use requests/limits from Kubedock config
 	IgnoreContainerMemory bool
 	// PollRate defines maximum polling requests per second towards the backend.
-	// Defaults to the PollRate constant if zero.
+	// Defaults to DefaultPollRate if zero.
 	PollRate float64
 	// PollBurst defines the maximum burst of poll requests towards the backend.
-	// Defaults to the PollBurst constant if zero.
+	// Defaults to DefaultPollBurst if zero.
 	PollBurst int
 }
 
@@ -68,11 +68,11 @@ func NewContextRouter(kub backend.Backend, cfg Config) (*ContextRouter, error) {
 	}
 	pollRate := cfg.PollRate
 	if pollRate <= 0 {
-		pollRate = PollRate
+		pollRate = DefaultPollRate
 	}
 	pollBurst := cfg.PollBurst
 	if pollBurst <= 0 {
-		pollBurst = PollBurst
+		pollBurst = DefaultPollBurst
 	}
 	cr := &ContextRouter{
 		Config:  cfg,
