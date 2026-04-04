@@ -65,6 +65,10 @@ func init() {
 	serverCmd.PersistentFlags().Bool("pre-archive", false, "Enable support for copying single files to containers without starting them")
 	serverCmd.PersistentFlags().Bool("disable-services", false, "Disable service creation (requires a network solution such as kubedock-dns)")
 	serverCmd.PersistentFlags().Bool("ignore-container-memory", false, "Ignore container memory setting and use requests/limits from gobal settings or container labels")
+	serverCmd.PersistentFlags().Float32("kube-api-qps", 0, "Maximum QPS for requests to the Kubernetes API (0 uses client default)")
+	serverCmd.PersistentFlags().Int("kube-api-burst", 0, "Maximum burst for requests to the Kubernetes API (0 uses client default)")
+	serverCmd.PersistentFlags().Float64("poll-rate", 0, "Maximum polling requests per second towards the backend (0 uses default of 1)")
+	serverCmd.PersistentFlags().Int("poll-burst", 0, "Maximum burst of poll requests towards the backend (0 uses default of 3)")
 
 	viper.BindPFlag("server.listen-addr", serverCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", serverCmd.PersistentFlags().Lookup("unix-socket"))
@@ -97,6 +101,10 @@ func init() {
 	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
 	viper.BindPFlag("disable-services", serverCmd.PersistentFlags().Lookup("disable-services"))
 	viper.BindPFlag("ignore-container-memory", serverCmd.PersistentFlags().Lookup("ignore-container-memory"))
+	viper.BindPFlag("kubernetes.qps", serverCmd.PersistentFlags().Lookup("kube-api-qps"))
+	viper.BindPFlag("kubernetes.burst", serverCmd.PersistentFlags().Lookup("kube-api-burst"))
+	viper.BindPFlag("server.poll-rate", serverCmd.PersistentFlags().Lookup("poll-rate"))
+	viper.BindPFlag("server.poll-burst", serverCmd.PersistentFlags().Lookup("poll-burst"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
@@ -120,6 +128,10 @@ func init() {
 	viper.BindEnv("kubernetes.timeout", "TIME_OUT")
 	viper.BindEnv("reaper.reapmax", "REAPER_REAPMAX")
 	viper.BindEnv("verbosity", "VERBOSITY")
+	viper.BindEnv("kubernetes.qps", "K8S_QPS")
+	viper.BindEnv("kubernetes.burst", "K8S_BURST")
+	viper.BindEnv("server.poll-rate", "POLL_RATE")
+	viper.BindEnv("server.poll-burst", "POLL_BURST")
 
 	serverCmd.PersistentFlags().Lookup("tls-enable").Hidden = true
 	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true

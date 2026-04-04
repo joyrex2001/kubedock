@@ -42,6 +42,10 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--label||K8S_LABEL_label|label that need to be added to every k8s resource (key=value)|
 |server|--active-deadline-seconds|-1|K8S_ACTIVE_DEADLINE_SECONDS|Default value for pod deadline, in seconds (a negative value means no deadline)|
 |server|--ignore-container-memory|false||Ignore container memory setting and use requests/limits from gobal settings or container labels|
+|server|--kube-api-qps|0|K8S_QPS|Maximum QPS for requests to the Kubernetes API (0 uses client default)|
+|server|--kube-api-burst|0|K8S_BURST|Maximum burst for requests to the Kubernetes API (0 uses client default)|
+|server|--poll-rate|0|POLL_RATE|Maximum polling requests per second towards the backend (0 uses default of 1)|
+|server|--poll-burst|0|POLL_BURST|Maximum burst of poll requests towards the backend (0 uses default of 3)|
 |dind|--unix-socket|/var/run/docker.sock||Unix socket to listen to|
 |dind|--kubedock-url|||Kubedock url to proxy requests to|
 |dind|--verbosity / -v|1|VERBOSITY|Log verbosity level|

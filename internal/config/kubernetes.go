@@ -62,5 +62,11 @@ func GetKubernetes() (*rest.Config, error) {
 			return nil, err
 		}
 	}
+	if qps := float32(viper.GetFloat64("kubernetes.qps")); qps > 0 {
+		config.QPS = qps
+	}
+	if burst := viper.GetInt("kubernetes.burst"); burst > 0 {
+		config.Burst = burst
+	}
 	return config, nil
 }

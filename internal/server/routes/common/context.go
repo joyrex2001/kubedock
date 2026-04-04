@@ -43,6 +43,12 @@ type Config struct {
 	NodeSelector string
 	// IgnoreContainerMemory is used to ignore Docker memory settings and use requests/limits from Kubedock config
 	IgnoreContainerMemory bool
+	// PollRate defines maximum polling requests per second towards the backend.
+	// Defaults to the PollRate constant if zero.
+	PollRate float64
+	// PollBurst defines the maximum burst of poll requests towards the backend.
+	// Defaults to the PollBurst constant if zero.
+	PollBurst int
 }
 
 // ContextRouter is the object that contains shared context for the kubedock API endpoints.
@@ -60,12 +66,20 @@ func NewContextRouter(kub backend.Backend, cfg Config) (*ContextRouter, error) {
 	if err != nil {
 		return nil, err
 	}
+	pollRate := cfg.PollRate
+	if pollRate <= 0 {
+		pollRate = PollRate
+	}
+	pollBurst := cfg.PollBurst
+	if pollBurst <= 0 {
+		pollBurst = PollBurst
+	}
 	cr := &ContextRouter{
 		Config:  cfg,
 		DB:      db,
 		Backend: kub,
 		Events:  events.New(),
-		Limiter: rate.NewLimiter(PollRate, PollBurst),
+		Limiter: rate.NewLimiter(rate.Limit(pollRate), pollBurst),
 	}
 	return cr, nil
 }

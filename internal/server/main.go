@@ -142,6 +142,9 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	icm := viper.GetBool("ignore-container-memory")
 
+	pollRate := viper.GetFloat64("server.poll-rate")
+	pollBurst := viper.GetInt("server.poll-burst")
+
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
 	cr, err := common.NewContextRouter(s.kub, common.Config{
@@ -158,6 +161,8 @@ func (s *Server) getGinEngine() *gin.Engine {
 		NamePrefix:            podprfx,
 		ActiveDeadlineSeconds: ads,
 		IgnoreContainerMemory: icm,
+		PollRate:              pollRate,
+		PollBurst:             pollBurst,
 	})
 	if err != nil {
 		klog.Errorf("error setting up context: %s", err)
