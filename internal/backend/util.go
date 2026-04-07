@@ -12,19 +12,19 @@ import (
 // toKubernetesValue will create a nice kubernetes string that can be used as a
 // key out of given random string.
 func (in *instance) toKubernetesKey(v string) string {
-	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\./]`, `[-/]*$`)
+	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\./]`, `[-_\./]*$`)
 }
 
 // toKubernetesValue will create a nice kubernetes string that can be used as a
 // value out of given random string.
 func (in *instance) toKubernetesValue(v string) string {
-	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\.]`, `-*$`)
+	return in.replaceValueWithPatterns(v, "", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-\.]`, `[-_\.]*$`)
 }
 
 // toKubernetesNamewill create a nice kubernetes string that can be used as a
 // value out of given random string.
 func (in *instance) toKubernetesName(v string) string {
-	return in.replaceValueWithPatterns(v, "undef", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-]`, `-*$`)
+	return in.replaceValueWithPatterns(v, "undef", `^[^A-Za-z0-9]+`, `[^A-Za-z0-9-]`, `[-_\.]*$`)
 }
 
 func (in *instance) replaceValueWithPatterns(v, def string, pt ...string) string {
