@@ -6,7 +6,7 @@ on:
 
 env:
   # Golang version to use across CI steps
-  GOLANG_VERSION: '1.25.5'
+  GOLANG_VERSION: '1.25.9'
   
 jobs:
   release:
