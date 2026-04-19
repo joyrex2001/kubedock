@@ -887,6 +887,14 @@ func TestMatch(t *testing.T) {
 			val:    "",
 			match:  false,
 		},
+		{
+			name:   "testymctestface",
+			labels: map[string]string{"com.docker.compose.config-hash": "2107007e-b7c8-df23-18fb-6a6f79726578"},
+			typ:    "label",
+			key:    "com.docker.compose.config-hash",
+			val:    "",
+			match:  true,
+		},
 	}
 	for i, tst := range tests {
 		in := &Container{Labels: tst.labels, Name: tst.name}
