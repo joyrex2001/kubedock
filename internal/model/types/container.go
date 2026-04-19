@@ -550,6 +550,9 @@ func (co *Container) Match(typ string, key string, val string) (bool, error) {
 	if !ok {
 		return false, nil
 	}
+	if val == "" {
+		return true, nil
+	}
 	return v == val, nil
 }
 
