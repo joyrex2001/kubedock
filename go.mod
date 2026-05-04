@@ -6,7 +6,7 @@ require (
 	github.com/containers/image/v5 v5.36.2
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dsnet/compress v0.0.1
-	github.com/fsnotify/fsnotify v1.10.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/opencontainers/image-spec v1.1.1
