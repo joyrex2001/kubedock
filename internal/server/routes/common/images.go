@@ -28,7 +28,7 @@ func ImageList(cr *ContextRouter, c *gin.Context) {
 		if !strings.Contains(name, ":") {
 			name = name + ":latest"
 		}
-		res = append(res, gin.H{"ID": img.ID, "Size": 0, "Created": img.Created.Unix(), "RepoTags": []string{name}})
+		res = append(res, gin.H{"Id": img.ID, "Size": 0, "Created": img.Created.Unix(), "RepoTags": []string{name}})
 	}
 	c.JSON(http.StatusOK, res)
 }
