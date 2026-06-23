@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -596,7 +596,7 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 					for file, info := range pfiles {
 						items = append(items, corev1.KeyToPath{
 							Key:  in.fileID(file),
-							Path: filepath.Base(file),
+							Path: path.Base(file),
 							Mode: func(i int32) *int32 { return &i }(int32(info[0].FileMode)),
 						})
 					}
@@ -608,7 +608,7 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 			mounts = append(mounts, corev1.VolumeMount{
 				Name:      "pfiles",
 				MountPath: dst,
-				SubPath:   filepath.Base(dst),
+				SubPath:   path.Base(dst),
 			})
 		}
 	}
