@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 
 	"k8s.io/klog"
@@ -81,7 +82,7 @@ func UnpackFile(dst, fname string, archive io.Reader, dest io.Writer) error {
 		if err != nil {
 			return err
 		}
-		if header != nil && filepath.Join(dst, header.Name) == fname {
+		if header != nil && path.Join(dst, header.Name) == fname {
 			_, err = io.Copy(dest, tr)
 			return err
 		}
@@ -112,7 +113,7 @@ func GetFileMode(dst string, fname string, archive io.Reader) (os.FileMode, erro
 		if err != nil {
 			return 0, err
 		}
-		if header != nil && filepath.Join(dst, header.Name) == fname {
+		if header != nil && path.Join(dst, header.Name) == fname {
 			return header.FileInfo().Mode(), nil
 		}
 	}
@@ -135,7 +136,7 @@ func getTargets(dst string, archive io.Reader, typ byte) ([]string, error) {
 		case header == nil:
 			continue
 		}
-		target := filepath.Join(dst, header.Name)
+		target := path.Join(dst, header.Name)
 		if header.Typeflag == typ {
 			res = append(res, target)
 		}
