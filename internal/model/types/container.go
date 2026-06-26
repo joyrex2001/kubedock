@@ -70,6 +70,8 @@ const (
 	LabelRequestCPU = "com.joyrex2001.kubedock.request-cpu"
 	// LabelRequestMemory is the label to use to specify memory request/limits
 	LabelRequestMemory = "com.joyrex2001.kubedock.request-memory"
+	// LabelRequestEphemeralStorage is the label to use to specify ephemeral-storage request/limits
+	LabelRequestEphemeralStorage = "com.joyrex2001.kubedock.request-ephemeral-storage"
 	// LabelPullPolicy is the label to be used to configure the pull policy
 	LabelPullPolicy = "com.joyrex2001.kubedock.pull-policy"
 	// LabelServiceAccount is the label to be used to enforce a service account
@@ -135,7 +137,7 @@ func (co *Container) GetResourceRequirements(req corev1.ResourceRequirements) (c
 		req.Limits = corev1.ResourceList{}
 	}
 
-	for typ, labl := range map[string]string{"cpu": LabelRequestCPU, "memory": LabelRequestMemory} {
+	for typ, labl := range map[string]string{"cpu": LabelRequestCPU, "memory": LabelRequestMemory, "ephemeral-storage": LabelRequestEphemeralStorage} {
 		rls, ok := co.Labels[labl]
 		if !ok {
 			continue

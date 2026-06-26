@@ -118,6 +118,10 @@ func (s *Server) getGinEngine() *gin.Engine {
 	if reqmem != "" {
 		klog.Infof("default memory request: %s", reqmem)
 	}
+	reqes := viper.GetString("kubernetes.ephemeral-storage")
+	if reqes != "" {
+		klog.Infof("default ephemeral-storage request: %s", reqmem)
+	}
 
 	runasuid := viper.GetString("kubernetes.runas-user")
 	if runasuid != "" {

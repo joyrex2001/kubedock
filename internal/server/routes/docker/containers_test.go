@@ -303,3 +303,45 @@ func TestGetContainerCreateRequestLabelRequestMemory(t *testing.T) {
 		}
 	}
 }
+
+// this mostly checks that there are no mix ups between the labels
+func TestGetContainerCreateRequestLabelRequestEphemeralStorage(t *testing.T) {
+	tests := []struct {
+		ignoreCtnrMem bool
+		body          string
+		expected      string
+	}{
+		{
+			ignoreCtnrMem: false,
+			body:          "{\"Name\": \"Foo\"}",
+		},
+		{
+			ignoreCtnrMem: false,
+			body:          "{\"Name\": \"Foo\",\"HostConfig\":{\"Memory\": 1024}}",
+		},
+		{
+			ignoreCtnrMem: true,
+			body:          "{\"Name\": \"Foo\",\"HostConfig\":{\"Memory\": 1024}}",
+		},
+	}
+	for i, tst := range tests {
+		c := &gin.Context{
+			Request: &http.Request{
+				Body: io.NopCloser(strings.NewReader(tst.body)),
+			},
+		}
+		cr := &common.ContextRouter{
+			Config: common.Config{
+				RequestEphemeralStorage: "2Gi,3Gi",
+				IgnoreContainerMemory:   tst.ignoreCtnrMem,
+			},
+		}
+		ccr, err := getContainerCreateRequest(c, cr)
+		if err != nil {
+			t.Errorf("failed test %d - error creating ContainerCreateRequerst: %s", i, err)
+		}
+		if ccr.Labels[types.LabelRequestEphemeralStorage] != cr.Config.RequestEphemeralStorage {
+			t.Errorf("failed test %d - expected %s, but got %s", i, tst.expected, ccr.Labels[types.LabelRequestEphemeralStorage])
+		}
+	}
+}
