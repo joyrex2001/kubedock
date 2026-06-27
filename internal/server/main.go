@@ -118,6 +118,10 @@ func (s *Server) getGinEngine() *gin.Engine {
 	if reqmem != "" {
 		klog.Infof("default memory request: %s", reqmem)
 	}
+	reqes := viper.GetString("kubernetes.request-ephemeral-storage")
+	if reqes != "" {
+		klog.Infof("default ephemeral-storage request: %s", reqes)
+	}
 
 	runasuid := viper.GetString("kubernetes.runas-user")
 	if runasuid != "" {
@@ -148,21 +152,22 @@ func (s *Server) getGinEngine() *gin.Engine {
 	klog.Infof("using namespace: %s", viper.GetString("kubernetes.namespace"))
 
 	cr, err := common.NewContextRouter(s.kub, common.Config{
-		Inspector:             insp,
-		RequestCPU:            reqcpu,
-		RequestMemory:         reqmem,
-		ServiceAccount:        sa,
-		RunasUser:             runasuid,
-		NodeSelector:          nodesel,
-		PullPolicy:            pulpol,
-		PortForward:           pfwrd,
-		ReverseProxy:          revprox,
-		PreArchive:            prea,
-		NamePrefix:            podprfx,
-		ActiveDeadlineSeconds: ads,
-		IgnoreContainerMemory: icm,
-		PollRate:              pollRate,
-		PollBurst:             pollBurst,
+		Inspector:               insp,
+		RequestCPU:              reqcpu,
+		RequestMemory:           reqmem,
+		RequestEphemeralStorage: reqes,
+		ServiceAccount:          sa,
+		RunasUser:               runasuid,
+		NodeSelector:            nodesel,
+		PullPolicy:              pulpol,
+		PortForward:             pfwrd,
+		ReverseProxy:            revprox,
+		PreArchive:              prea,
+		NamePrefix:              podprfx,
+		ActiveDeadlineSeconds:   ads,
+		IgnoreContainerMemory:   icm,
+		PollRate:                pollRate,
+		PollBurst:               pollBurst,
 	})
 	if err != nil {
 		klog.Errorf("error setting up context: %s", err)

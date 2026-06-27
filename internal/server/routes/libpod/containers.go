@@ -51,6 +51,9 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 	if _, ok := in.Labels[types.LabelRequestMemory]; !ok && cr.Config.RequestMemory != "" {
 		in.Labels[types.LabelRequestMemory] = cr.Config.RequestMemory
 	}
+	if _, ok := in.Labels[types.LabelRequestEphemeralStorage]; !ok && cr.Config.RequestEphemeralStorage != "" {
+		in.Labels[types.LabelRequestEphemeralStorage] = cr.Config.RequestEphemeralStorage
+	}
 	if _, ok := in.Labels[types.LabelPullPolicy]; !ok && cr.Config.PullPolicy != "" {
 		in.Labels[types.LabelPullPolicy] = cr.Config.PullPolicy
 	}

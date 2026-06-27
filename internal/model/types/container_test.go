@@ -59,6 +59,8 @@ func TestGetEnvVar(t *testing.T) {
 
 func TestGetResourceRequirements(t *testing.T) {
 	mem64, _ := resource.ParseQuantity("64Mi")
+	mem500, _ := resource.ParseQuantity("500Mi")
+	mem2000, _ := resource.ParseQuantity("2000Mi")
 
 	tests := []struct {
 		in        *Container
@@ -186,6 +188,33 @@ func TestGetResourceRequirements(t *testing.T) {
 			},
 			err: false,
 		},
+		{ // 16
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-ephemeral-storage": "209715200",
+			}},
+			reqlim: map[string]string{"reqes": "209715200"},
+			resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"ephemeral-storage": mem64,
+				},
+			},
+			err: false,
+		},
+		{ // 17
+			in: &Container{Labels: map[string]string{
+				"com.joyrex2001.kubedock.request-ephemeral-storage": "500Mi,2000Mi",
+			}},
+			reqlim: map[string]string{"reqes": "500Mi", "limes": "2000Mi"},
+			resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					"ephemeral-storage": mem500,
+				},
+				Limits: corev1.ResourceList{
+					"ephemeral-storage": mem2000,
+				},
+			},
+			err: false,
+		},
 	}
 	for i, tst := range tests {
 		res, err := tst.in.GetResourceRequirements(tst.resources)
@@ -203,11 +232,17 @@ func TestGetResourceRequirements(t *testing.T) {
 		if v, ok := res.Requests["memory"]; ok {
 			reqlim["reqmem"] = v.String()
 		}
+		if v, ok := res.Requests["ephemeral-storage"]; ok {
+			reqlim["reqes"] = v.String()
+		}
 		if v, ok := res.Limits["cpu"]; ok {
 			reqlim["limcpu"] = v.String()
 		}
 		if v, ok := res.Limits["memory"]; ok {
 			reqlim["limmem"] = v.String()
+		}
+		if v, ok := res.Limits["ephemeral-storage"]; ok {
+			reqlim["limes"] = v.String()
 		}
 
 		if err == nil && !reflect.DeepEqual(reqlim, tst.reqlim) {
