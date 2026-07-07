@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/image"
-	"github.com/containers/image/v5/transports/alltransports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/image"
+	"go.podman.io/image/v5/transports/alltransports"
+	"go.podman.io/image/v5/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
