@@ -164,7 +164,11 @@ func run(ctx context.Context, kub backend.Backend) {
 		klog.Fatalf("error instantiating reaper: %s", err)
 	}
 
-	klog.Infof("reaper started with max container age %s", reapmax)
+	if reapmax <= 0 {
+		klog.Info("reaper started with container reaping disabled (reapmax 0)")
+	} else {
+		klog.Infof("reaper started with max container age %s", reapmax)
+	}
 	rpr.Start()
 
 	if viper.GetBool("prune-start") {

@@ -24,6 +24,8 @@ var once sync.Once
 // Config is the configuration to be used for the Reaper proces.
 type Config struct {
 	// KeepMax is the maximum age of resources, older resources are deleted.
+	// A zero (or negative) value disables container reaping entirely;
+	// lingering execs are still cleaned.
 	KeepMax time.Duration
 	// Backend is the kubedock backend object.
 	Backend backend.Backend
@@ -75,6 +77,10 @@ func (in *Reaper) runloop() {
 func (in *Reaper) clean() {
 	if err := in.CleanExecs(); err != nil {
 		klog.Errorf("error cleaning execs: %s", err)
+	}
+	if in.keepMax <= 0 {
+		klog.V(2).Info("container reaping is disabled (reapmax 0); skipping")
+		return
 	}
 	if err := in.CleanContainers(); err != nil {
 		klog.Errorf("error cleaning containers: %s", err)
