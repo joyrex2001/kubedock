@@ -26,7 +26,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--pod-name-prefix||POD_NAME_PREFIX|The prefix of the name to be used in the created pods|
 |server|--inspector / -i|false||Enable image inspect to fetch container port config from a registry|
 |server|--timeout / -t|1m|TIME_OUT|Container creating/deletion timeout|
-|server|--reapmax / -r|60m|REAPER_REAPMAX|Reap all resources older than this time|
+|server|--reapmax / -r|60m|REAPER_REAPMAX|Reap all resources older than this time (0 disables container reaping)|
 |server|--request-cpu||K8S_REQUEST_CPU|Default k8s cpu resource request (optionally add ,limit)|
 |server|--request-memory||K8S_REQUEST_MEMORY|Default k8s memory resource request (optionally add ,limit)|
 |server|--node-selector||K8S_NODE_SELECTOR|Default k8s node selector in the form of key1=value1[,key2=value2]|

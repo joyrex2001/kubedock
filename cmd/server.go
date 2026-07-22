@@ -50,7 +50,7 @@ func init() {
 	serverCmd.PersistentFlags().String("pod-name-prefix", "kubedock", "The prefix of the name to be used in the created pods")
 	serverCmd.PersistentFlags().BoolP("inspector", "i", false, "Enable image inspect to fetch container port config from a registry")
 	serverCmd.PersistentFlags().DurationP("timeout", "t", 1*time.Minute, "Container creating/deletion timeout")
-	serverCmd.PersistentFlags().DurationP("reapmax", "r", 60*time.Minute, "Reap all resources older than this time")
+	serverCmd.PersistentFlags().DurationP("reapmax", "r", 60*time.Minute, "Reap all resources older than this time (0 disables container reaping)")
 	serverCmd.PersistentFlags().String("request-cpu", "", "Default k8s cpu resource request (optionally add ,limit)")
 	serverCmd.PersistentFlags().String("request-memory", "", "Default k8s memory resource request (optionally add ,limit)")
 	serverCmd.PersistentFlags().String("request-ephemeral-storage", "", "Default k8s ephemeral-storage resource request (optionally add ,limit)")

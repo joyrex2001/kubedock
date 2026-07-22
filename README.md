@@ -81,7 +81,9 @@ Kubedock will dynamically create pods and services in the configured namespace. 
 
 ### Automatic reaping
 
-If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused pods, configmaps and services lingering around, kubedock will automatically delete these resources. If these resources are owned by the current process, they will be removed if they are older than 60 minutes (default). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
+If a test fails and didn't clean up its started containers, these resources will remain in the namespace. To prevent unused pods, configmaps and services lingering around, kubedock will automatically delete these resources. If these resources are owned by the current process, they will be removed if they are older than 60 minutes (default, configurable with `--reapmax`). If the resources have the label `kubedock=true`, but are not owned by the running process, it will delete them 15 minutes after the initial reap interval (in the default scenario; after 75 minutes).
+
+Automatic reaping can be disabled entirely with `--reapmax=0`. This is useful when containers are expected to outlive any fixed age threshold — for example long-lived service containers managed by an external system that handles cleanup itself (such as namespace deletion). Internal bookkeeping (lingering exec records) is still cleaned, and `--prune-start` still works.
 
 ### Forced cleaning
 

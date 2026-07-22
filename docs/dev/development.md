@@ -68,7 +68,8 @@ Common functionality should be extracted to `routes/common/` to avoid duplicatio
 ### 4. Reaper (`internal/reaper/`)
 
 The reaper handles automatic cleanup of orphaned resources:
-- Removes containers older than configured threshold (default: 60 minutes)
+- Removes containers older than configured threshold (default: 60 minutes;
+  `--reapmax=0` disables container reaping, exec records are still cleaned)
 - Deletes resources owned by terminated kubedock instances
 - Can be triggered at startup with `--prune-start`
 
