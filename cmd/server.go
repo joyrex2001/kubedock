@@ -64,6 +64,7 @@ func init() {
 	serverCmd.PersistentFlags().Bool("port-forward", false, "Open port-forwards for all services")
 	serverCmd.PersistentFlags().Bool("reverse-proxy", false, "Reverse proxy all services via 0.0.0.0 on the kubedock host as well")
 	serverCmd.PersistentFlags().Bool("pre-archive", false, "Enable support for copying single files to containers without starting them")
+	serverCmd.PersistentFlags().Int("pre-archive-max-configmaps", 10, "Maximum number of configmaps --pre-archive creates per container, one per file (0 disables the limit)")
 	serverCmd.PersistentFlags().Bool("disable-services", false, "Disable service creation (requires a network solution such as kubedock-dns)")
 	serverCmd.PersistentFlags().Bool("ignore-container-memory", false, "Ignore container memory setting and use requests/limits from gobal settings or container labels")
 	serverCmd.PersistentFlags().Float32("kube-api-qps", 0, "Maximum QPS for requests to the Kubernetes API (0 uses client default)")
@@ -101,6 +102,7 @@ func init() {
 	viper.BindPFlag("port-forward", serverCmd.PersistentFlags().Lookup("port-forward"))
 	viper.BindPFlag("reverse-proxy", serverCmd.PersistentFlags().Lookup("reverse-proxy"))
 	viper.BindPFlag("pre-archive", serverCmd.PersistentFlags().Lookup("pre-archive"))
+	viper.BindPFlag("pre-archive-max-configmaps", serverCmd.PersistentFlags().Lookup("pre-archive-max-configmaps"))
 	viper.BindPFlag("disable-services", serverCmd.PersistentFlags().Lookup("disable-services"))
 	viper.BindPFlag("ignore-container-memory", serverCmd.PersistentFlags().Lookup("ignore-container-memory"))
 	viper.BindPFlag("kubernetes.qps", serverCmd.PersistentFlags().Lookup("kube-api-qps"))
@@ -135,6 +137,7 @@ func init() {
 	viper.BindEnv("kubernetes.burst", "K8S_BURST")
 	viper.BindEnv("server.poll-rate", "POLL_RATE")
 	viper.BindEnv("server.poll-burst", "POLL_BURST")
+	viper.BindEnv("pre-archive-max-configmaps", "PRE_ARCHIVE_MAX_CONFIGMAPS")
 
 	serverCmd.PersistentFlags().Lookup("tls-enable").Hidden = true
 	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true

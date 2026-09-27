@@ -983,3 +983,51 @@ func TestAddPreArchivesSameBaseName(t *testing.T) {
 		byName[m.Name] = m.MountPath
 	}
 }
+
+// TestAddPreArchivesMaxConfigMaps checks the cap on configmaps per container:
+// a container over the cap fails before any configmap is created, one at the
+// cap is deployed, and 0 disables the cap.
+func TestAddPreArchivesMaxConfigMaps(t *testing.T) {
+	tests := []struct {
+		max   int
+		files int
+		err   bool
+	}{
+		{max: 2, files: 3, err: true},
+		{max: 3, files: 3, err: false},
+		{max: 0, files: 12, err: false},
+	}
+	for i, tst := range tests {
+		pas := []types.PreArchive{}
+		for f := 0; f < tst.files; f++ {
+			pas = append(pas, types.PreArchive{Path: "/etc/app", Archive: singleFileTar(t, "file"+strconv.Itoa(f), 10, 0644)})
+		}
+		tainr := &types.Container{ShortID: "abc123", PreArchives: pas}
+		pod := &corev1.Pod{Spec: corev1.PodSpec{Containers: []corev1.Container{{}}}}
+		cli := fake.NewSimpleClientset()
+		kub := &instance{cli: cli, maxPreArchiveCMs: tst.max}
+
+		err := kub.addPreArchives(tainr, pod)
+		if err != nil && !tst.err {
+			t.Errorf("failed test %d - unexpected error: %s", i, err)
+		}
+		if err == nil && tst.err {
+			t.Errorf("failed test %d - expected error, but succeeded instead", i)
+		}
+
+		cms, lerr := cli.CoreV1().ConfigMaps("").List(context.Background(), metav1.ListOptions{})
+		if lerr != nil {
+			t.Fatal(lerr)
+		}
+		want := tst.files
+		if tst.err {
+			want = 0
+		}
+		if len(cms.Items) != want {
+			t.Errorf("failed test %d - expected %d configmaps, got %d", i, want, len(cms.Items))
+		}
+		if tst.err && (len(pod.Spec.Volumes) != 0 || len(pod.Spec.InitContainers) != 0) {
+			t.Errorf("failed test %d - pod was modified although the cap was exceeded", i)
+		}
+	}
+}

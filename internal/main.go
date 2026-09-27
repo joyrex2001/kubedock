@@ -99,6 +99,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	podtmpl := viper.GetString("kubernetes.pod-template")
 	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
 	dissvcs := viper.GetBool("disable-services")
+	maxpacms := viper.GetInt("pre-archive-max-configmaps")
 
 	optlog := ""
 	imgps := []string{}
@@ -130,6 +131,8 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		KubedockURL:      kuburl,
 		TimeOut:          timeout,
 		DisableServices:  dissvcs,
+
+		MaxPreArchiveConfigMaps: maxpacms,
 	})
 }
 

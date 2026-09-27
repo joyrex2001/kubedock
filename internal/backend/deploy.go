@@ -572,8 +572,15 @@ func (in *instance) addVolumes(tainr *types.Container, pod *corev1.Pod) error {
 // volume mount per file to the setup init container and main container, in
 // order to copy data before the container is started. Each file gets its own
 // configmap so the 1MiB configmap size limit applies to every file on its
-// own, rather than to all files copied into the container combined.
+// own, rather than to all files copied into the container combined. The
+// number of files is capped by maxPreArchiveCMs (0 disables the cap), and
+// the cap is checked before any configmap is created.
 func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) error {
+	pfiles := tainr.GetPreArchiveFiles()
+	if in.maxPreArchiveCMs > 0 && len(pfiles) > in.maxPreArchiveCMs {
+		return fmt.Errorf("container has %d pre-archived files, but --pre-archive creates one configmap per file and the maximum is %d (configurable with --pre-archive-max-configmaps)", len(pfiles), in.maxPreArchiveCMs)
+	}
+
 	initContainer, err := in.addSetupInitContainer(tainr, pod)
 	if err != nil {
 		return err
@@ -582,7 +589,6 @@ func (in *instance) addPreArchives(tainr *types.Container, pod *corev1.Pod) erro
 	volumes := []corev1.Volume{}
 	mounts := []corev1.VolumeMount{}
 
-	pfiles := tainr.GetPreArchiveFiles()
 	dsts := make([]string, 0, len(pfiles))
 	for dst := range pfiles {
 		dsts = append(dsts, dst)

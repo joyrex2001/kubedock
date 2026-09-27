@@ -107,7 +107,7 @@ func (s *Server) getGinEngine() *gin.Engine {
 
 	prea := viper.GetBool("pre-archive")
 	if prea {
-		klog.Infof("copying archives without starting containers enabled")
+		klog.Infof("copying archives without starting containers enabled (max %d configmaps per container)", viper.GetInt("pre-archive-max-configmaps"))
 	}
 
 	reqcpu := viper.GetString("kubernetes.request-cpu")
