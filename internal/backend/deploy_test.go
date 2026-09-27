@@ -1,7 +1,10 @@
 package backend
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
+	"path"
 	"reflect"
 	"sort"
 	"strconv"
@@ -856,5 +859,127 @@ func TestGetAnnotations(t *testing.T) {
 		if count != tst.count {
 			t.Errorf("failed test %d - expected %d labels, but got %d", i, tst.count, count)
 		}
+	}
+}
+
+// singleFileTar returns a tar archive holding one file, as a docker cp of a
+// single file to a container would send it.
+func singleFileTar(t *testing.T, name string, size int, mode int64) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	if err := tw.WriteHeader(&tar.Header{Name: name, Mode: mode, Size: int64(size), Typeflag: tar.TypeReg}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tw.Write(bytes.Repeat([]byte("x"), size)); err != nil {
+		t.Fatal(err)
+	}
+	if err := tw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
+}
+
+// TestAddPreArchivesConfigMapPerFile checks that every pre-archived file gets
+// a configmap of its own: files that each fit the 1MiB configmap limit must
+// not fail because together they exceed it.
+func TestAddPreArchivesConfigMapPerFile(t *testing.T) {
+	const maxConfigMapSize = 1024 * 1024
+	tainr := &types.Container{ShortID: "abc123", PreArchives: []types.PreArchive{
+		{Path: "/etc/app", Archive: singleFileTar(t, "broker.xml", 2*1024, 0644)},
+		{Path: "/opt/lib", Archive: singleFileTar(t, "protocol.jar", 860*1024, 0644)},
+		{Path: "/opt/lib", Archive: singleFileTar(t, "engine.jar", 735*1024, 0755)},
+	}}
+	pod := &corev1.Pod{Spec: corev1.PodSpec{Containers: []corev1.Container{{}}}}
+	cli := fake.NewSimpleClientset()
+	kub := &instance{cli: cli}
+
+	if err := kub.addPreArchives(tainr, pod); err != nil {
+		t.Fatalf("expected no error but got: %v", err)
+	}
+
+	cms, err := cli.CoreV1().ConfigMaps("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cms.Items) != 3 {
+		t.Fatalf("expected 3 configmaps, got %d", len(cms.Items))
+	}
+	total := 0
+	for _, cm := range cms.Items {
+		if len(cm.BinaryData) != 1 {
+			t.Errorf("configmap %s: expected 1 file, got %d", cm.Name, len(cm.BinaryData))
+		}
+		size := 0
+		for _, d := range cm.BinaryData {
+			size += len(d)
+		}
+		if size > maxConfigMapSize {
+			t.Errorf("configmap %s: %d bytes exceeds the configmap limit", cm.Name, size)
+		}
+		total += size
+		// cleanup and reaping select configmaps by this label
+		if cm.Labels["kubedock.containerid"] != tainr.ShortID {
+			t.Errorf("configmap %s: missing kubedock.containerid label", cm.Name)
+		}
+	}
+	if total <= maxConfigMapSize {
+		t.Fatalf("test files should exceed the limit combined (got %d bytes)", total)
+	}
+
+	if len(pod.Spec.Volumes) != 3 {
+		t.Fatalf("expected 3 volumes, got %d", len(pod.Spec.Volumes))
+	}
+	mounts := map[string]corev1.VolumeMount{}
+	for _, m := range pod.Spec.Containers[0].VolumeMounts {
+		mounts[m.MountPath] = m
+	}
+	for _, dst := range []string{"/etc/app/broker.xml", "/opt/lib/protocol.jar", "/opt/lib/engine.jar"} {
+		m, ok := mounts[dst]
+		if !ok {
+			t.Errorf("expected a mount for %s", dst)
+			continue
+		}
+		if m.SubPath != path.Base(dst) {
+			t.Errorf("%s: expected subpath %s, got %s", dst, path.Base(dst), m.SubPath)
+		}
+	}
+	for _, v := range pod.Spec.Volumes {
+		if v.ConfigMap == nil || len(v.ConfigMap.Items) != 1 {
+			t.Errorf("volume %s: expected a configmap volume with one item", v.Name)
+			continue
+		}
+		if v.ConfigMap.Items[0].Path == "engine.jar" && *v.ConfigMap.Items[0].Mode != 0755 {
+			t.Errorf("engine.jar: expected mode 0755, got %o", *v.ConfigMap.Items[0].Mode)
+		}
+	}
+	if len(pod.Spec.InitContainers) != 1 || len(pod.Spec.InitContainers[0].VolumeMounts) != 3 {
+		t.Errorf("expected the setup init container to mount all 3 files")
+	}
+}
+
+// TestAddPreArchivesSameBaseName checks that files sharing a base name in
+// different directories each land at their own destination. With a single
+// shared configmap volume both items used the same path within the volume.
+func TestAddPreArchivesSameBaseName(t *testing.T) {
+	tainr := &types.Container{ShortID: "abc123", PreArchives: []types.PreArchive{
+		{Path: "/etc/one", Archive: singleFileTar(t, "config.xml", 10, 0644)},
+		{Path: "/etc/two", Archive: singleFileTar(t, "config.xml", 20, 0644)},
+	}}
+	pod := &corev1.Pod{Spec: corev1.PodSpec{Containers: []corev1.Container{{}}}}
+	kub := &instance{cli: fake.NewSimpleClientset()}
+
+	if err := kub.addPreArchives(tainr, pod); err != nil {
+		t.Fatalf("expected no error but got: %v", err)
+	}
+	if len(pod.Spec.Volumes) != 2 {
+		t.Fatalf("expected 2 volumes, got %d", len(pod.Spec.Volumes))
+	}
+	byName := map[string]string{}
+	for _, m := range pod.Spec.Containers[0].VolumeMounts {
+		if prev, dup := byName[m.Name]; dup {
+			t.Errorf("volume %s mounted at both %s and %s", m.Name, prev, m.MountPath)
+		}
+		byName[m.Name] = m.MountPath
 	}
 }
