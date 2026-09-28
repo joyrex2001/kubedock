@@ -38,6 +38,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--port-forward|false||Open port-forwards for all services|
 |server|--reverse-proxy|false||Reverse proxy all services via 0.0.0.0 on the kubedock host as well|
 |server|--pre-archive|false||Enable support for copying single files to containers without starting them|
+|server|--pre-archive-max-configmaps|10|PRE_ARCHIVE_MAX_CONFIGMAPS|Maximum number of configmaps --pre-archive creates per container, one per file (0 disables the limit)|
 |server|--annotation||K8S_ANNOTATION_annotation|annotation that need to be added to every k8s resource (key=value)|
 |server|--label||K8S_LABEL_label|label that need to be added to every k8s resource (key=value)|
 |server|--active-deadline-seconds|-1|K8S_ACTIVE_DEADLINE_SECONDS|Default value for pod deadline, in seconds (a negative value means no deadline)|

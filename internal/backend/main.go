@@ -51,6 +51,7 @@ type instance struct {
 	timeOut           int
 	kuburl            string
 	disableServices   bool
+	maxPreArchiveCMs  int
 }
 
 // Config is the structure to instantiate a Backend object
@@ -84,6 +85,12 @@ type Config struct {
 	// Disable the creation of services. A networking solution such as kubedock-dns
 	// should be used.
 	DisableServices bool
+
+	// MaxPreArchiveConfigMaps is the maximum number of configmaps that
+	// --pre-archive may create for a single container (one per file). A
+	// container with more pre-archived files fails to start. 0 disables
+	// the limit.
+	MaxPreArchiveConfigMaps int
 }
 
 // New will return a Backend instance.
@@ -110,5 +117,6 @@ func New(cfg Config) (Backend, error) {
 		kuburl:            cfg.KubedockURL,
 		timeOut:           int(cfg.TimeOut.Seconds()),
 		disableServices:   cfg.DisableServices,
+		maxPreArchiveCMs:  cfg.MaxPreArchiveConfigMaps,
 	}, nil
 }
