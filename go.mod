@@ -14,7 +14,7 @@ require (
 	github.com/ulikunitz/xz v0.5.17
 	go.podman.io/image/v5 v5.41.2
 	golang.org/x/time v0.16.0
-	k8s.io/api v0.37.0
+	k8s.io/api v0.37.1
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.0
 	k8s.io/klog v1.0.0
