@@ -205,11 +205,13 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
+	started := false
 	if !tainr.Running && !tainr.Completed {
 		if err := StartContainer(cr, tainr); err != nil {
 			httputil.Error(c, http.StatusInternalServerError, err)
 			return
 		}
+		started = true
 	}
 
 	r := c.Request
@@ -230,9 +232,14 @@ func ContainerAttach(cr *ContextRouter, c *gin.Context) {
 	defer tainr.SignalDetach()
 	defer cr.Events.Publish(tainr.ID, events.Container, events.Detach)
 
-	if tainr.Completed || tainr.Stopped {
-		count := uint64(100)
-		logOpts := backend.LogOptions{Follow: true, TailLines: &count}
+	// A kubernetes attach only streams output written after it connects, so
+	// output of a container started by this request is read from its logs.
+	if tainr.Completed || tainr.Stopped || (started && !stdin) {
+		logOpts := backend.LogOptions{Follow: true}
+		if !started {
+			count := uint64(100)
+			logOpts.TailLines = &count
+		}
 		if tty {
 			if err := cr.Backend.GetLogsRaw(tainr, &logOpts, stop, out); err != nil {
 				klog.V(3).Infof("error retrieving logs: %s", err)

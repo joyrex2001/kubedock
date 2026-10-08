@@ -423,7 +423,10 @@ func (in *instance) waitReadyState(tainr *types.Container, wait int) (DeployStat
 	return DeployFailed, fmt.Errorf("timeout starting container")
 }
 
-// GetContainerStatus will return the state of the deployed container.
+// GetContainerStatus will return the state of the deployed container. When
+// the container has terminated, its exit code is stored in tainr.ExitCode.
+// A container that ran and exited with a non-zero code is completed, as in
+// docker; only a container that could not be started is failed.
 func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, error) {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
 	if err != nil {
@@ -435,11 +438,15 @@ func (in *instance) GetContainerStatus(tainr *types.Container) (DeployState, err
 		}
 		term := status.State.Terminated
 		ters := status.LastTerminationState.Terminated
-		if (ters != nil && ters.Reason == "Completed") || (term != nil && term.Reason == "Completed") {
-			return DeployCompleted, nil
+		if term == nil && ters != nil && ters.Reason == "Completed" {
+			term = ters
 		}
-		if term != nil && term.ExitCode != 0 {
-			return DeployFailed, fmt.Errorf("failed to start container")
+		if term != nil {
+			tainr.ExitCode = int(term.ExitCode)
+			if term.Reason == "StartError" || term.Reason == "ContainerCannotRun" {
+				return DeployFailed, fmt.Errorf("failed to start container: %s", term.Message)
+			}
+			return DeployCompleted, nil
 		}
 		if status.RestartCount > 0 {
 			return DeployFailed, fmt.Errorf("failed to start container")

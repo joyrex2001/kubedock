@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -143,8 +144,12 @@ func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 			if err == nil {
 				common.UpdateContainerStatus(cr, tainr)
 			}
-			if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
+			if err != nil {
 				c.Data(http.StatusOK, "application/json", []byte("0"))
+				return
+			}
+			if tainr.Stopped || tainr.Killed || tainr.Completed || tainr.Failed {
+				c.Data(http.StatusOK, "application/json", []byte(strconv.Itoa(tainr.ExitCode)))
 				return
 			}
 		}

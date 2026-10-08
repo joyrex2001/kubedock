@@ -44,6 +44,8 @@ type Container struct {
 	Failed         bool
 	Stopped        bool
 	Killed         bool
+	ExitCode       int
+	AutoRemove     bool
 	Tty            bool
 	OpenStdin      bool
 	Created        time.Time

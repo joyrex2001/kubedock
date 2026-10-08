@@ -12,6 +12,7 @@ import (
 // StartContainer will start given container and saves the appropriate state
 // in the database.
 func StartContainer(cr *ContextRouter, tainr *types.Container) error {
+	tainr.ExitCode = 0
 	state, err := cr.Backend.StartContainer(tainr)
 	if err != nil {
 		return err
@@ -38,6 +39,9 @@ func StartContainer(cr *ContextRouter, tainr *types.Container) error {
 	tainr.Failed = (state == backend.DeployFailed)
 	tainr.Completed = (state == backend.DeployCompleted)
 	tainr.Running = (state == backend.DeployRunning)
+	if tainr.Completed {
+		tainr.Finished = time.Now()
+	}
 
 	return cr.DB.SaveContainer(tainr)
 }
@@ -45,7 +49,7 @@ func StartContainer(cr *ContextRouter, tainr *types.Container) error {
 // UpdateContainerStatus will check if the started container is finished and will
 // update the container database record accordingly.
 func UpdateContainerStatus(cr *ContextRouter, tainr *types.Container) {
-	if tainr.Completed {
+	if tainr.Completed || !tainr.Running {
 		return
 	}
 	if !cr.Limiter.Allow() {
