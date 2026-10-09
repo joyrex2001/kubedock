@@ -55,6 +55,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 		PreArchives:  []types.PreArchive{},
 		Tty:          in.TTY,
 		OpenStdin:    in.OpenStdin,
+		AutoRemove:   in.HostConfig.AutoRemove,
 	}
 
 	if img, err := cr.DB.GetImageByNameOrID(in.Image); err != nil {
@@ -172,27 +173,85 @@ func getContainerCreateRequest(c *gin.Context, cr *common.ContextRouter) (*Conta
 	return in, nil
 }
 
+var (
+	// waitInterval is the interval at which ContainerWait polls the container state.
+	waitInterval = time.Second
+	// autoRemoveAttachGrace is how long an exited container with AutoRemove
+	// set is kept while a client is still attached and reading its output.
+	autoRemoveAttachGrace = 10 * time.Second
+)
+
 // ContainerWait - Block until a container stops, then returns the exit code.
-// https://docs.docker.com/engine/api/v1.41/#operation/ContainerWait
+// The status and headers are sent immediately; the body follows when the
+// wait condition is met.
+// https://docs.docker.com/engine/api/v1.44/#tag/Container/operation/ContainerWait
 // POST "/containers/:id/wait"
 func ContainerWait(cr *common.ContextRouter, c *gin.Context) {
 	id := c.Param("id")
-	ticker := time.NewTicker(time.Second)
+	tainr, err := cr.DB.GetContainerByNameOrID(id)
+	if err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+	cond := c.DefaultQuery("condition", "not-running")
+	if cond != "not-running" && cond != "next-exit" && cond != "removed" {
+		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("invalid condition: %s", cond))
+		return
+	}
+
+	w := c.Writer
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Flush()
+
+	ticker := time.NewTicker(waitInterval)
+	defer ticker.Stop()
 	for {
+		cur, err := cr.DB.GetContainer(tainr.ID)
+		if err != nil {
+			break
+		}
+		tainr = cur
+		common.UpdateContainerStatus(cr, tainr)
+		if waitConditionMet(cr, tainr, cond) {
+			break
+		}
 		select {
 		case <-c.Request.Context().Done():
 			return
 		case <-ticker.C:
-			tainr, err := cr.DB.GetContainer(id)
-			if err == nil {
-				common.UpdateContainerStatus(cr, tainr)
-			}
-			if err != nil || tainr.Stopped || tainr.Killed || tainr.Completed {
-				c.JSON(http.StatusOK, gin.H{"StatusCode": 0})
-				return
-			}
 		}
 	}
+
+	res := gin.H{"StatusCode": tainr.ExitCode}
+	if tainr.Failed {
+		res["Error"] = gin.H{"Message": "container failed"}
+	}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		klog.Warningf("error writing wait response: %s", err)
+	}
+}
+
+// waitConditionMet will return true if the given wait condition is met for
+// the container. A container that already exited also meets next-exit, as
+// kubedock starts the container on attach, before the client calls wait.
+// With condition removed, an exited container with AutoRemove set is removed
+// once attached clients have read its output.
+func waitConditionMet(cr *common.ContextRouter, tainr *types.Container, cond string) bool {
+	exited := tainr.Completed || tainr.Failed || tainr.Stopped || tainr.Killed
+	switch cond {
+	case "not-running":
+		return exited || !tainr.Running
+	case "next-exit":
+		return exited
+	}
+	attached := len(tainr.AttachChannels) > 0 && time.Since(tainr.Finished) < autoRemoveAttachGrace
+	if exited && tainr.AutoRemove && !attached {
+		if err := removeContainer(cr, tainr); err != nil {
+			klog.Warningf("error auto-removing container %s: %s", tainr.ShortID, err)
+		}
+	}
+	return false
 }
 
 // ContainerDelete - remove a container.
@@ -206,6 +265,16 @@ func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
 		return
 	}
 
+	if err := removeContainer(cr, tainr); err != nil {
+		httputil.Error(c, http.StatusNotFound, err)
+		return
+	}
+
+	c.Writer.WriteHeader(http.StatusNoContent)
+}
+
+// removeContainer will delete the container from kubernetes and the database.
+func removeContainer(cr *common.ContextRouter, tainr *types.Container) error {
 	tainr.SignalDetach()
 	tainr.SignalStop()
 
@@ -216,12 +285,7 @@ func ContainerDelete(cr *common.ContextRouter, c *gin.Context) {
 		cr.Events.Publish(tainr.ID, events.Container, events.Die)
 	}
 
-	if err := cr.DB.DeleteContainer(tainr); err != nil {
-		httputil.Error(c, http.StatusNotFound, err)
-		return
-	}
-
-	c.Writer.WriteHeader(http.StatusNoContent)
+	return cr.DB.DeleteContainer(tainr)
 }
 
 // ContainerInfo - return low-level information about a container.
@@ -320,7 +384,7 @@ func getContainerInfo(cr *common.ContextRouter, tainr *types.Container, detail b
 			"Dead":       tainr.Failed,
 			"StartedAt":  tainr.Created.Format("2006-01-02T15:04:05Z"),
 			"FinishedAt": tainr.Finished.Format("2006-01-02T15:04:05Z"),
-			"ExitCode":   0,
+			"ExitCode":   tainr.ExitCode,
 			"Error":      errstr,
 		}
 		res["Config"] = gin.H{

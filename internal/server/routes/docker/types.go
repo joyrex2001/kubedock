@@ -46,6 +46,7 @@ type HostConfig struct {
 	Memory       int    `json:"Memory"`
 	NanoCpus     int    `json:"NanoCpus"`
 	NetworkMode  string `json:"NetworkMode"`
+	AutoRemove   bool   `json:"AutoRemove"`
 }
 
 // PortBinding represents a binding between to a port
