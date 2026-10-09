@@ -25,6 +25,13 @@ type NetworkCreateRequest struct {
 	Labels map[string]string `json:"Labels"`
 }
 
+// VolumeCreateRequest represents the json structure that
+// is used for the /volumes/create post endpoint.
+type VolumeCreateRequest struct {
+	Name   string            `json:"Name"`
+	Labels map[string]string `json:"Labels"`
+}
+
 // NetworkConnectRequest represents the json structure that
 // is used for the /networks/:id/connect post endpoint.
 type NetworkConnectRequest struct {

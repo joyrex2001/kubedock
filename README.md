@@ -37,6 +37,8 @@ Volumes are implemented by copying the source content to the container by means 
 
 Volumes are one-way copies and ephemeral. This typically means, any data that is written into the volume is not available locally. This also means that mounts to devices, or sockets are not supported (e.g. mounting a docker-socket). Volumes that point to a single file will be converted to a configmap (and is implicitly read-only always).
 
+Named volumes can be created, listed, inspected and removed via the volume api (e.g. by docker compose), but are not backed by storage. Mounts of type volume are ignored; the container writes to its own ephemeral filesystem, and the data is not shared between containers or kept when the container is recreated.
+
 Copying data from a running container back to the client is supported as well, but only works if the running container has tar available. Also be aware that copying data to a container will implicitly start the container. This is different compared to a real docker api, where a container can be in an unstarted state. To 'workaround' this, use a volume instead. Alternatively kubedock can be started with `--pre-archive`, which will convert copy statements of single files to configmaps when the container is started yet. Each file gets a configmap of its own, so the 1MiB configmap size limit applies to each file separately; a container can have at most 10 pre-archived files by default (configurable with `--pre-archive-max-configmaps`). This will implicitly make the target file read-only, and may not work in all use-cases (hence it's not the default).
 
 ## Networking

@@ -37,7 +37,7 @@ func Version(cr *common.ContextRouter, c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Version":       config.DockerVersion,
 		"ApiVersion":    config.DockerAPIVersion,
-		"MinAPIVersion": config.DockerAPIVersion,
+		"MinAPIVersion": config.DockerMinAPIVersion,
 		"GitCommit":     config.Build,
 		"BuildTime":     config.Date,
 		"GoVersion":     config.GoVersion,

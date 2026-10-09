@@ -16,7 +16,7 @@ const (
 	// DockerMinAPIVersion is the minimum docker version as advertised when calling /version
 	DockerMinAPIVersion = "1.25"
 	// DockerAPIVersion is the api version as advertised when calling /version
-	DockerAPIVersion = "1.25"
+	DockerAPIVersion = "1.44"
 	// LibpodAPIVersion is the api version as advertised in libpod rest calls
 	LibpodAPIVersion = "4.2.0"
 )

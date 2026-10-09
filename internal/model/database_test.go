@@ -213,6 +213,45 @@ func TestNetwork(t *testing.T) {
 	}
 }
 
+func TestVolume(t *testing.T) {
+	db, _ := New()
+
+	if _, err := db.GetVolume("vol1"); err == nil {
+		t.Errorf("Expected an error when loading a non existing volume")
+	}
+
+	for _, n := range []string{"vol1", "vol2"} {
+		if err := db.SaveVolume(&types.Volume{Name: n}); err != nil {
+			t.Errorf("Unexpected error when creating volume %s: %s", n, err)
+		}
+	}
+
+	anon := &types.Volume{}
+	if err := db.SaveVolume(anon); err != nil {
+		t.Errorf("Unexpected error when creating anonymous volume: %s", err)
+	}
+	if anon.Name == "" || anon.Created.IsZero() {
+		t.Errorf("Expected a generated name and created time for anonymous volume")
+	}
+
+	if vols, err := db.GetVolumes(); err != nil {
+		t.Errorf("Unexpected error when loading all existing volumes")
+	} else if len(vols) != 3 {
+		t.Errorf("Expected 3 volume records, but got %d", len(vols))
+	}
+
+	vol1, err := db.GetVolume("vol1")
+	if err != nil {
+		t.Errorf("Unexpected error when loading volume vol1: %s", err)
+	}
+	if err := db.DeleteVolume(vol1); err != nil {
+		t.Errorf("Unexpected error when deleting volume vol1: %s", err)
+	}
+	if _, err := db.GetVolume("vol1"); err == nil {
+		t.Errorf("Expected error when loading deleted volume vol1")
+	}
+}
+
 func TestImage(t *testing.T) {
 	db, _ := New()
 

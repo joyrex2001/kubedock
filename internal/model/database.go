@@ -89,6 +89,16 @@ func (in *Database) createSchema() (*memdb.MemDB, error) {
 					},
 				},
 			},
+			"volume": {
+				Name: "volume",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.StringFieldIndex{Field: "Name"},
+					},
+				},
+			},
 			"image": {
 				Name: "image",
 				Indexes: map[string]*memdb.IndexSchema{
@@ -354,6 +364,54 @@ func (in *Database) SaveNetwork(netw *types.Network) error {
 // DeleteNetwork will delete provided network.
 func (in *Database) DeleteNetwork(netw *types.Network) error {
 	return in.delete("network", netw)
+}
+
+// GetVolume will return a volume with given name, or an error if the
+// instance does not exist.
+func (in *Database) GetVolume(name string) (*types.Volume, error) {
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	raw, err := txn.First("volume", "id", name)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("volume %s not found", name)
+	}
+	return raw.(*types.Volume), nil
+}
+
+// GetVolumes will return all stored volumes.
+func (in *Database) GetVolumes() ([]*types.Volume, error) {
+	rec := []*types.Volume{}
+	txn := in.db.Txn(false)
+	defer txn.Abort()
+	it, err := txn.Get("volume", "id")
+	if err != nil {
+		return rec, err
+	}
+	for obj := it.Next(); obj != nil; obj = it.Next() {
+		rec = append(rec, obj.(*types.Volume))
+	}
+	return rec, nil
+}
+
+// SaveVolume will either update the given volume, or create a new
+// record. If Name is not provided, it will generate a name. If Created
+// is not set, it will add the current time.
+func (in *Database) SaveVolume(vol *types.Volume) error {
+	if vol.Name == "" {
+		vol.Name = stringid.GenerateRandomID()
+	}
+	if vol.Created.IsZero() {
+		vol.Created = time.Now()
+	}
+	return in.save("volume", vol)
+}
+
+// DeleteVolume will delete provided volume.
+func (in *Database) DeleteVolume(vol *types.Volume) error {
+	return in.delete("volume", vol)
 }
 
 // GetImage will return an image with given id, or an error if the
