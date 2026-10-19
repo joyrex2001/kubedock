@@ -100,6 +100,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	imgpsr := strings.ReplaceAll(viper.GetString("kubernetes.image-pull-secrets"), " ", "")
 	dissvcs := viper.GetBool("disable-services")
 	maxpacms := viper.GetInt("pre-archive-max-configmaps")
+	waitklt := viper.GetBool("kubernetes.wait-kubelet-ready")
 
 	optlog := ""
 	imgps := []string{}
@@ -133,6 +134,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 		DisableServices:  dissvcs,
 
 		MaxPreArchiveConfigMaps: maxpacms,
+		WaitKubeletReady:        waitklt,
 	})
 }
 

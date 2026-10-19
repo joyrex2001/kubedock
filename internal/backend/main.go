@@ -52,6 +52,7 @@ type instance struct {
 	kuburl            string
 	disableServices   bool
 	maxPreArchiveCMs  int
+	waitKubelet       bool
 }
 
 // Config is the structure to instantiate a Backend object
@@ -91,6 +92,10 @@ type Config struct {
 	// container with more pre-archived files fails to start. 0 disables
 	// the limit.
 	MaxPreArchiveConfigMaps int
+
+	// WaitKubeletReady makes kubedock wait until the kubelet of the node
+	// a container is scheduled on serves logs, before using the container.
+	WaitKubeletReady bool
 }
 
 // New will return a Backend instance.
@@ -118,5 +123,6 @@ func New(cfg Config) (Backend, error) {
 		timeOut:           int(cfg.TimeOut.Seconds()),
 		disableServices:   cfg.DisableServices,
 		maxPreArchiveCMs:  cfg.MaxPreArchiveConfigMaps,
+		waitKubelet:       cfg.WaitKubeletReady,
 	}, nil
 }
