@@ -796,6 +796,21 @@ func TestVolumes(t *testing.T) {
 			vol:     false,
 			sock:    false,
 		},
+		{
+			in: &Container{Mounts: []Mount{{
+				Type:   "volume",
+				Target: "/workspace/repository",
+			}}},
+			all: map[string]string{
+				"/workspace/repository": "",
+			},
+			files: map[string]string{},
+			folders: map[string]string{
+				"/workspace/repository": "",
+			},
+			vol:  true,
+			sock: false,
+		},
 	}
 	for i, tst := range tests {
 		res := tst.in.GetVolumes()
