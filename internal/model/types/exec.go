@@ -9,6 +9,7 @@ type Exec struct {
 	ID          string
 	ContainerID string
 	Cmd         []string
+	Env         []string
 	TTY         bool
 	Stdin       bool
 	Stdout      bool

@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -25,11 +24,6 @@ func ContainerExec(cr *ContextRouter, c *gin.Context) {
 		return
 	}
 
-	if in.Env != nil && len(in.Env) > 0 {
-		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("env variables not supported"))
-		return
-	}
-
 	if !in.Stdout && !in.Stderr {
 		in.Stdout = true
 	}
@@ -44,6 +38,7 @@ func ContainerExec(cr *ContextRouter, c *gin.Context) {
 	exec := &types.Exec{
 		ContainerID: id,
 		Cmd:         in.Cmd,
+		Env:         in.Env,
 		TTY:         in.Tty,
 		Stderr:      in.Stderr,
 		Stdout:      in.Stdout,

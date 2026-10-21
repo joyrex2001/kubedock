@@ -2,8 +2,38 @@ package backend
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
+
+func TestCommandWithEnv(t *testing.T) {
+	tests := []struct {
+		name    string
+		command []string
+		env     []string
+		want    []string
+	}{
+		{
+			name:    "no environment",
+			command: []string{"pwd"},
+			want:    []string{"pwd"},
+		},
+		{
+			name:    "environment is passed as arguments",
+			command: []string{"sh", "-c", "printf '%s' \"$DOCKER_HOST\""},
+			env:     []string{"DOCKER_HOST=tcp://kubedock:2475", "SAMPLE=a b"},
+			want:    []string{"env", "DOCKER_HOST=tcp://kubedock:2475", "SAMPLE=a b", "sh", "-c", "printf '%s' \"$DOCKER_HOST\""},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := commandWithEnv(test.command, test.env); !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("commandWithEnv() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
 
 func TestParseExecResponse(t *testing.T) {
 	tests := []struct {

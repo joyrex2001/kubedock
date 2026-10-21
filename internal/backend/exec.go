@@ -14,6 +14,17 @@ import (
 	"github.com/joyrex2001/kubedock/internal/util/ioproxy"
 )
 
+func commandWithEnv(command, env []string) []string {
+	if len(env) == 0 {
+		return command
+	}
+	result := make([]string, 0, len(env)+len(command)+1)
+	result = append(result, "env")
+	result = append(result, env...)
+	result = append(result, command...)
+	return result
+}
+
 // ExecContainer will execute given exec object in kubernetes.
 func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, stdin io.Reader, stdout io.Writer) (int, error) {
 	pod, err := in.cli.CoreV1().Pods(in.namespace).Get(context.Background(), tainr.GetPodName(), metav1.GetOptions{})
@@ -26,7 +37,7 @@ func (in *instance) ExecContainer(tainr *types.Container, ex *types.Exec, stdin 
 		RestConfig: in.cfg,
 		Pod:        *pod,
 		Container:  "main",
-		Cmd:        ex.Cmd,
+		Cmd:        commandWithEnv(ex.Cmd, ex.Env),
 		TTY:        ex.TTY,
 	}
 
