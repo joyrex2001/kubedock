@@ -39,6 +39,7 @@ func ContainerExec(cr *ContextRouter, c *gin.Context) {
 		ContainerID: id,
 		Cmd:         in.Cmd,
 		Env:         in.Env,
+		WorkingDir:  in.WorkingDir,
 		TTY:         in.Tty,
 		Stderr:      in.Stderr,
 		Stdout:      in.Stdout,
