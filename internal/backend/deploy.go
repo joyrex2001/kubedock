@@ -173,6 +173,10 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		return state, err
 	}
 
+	if err := in.waitKubeletReady(tainr, "main", in.timeOut); err != nil {
+		return DeployFailed, err
+	}
+
 	if err := in.MapContainerTCPPorts(tainr); err != nil {
 		return DeployFailed, err
 	}
@@ -753,6 +757,10 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, name string, 
 // with copying.
 func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 	if err := in.waitInitContainerRunning(tainr, SetupInitContainerName, wait); err != nil {
+		return err
+	}
+
+	if err := in.waitKubeletReady(tainr, SetupInitContainerName, wait); err != nil {
 		return err
 	}
 
