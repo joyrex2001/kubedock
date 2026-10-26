@@ -101,6 +101,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 	dissvcs := viper.GetBool("disable-services")
 	maxpacms := viper.GetInt("pre-archive-max-configmaps")
 	waitklt := viper.GetBool("kubernetes.wait-kubelet-ready")
+	revprox := viper.GetBool("reverse-proxy") && !viper.GetBool("port-forward")
 
 	optlog := ""
 	imgps := []string{}
@@ -135,6 +136,7 @@ func getBackend(cfg *rest.Config, cli kubernetes.Interface) (backend.Backend, er
 
 		MaxPreArchiveConfigMaps: maxpacms,
 		WaitKubeletReady:        waitklt,
+		ReverseProxy:            revprox,
 	})
 }
 

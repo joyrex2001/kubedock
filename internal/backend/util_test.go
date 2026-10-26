@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"fmt"
+	"net"
 	"testing"
 
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -193,6 +195,81 @@ func TestMapContainerTCPPortsIdempotency(t *testing.T) {
 		if container.MappedPorts[k] != v {
 			t.Errorf("port mapping changed: expected %d->%d, got %d->%d",
 				k, v, k, container.MappedPorts[k])
+		}
+	}
+}
+
+func TestMapContainerTCPPortsHoldsListeners(t *testing.T) {
+	kub := &instance{holdPorts: true}
+	c := &types.Container{
+		ExposedPorts: map[string]interface{}{
+			"303/tcp": 0,
+			"909/tcp": 0,
+		},
+	}
+	if err := kub.MapContainerTCPPorts(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(c.MappedPorts) != 2 {
+		t.Fatalf("expected 2 mapped ports, but got %d", len(c.MappedPorts))
+	}
+	for src := range c.MappedPorts {
+		if l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", src)); err == nil {
+			l.Close()
+			t.Errorf("expected mapped port %d to be held, but it could be bound", src)
+		}
+	}
+
+	kub.releaseListeners(c)
+
+	for src := range c.MappedPorts {
+		l, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", src))
+		if err != nil {
+			t.Errorf("expected mapped port %d to be released, but got: %v", src, err)
+			continue
+		}
+		l.Close()
+	}
+	if len(kub.listeners) != 0 {
+		t.Errorf("expected no held listeners after release, but got %d", len(kub.listeners))
+	}
+}
+
+func TestMapContainerTCPPortsTakeListener(t *testing.T) {
+	kub := &instance{holdPorts: true}
+	c := &types.Container{
+		ExposedPorts: map[string]interface{}{
+			"303/tcp": 0,
+		},
+	}
+	if err := kub.MapContainerTCPPorts(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for src := range c.MappedPorts {
+		l := kub.takeListener(src)
+		if l == nil {
+			t.Fatalf("expected a held listener for port %d", src)
+		}
+		if kub.takeListener(src) != nil {
+			t.Errorf("expected listener for port %d to be taken only once", src)
+		}
+		l.Close()
+	}
+}
+
+func TestMapContainerTCPPortsWithoutReverseProxy(t *testing.T) {
+	kub := &instance{}
+	c := &types.Container{
+		ExposedPorts: map[string]interface{}{
+			"303/tcp": 0,
+		},
+	}
+	if err := kub.MapContainerTCPPorts(c); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for src := range c.MappedPorts {
+		if kub.takeListener(src) != nil {
+			t.Errorf("expected no held listener for port %d without reverse proxy", src)
 		}
 	}
 }
