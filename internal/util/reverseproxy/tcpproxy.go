@@ -25,6 +25,9 @@ type Request struct {
 	// MaxRetry is the maximum number of retries (equals to seconds) upon error
 	// and initial connection.
 	MaxRetry int
+	// Listener is an optional listener that is already bound to LocalPort. When
+	// set, the proxy uses it instead of binding LocalPort itself.
+	Listener net.Listener
 }
 
 // Proxy will open a reverse tcp proxy, listening to the provided
@@ -41,9 +44,13 @@ func Proxy(req Request) error {
 	// fixes liquibase read-timeouts whe using quarkus + postgres + liquibase.
 	waitUntilRemoteAcceptsConnection(remote, initialConnectTimeOut)
 
-	listener, err := net.Listen("tcp", local)
-	if err != nil {
-		return err
+	listener := req.Listener
+	if listener == nil {
+		var err error
+		listener, err = net.Listen("tcp", local)
+		if err != nil {
+			return err
+		}
 	}
 
 	done := false

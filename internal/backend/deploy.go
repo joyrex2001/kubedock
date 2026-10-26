@@ -48,6 +48,9 @@ const (
 // waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
 	state, err := in.startContainer(tainr)
+	if err != nil {
+		in.releaseListeners(tainr)
+	}
 	if state == DeployFailed {
 		if klog.V(2) {
 			klog.Infof("container %s log output:", tainr.ShortID)
@@ -264,6 +267,7 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 				RemoteIP:   tainr.HostIP,
 				StopCh:     stop,
 				MaxRetry:   30,
+				Listener:   in.takeListener(src),
 			})
 			if err != nil {
 				klog.Errorf("error setting up reverse-proxy for %d to %d: %s", src, dst, err)
