@@ -25,6 +25,8 @@ func Info(cr *common.ContextRouter, c *gin.Context) {
 		"Name":            config.Name,
 		"ServerVersion":   config.Version,
 		"OperatingSystem": config.OS,
+		"Architecture":    config.GOARCH,
+		"OSType":           config.GOOS,
 		"MemTotal":        0,
 		"Labels":          labels,
 	})
