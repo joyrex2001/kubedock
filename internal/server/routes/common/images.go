@@ -1,10 +1,14 @@
 package common
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	oci "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/joyrex2001/kubedock/internal/config"
 	"github.com/joyrex2001/kubedock/internal/model/types"
@@ -37,6 +41,36 @@ func ImageList(cr *ContextRouter, c *gin.Context) {
 // https://docs.docker.com/engine/api/v1.41/#operation/ImageInspect
 // GET "/images/:image/json"
 func ImageJSON(cr *ContextRouter, c *gin.Context) {
+	platformQuery := c.Query("platform")
+	if manifests, err := strconv.ParseBool(c.DefaultQuery("manifests", "false")); err != nil {
+		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("invalid manifests value: %w", err))
+		return
+	} else if manifests && platformQuery != "" {
+		httputil.Error(c, http.StatusBadRequest, fmt.Errorf("manifests and platform options are mutually exclusive"))
+		return
+	} else if manifests {
+		httputil.Error(c, http.StatusNotImplemented, fmt.Errorf("image manifests are not supported"))
+		return
+	}
+
+	platform := oci.Platform{OS: config.GOOS, Architecture: config.GOARCH}
+	if platformQuery != "" {
+		requestedPlatform := oci.Platform{}
+		if err := json.Unmarshal([]byte(platformQuery), &requestedPlatform); err != nil {
+			httputil.Error(c, http.StatusBadRequest, fmt.Errorf("invalid platform value: %w", err))
+			return
+		}
+		if requestedPlatform.OS == "" || requestedPlatform.Architecture == "" {
+			httputil.Error(c, http.StatusBadRequest, fmt.Errorf("platform must include os and architecture"))
+			return
+		}
+		platform = requestedPlatform
+	}
+	if platform.OS != config.GOOS || platform.Architecture != config.GOARCH {
+		httputil.Error(c, http.StatusNotFound, fmt.Errorf("image platform %s/%s is not available", platform.OS, platform.Architecture))
+		return
+	}
+
 	id := strings.TrimSuffix(c.Param("image")+c.Param("json"), "/json")
 	img, err := cr.DB.GetImageByNameOrID(id)
 	if err != nil {
@@ -56,7 +90,9 @@ func ImageJSON(cr *ContextRouter, c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"Id":           img.Name,
-		"Architecture": config.GOARCH,
+		"Architecture": platform.Architecture,
+		"Os":           platform.OS,
+		"Variant":      platform.Variant,
 		"Created":      img.Created.Format("2006-01-02T15:04:05Z"),
 		"Size":         0,
 		"ContainerConfig": gin.H{

@@ -28,6 +28,16 @@ func (in *instance) CopyToContainer(tainr *types.Container, reader io.Reader, ta
 	}
 
 	klog.Infof("copy archive to %s:%s", tainr.ShortID, target)
+	if err := exec.RemoteCmd(exec.Request{
+		Client:     in.cli,
+		RestConfig: in.cfg,
+		Pod:        *pod,
+		Container:  "main",
+		Cmd:        []string{"mkdir", "-p", target},
+		Stdout:     io.Discard,
+	}); err != nil {
+		return err
+	}
 
 	cmpflag := ""
 	if compressed {

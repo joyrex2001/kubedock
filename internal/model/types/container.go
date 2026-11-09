@@ -421,6 +421,11 @@ func (co *Container) GetVolumeFolders() map[string]string {
 			mounts[dst] = src
 		}
 	}
+	for _, mount := range co.Mounts {
+		if mount.Type == "volume" {
+			mounts[mount.Target] = ""
+		}
+	}
 	return mounts
 }
 
@@ -480,7 +485,7 @@ func (co *Container) GetPreArchiveFiles() map[string][]File {
 
 // HasVolumes will return true if the container has volumes configured.
 func (co *Container) HasVolumes() bool {
-	return len(co.Binds) > 0
+	return len(co.Binds) > 0 || len(co.Mounts) > 0
 }
 
 // HasPreArchives will return true if the container has pre archives configured.
