@@ -28,7 +28,7 @@ func ContainerCreate(cr *common.ContextRouter, c *gin.Context) {
 
 	mounts := []types.Mount{}
 	for _, m := range in.HostConfig.Mounts {
-		if m.Type != "bind" {
+		if m.Type != "bind" && m.Type != "volume" {
 			klog.Infof("mount '%s:%s' with type '%s' not supported, ignoring", m.Source, m.Target, m.Type)
 			continue
 		}
