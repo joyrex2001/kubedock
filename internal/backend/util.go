@@ -77,8 +77,44 @@ OUTER:
 		if err != nil {
 			return err
 		}
-		tainr.MapPort(l.Addr().(*net.TCPAddr).Port, pp)
-		defer l.Close()
+		port := l.Addr().(*net.TCPAddr).Port
+		tainr.MapPort(port, pp)
+		if in.holdPorts {
+			in.holdListener(port, l)
+		} else {
+			defer l.Close()
+		}
 	}
 	return nil
+}
+
+// holdListener keeps given listener open until the reverse proxy for its
+// port takes it over, so the port can't be claimed in the meantime.
+func (in *instance) holdListener(port int, l net.Listener) {
+	in.listenersMu.Lock()
+	defer in.listenersMu.Unlock()
+	if in.listeners == nil {
+		in.listeners = map[int]net.Listener{}
+	}
+	in.listeners[port] = l
+}
+
+// takeListener returns the held listener for given port and stops holding
+// it, or nil if no listener is held for the port.
+func (in *instance) takeListener(port int) net.Listener {
+	in.listenersMu.Lock()
+	defer in.listenersMu.Unlock()
+	l := in.listeners[port]
+	delete(in.listeners, port)
+	return l
+}
+
+// releaseListeners closes the listeners that are still held for the mapped
+// ports of given container.
+func (in *instance) releaseListeners(tainr *types.Container) {
+	for src := range tainr.MappedPorts {
+		if l := in.takeListener(src); l != nil {
+			l.Close()
+		}
+	}
 }

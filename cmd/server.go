@@ -71,6 +71,7 @@ func init() {
 	serverCmd.PersistentFlags().Int("kube-api-burst", 0, "Maximum burst for requests to the Kubernetes API (0 uses client default)")
 	serverCmd.PersistentFlags().Float64("poll-rate", 0, "Maximum polling requests per second towards the backend (0 uses default of 1)")
 	serverCmd.PersistentFlags().Int("poll-burst", 0, "Maximum burst of poll requests towards the backend (0 uses default of 3)")
+	serverCmd.PersistentFlags().Bool("wait-kubelet-ready", false, "Wait until the kubelet of the node a container runs on serves logs before using the container")
 
 	viper.BindPFlag("server.listen-addr", serverCmd.PersistentFlags().Lookup("listen-addr"))
 	viper.BindPFlag("server.socket", serverCmd.PersistentFlags().Lookup("unix-socket"))
@@ -109,6 +110,7 @@ func init() {
 	viper.BindPFlag("kubernetes.burst", serverCmd.PersistentFlags().Lookup("kube-api-burst"))
 	viper.BindPFlag("server.poll-rate", serverCmd.PersistentFlags().Lookup("poll-rate"))
 	viper.BindPFlag("server.poll-burst", serverCmd.PersistentFlags().Lookup("poll-burst"))
+	viper.BindPFlag("kubernetes.wait-kubelet-ready", serverCmd.PersistentFlags().Lookup("wait-kubelet-ready"))
 
 	viper.BindEnv("server.listen-addr", "SERVER_LISTEN_ADDR")
 	viper.BindEnv("server.tls-enable", "SERVER_TLS_ENABLE")
@@ -138,6 +140,7 @@ func init() {
 	viper.BindEnv("server.poll-rate", "POLL_RATE")
 	viper.BindEnv("server.poll-burst", "POLL_BURST")
 	viper.BindEnv("pre-archive-max-configmaps", "PRE_ARCHIVE_MAX_CONFIGMAPS")
+	viper.BindEnv("kubernetes.wait-kubelet-ready", "WAIT_KUBELET_READY")
 
 	serverCmd.PersistentFlags().Lookup("tls-enable").Hidden = true
 	serverCmd.PersistentFlags().Lookup("tls-key-file").Hidden = true

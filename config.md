@@ -47,6 +47,7 @@ The `server` command is the actual kubedock server, and is the command to start 
 |server|--kube-api-burst|0|K8S_BURST|Maximum burst for requests to the Kubernetes API (0 uses client default)|
 |server|--poll-rate|0|POLL_RATE|Maximum polling requests per second towards the backend (0 uses default of 1)|
 |server|--poll-burst|0|POLL_BURST|Maximum burst of poll requests towards the backend (0 uses default of 3)|
+|server|--wait-kubelet-ready|false|WAIT_KUBELET_READY|Wait until the kubelet of the node a container runs on serves logs before using the container|
 |dind|--unix-socket|/var/run/docker.sock||Unix socket to listen to|
 |dind|--kubedock-url|||Kubedock url to proxy requests to|
 |dind|--verbosity / -v|1|VERBOSITY|Log verbosity level|

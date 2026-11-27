@@ -48,6 +48,9 @@ const (
 // waits until it's started, or failed with an error.
 func (in *instance) StartContainer(tainr *types.Container) (DeployState, error) {
 	state, err := in.startContainer(tainr)
+	if err != nil {
+		in.releaseListeners(tainr)
+	}
 	if state == DeployFailed {
 		if klog.V(2) {
 			klog.Infof("container %s log output:", tainr.ShortID)
@@ -173,6 +176,10 @@ func (in *instance) startContainer(tainr *types.Container) (DeployState, error) 
 		return state, err
 	}
 
+	if err := in.waitKubeletReady(tainr, "main", in.timeOut); err != nil {
+		return DeployFailed, err
+	}
+
 	if err := in.MapContainerTCPPorts(tainr); err != nil {
 		return DeployFailed, err
 	}
@@ -260,6 +267,7 @@ func (in *instance) reverseProxy(tainr *types.Container, ports map[int]int) {
 				RemoteIP:   tainr.HostIP,
 				StopCh:     stop,
 				MaxRetry:   30,
+				Listener:   in.takeListener(src),
 			})
 			if err != nil {
 				klog.Errorf("error setting up reverse-proxy for %d to %d: %s", src, dst, err)
@@ -753,6 +761,10 @@ func (in *instance) createConfigMapFromRaw(tainr *types.Container, name string, 
 // with copying.
 func (in *instance) copyVolumeFolders(tainr *types.Container, wait int) error {
 	if err := in.waitInitContainerRunning(tainr, SetupInitContainerName, wait); err != nil {
+		return err
+	}
+
+	if err := in.waitKubeletReady(tainr, SetupInitContainerName, wait); err != nil {
 		return err
 	}
 

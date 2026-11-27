@@ -56,6 +56,7 @@ func (in *instance) DeleteWithKubedockID(id string) error {
 
 // DeleteContainer will delete given container object in kubernetes.
 func (in *instance) DeleteContainer(tainr *types.Container) error {
+	in.releaseListeners(tainr)
 	ok := true
 	if err := in.deleteServices("kubedock.containerid=" + tainr.ShortID); err != nil {
 		klog.Errorf("error deleting services: %s", err)

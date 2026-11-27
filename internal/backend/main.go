@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
+	"sync"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -52,6 +54,10 @@ type instance struct {
 	kuburl            string
 	disableServices   bool
 	maxPreArchiveCMs  int
+	waitKubelet       bool
+	holdPorts         bool
+	listeners         map[int]net.Listener
+	listenersMu       sync.Mutex
 }
 
 // Config is the structure to instantiate a Backend object
@@ -91,6 +97,15 @@ type Config struct {
 	// container with more pre-archived files fails to start. 0 disables
 	// the limit.
 	MaxPreArchiveConfigMaps int
+
+	// WaitKubeletReady makes kubedock wait until the kubelet of the node
+	// a container is scheduled on serves logs, before using the container.
+	WaitKubeletReady bool
+
+	// ReverseProxy keeps the random ports mapped to a container bound until
+	// its reverse proxies take them over, so they can't be claimed by
+	// anything else in the meantime.
+	ReverseProxy bool
 }
 
 // New will return a Backend instance.
@@ -118,5 +133,7 @@ func New(cfg Config) (Backend, error) {
 		timeOut:           int(cfg.TimeOut.Seconds()),
 		disableServices:   cfg.DisableServices,
 		maxPreArchiveCMs:  cfg.MaxPreArchiveConfigMaps,
+		waitKubelet:       cfg.WaitKubeletReady,
+		holdPorts:         cfg.ReverseProxy,
 	}, nil
 }
